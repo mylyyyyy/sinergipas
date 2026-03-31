@@ -16,7 +16,14 @@ class DocumentController extends Controller
         $user = auth()->user();
         
         if ($user->role === 'superadmin') {
-            $query = Employee::withCount('documents');
+            // Load Categories with Document Counts
+            $categories = DocumentCategory::withCount('documents')->get();
+
+            $query = Employee::withCount(['documents' => function($q) use ($request) {
+                if ($request->filled('category_id')) {
+                    $q->where('document_category_id', $request->category_id);
+                }
+            }]);
             
             if ($request->filled('search')) {
                 $search = $request->search;
@@ -24,8 +31,14 @@ class DocumentController extends Controller
                       ->orWhere('nip', 'like', "%$search%");
             }
 
+            // If category filter is active, only show employees who HAVE documents in that category
+            if ($request->filled('category_id')) {
+                $query->whereHas('documents', function($q) use ($request) {
+                    $q->where('document_category_id', $request->category_id);
+                });
+            }
+
             $employees = $query->get();
-            $categories = DocumentCategory::all();
             return view('documents.index', compact('employees', 'categories'));
         } else {
             $employee = Employee::where('user_id', $user->id)->first();
@@ -131,7 +144,7 @@ class DocumentController extends Controller
     public function storeCategory(Request $request)
     {
         $request->validate(['name' => 'required|string|unique:document_categories,name']);
-        \App\Models\DocumentCategory::create([
+        DocumentCategory::create([
             'name' => $request->name,
             'slug' => \Illuminate\Support\Str::slug($request->name),
         ]);
