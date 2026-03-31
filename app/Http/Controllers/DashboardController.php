@@ -25,11 +25,15 @@ class DashboardController extends Controller
 
         $latestEmployees = Employee::with('user')->latest()->take(5)->get();
 
+        // Chart Data: Documents by Category
+        $chartData = \App\Models\DocumentCategory::withCount('documents')->get();
+
         return view('dashboard', compact(
             'totalEmployees', 
             'totalDocuments', 
             'latestEmployees',
-            'myDocumentsCount'
+            'myDocumentsCount',
+            'chartData'
         ));
     }
 }

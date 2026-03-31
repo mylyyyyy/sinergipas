@@ -11,13 +11,20 @@ use Illuminate\Support\Facades\Storage;
 
 class DocumentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         
         if ($user->role === 'superadmin') {
-            // Admin sees all employees as folders
-            $employees = Employee::withCount('documents')->get();
+            $query = Employee::withCount('documents');
+            
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where('full_name', 'like', "%$search%")
+                      ->orWhere('nip', 'like', "%$search%");
+            }
+
+            $employees = $query->get();
             return view('documents.index', compact('employees'));
         } else {
             // Pegawai sees their files in grid

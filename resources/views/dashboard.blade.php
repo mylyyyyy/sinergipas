@@ -89,4 +89,27 @@
     </a>
 </div>
 @endif
+</div>
+
+<script>
+    const ctx = document.getElementById('docChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: {!! json_encode($chartData->pluck('name')) !!},
+            datasets: [{
+                data: {!! json_encode($chartData->pluck('documents_count')) !!},
+                backgroundColor: ['#E85A4F', '#1E2432', '#8A8A8A', '#EFEFEF'],
+                borderWidth: 0,
+                hoverOffset: 20
+            }]
+        },
+        options: {
+            cutout: '70%',
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { family: 'Plus Jakarta Sans', weight: 'bold' } } }
+            }
+        }
+    });
+</script>
 @endsection

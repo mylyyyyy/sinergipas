@@ -5,43 +5,44 @@ namespace App\Imports;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
-class EmployeesImport implements ToModel, WithHeadingRow
+class EmployeesImport implements ToCollection, WithHeadingRow
 {
-    public function model(array $row)
+    public function collection(Collection $rows)
     {
-        // Skip if NIP or Email is missing
-        if (!isset($row['nip']) || !isset($row['email'])) {
-            return null;
-        }
+        DB::transaction(function () use ($rows) {
+            foreach ($rows as $row) {
+                $nip = $row['nip'] ?? $row['NIP'] ?? null;
+                $email = $row['email'] ?? $row['Email'] ?? null;
+                $nama = $row['nama_lengkap'] ?? $row['Nama Lengkap'] ?? $row['nama'] ?? null;
+                $jabatan = $row['jabatan'] ?? $row['Jabatan'] ?? null;
 
-        // Check if user already exists
-        $user = User::where('email', $row['email'])->first();
-        
-        if (!$user) {
-            $user = User::create([
-                'name'     => $row['nama_lengkap'] ?? $row['name'],
-                'email'    => $row['email'],
-                'password' => Hash::make($row['password'] ?? 'password'),
-                'role'     => 'pegawai',
-            ]);
-        }
+                if (empty($nip) || empty($email)) continue;
 
-        // Check if employee record already exists
-        $employee = Employee::where('nip', $row['nip'])->first();
+                // Create or Update User
+                $user = User::updateOrCreate(
+                    ['email' => $email],
+                    [
+                        'name' => $nama ?? 'Pegawai Baru',
+                        'password' => Hash::make('password'),
+                        'role' => 'pegawai'
+                    ]
+                );
 
-        if (!$employee) {
-            return new Employee([
-                'user_id'   => $user->id,
-                'nip'       => $row['nip'],
-                'full_name' => $row['nama_lengkap'] ?? $row['name'],
-                'position'  => $row['jabatan'] ?? $row['position'],
-                'rank'      => $row['pangkat'] ?? $row['rank'] ?? null,
-            ]);
-        }
-
-        return null;
+                // Create or Update Employee
+                Employee::updateOrCreate(
+                    ['nip' => $nip],
+                    [
+                        'user_id' => $user->id,
+                        'full_name' => $nama ?? 'Pegawai Baru',
+                        'position' => $jabatan ?? 'Staf'
+                    ]
+                );
+            }
+        });
     }
 }

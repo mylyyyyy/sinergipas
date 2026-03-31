@@ -104,6 +104,38 @@
 
     <script>
         lucide.createIcons();
+
+        // Show loading on all form submits
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function() {
+                // Only show for non-DELETE forms or confirm them
+                document.getElementById('global-loading').style.display = 'flex';
+            });
+        });
+
+        function showLoading() {
+            document.getElementById('global-loading').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
+
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                    </button>
+                    <a href="{{ route('profile.index') }}" class="p-2 text-[#8A8A8A] hover:bg-[#F5F4F2] rounded-lg transition-all">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                    </a>
+                </div>
+            </header>
+
+            <div class="p-10">
+                @yield('content')
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
     </script>
 </body>
 </html>

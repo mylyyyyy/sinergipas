@@ -4,10 +4,18 @@
 @section('header-title', 'Pusat Dokumen Pegawai')
 
 @section('content')
-<div class="mb-10 flex items-center gap-3 text-sm">
-    <span class="text-[#E85A4F] font-semibold">Semua Folder</span>
-    <span class="text-[#8A8A8A]">/</span>
-    <span class="text-[#8A8A8A]">Data Pegawai</span>
+<div class="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center mb-10">
+    <div class="flex items-center gap-3 text-sm">
+        <span class="text-[#E85A4F] font-semibold">Semua Folder</span>
+        <span class="text-[#8A8A8A]">/</span>
+        <span class="text-[#8A8A8A]">Data Pegawai</span>
+    </div>
+
+    <form action="{{ route('documents.index') }}" method="GET" class="relative w-full md:w-80 group">
+        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8A8A] group-focus-within:text-[#E85A4F] transition-all"></i>
+        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari folder pegawai..." 
+            class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#EFEFEF] bg-white text-xs outline-none focus:ring-2 focus:ring-[#E85A4F] transition-all shadow-sm">
+    </form>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
