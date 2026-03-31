@@ -27,6 +27,9 @@ Route::middleware('auth')->group(function () {
     // Document Management
     Route::get('/documents', [\App\Http\Controllers\DocumentController::class, 'index'])->name('documents.index');
     Route::get('/documents/employee/{employee}', [\App\Http\Controllers\DocumentController::class, 'showEmployeeFolders'])->name('documents.employee');
+    
+    // Audit Logs (Admin)
+    Route::get('/audit', [\App\Http\Controllers\AuditController::class, 'index'])->name('audit.index');
     Route::post('/documents', [\App\Http\Controllers\DocumentController::class, 'store'])->name('documents.store');
     Route::get('/documents/{document}/download', [\App\Http\Controllers\DocumentController::class, 'download'])->name('documents.download');
     // Profile Settings

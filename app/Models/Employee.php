@@ -18,11 +18,23 @@ class Employee extends Model
         'position',
         'rank',
         'photo',
+        'position_id',
+        'work_unit_id',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function position_relation(): BelongsTo
+    {
+        return $this->belongsTo(Position::class, 'position_id');
+    }
+
+    public function work_unit(): BelongsTo
+    {
+        return $this->belongsTo(WorkUnit::class, 'work_unit_id');
     }
 
     public function documents(): HasMany

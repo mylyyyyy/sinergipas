@@ -52,13 +52,16 @@ class DocumentController extends Controller
 
         $path = $request->file('file')->store('documents');
 
-        Document::create([
+        $doc = Document::create([
             'employee_id' => $request->employee_id,
             'document_category_id' => $request->document_category_id,
             'title' => $request->title,
             'file_path' => $path,
             'description' => $request->description,
         ]);
+
+        // Trigger Notification
+        $doc->employee->user->notify(new \App\Notifications\NewDocumentNotification($doc));
 
         return back()->with('success', 'Dokumen berhasil diunggah.');
     }
