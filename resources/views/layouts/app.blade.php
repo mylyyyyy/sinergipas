@@ -134,6 +134,12 @@
             <header class="h-20 bg-white border-b border-[#EFEFEF] flex items-center justify-between px-10 sticky top-0 z-10">
                 <h2 class="text-xl font-semibold text-[#1E2432]">@yield('header-title')</h2>
                 <div class="flex items-center gap-4">
+                    <!-- Dark Mode Toggle -->
+                    <button onclick="toggleDarkMode()" class="p-2 text-[#8A8A8A] hover:bg-[#F5F4F2] rounded-lg transition-all" id="dark-mode-toggle">
+                        <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+                        <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                    </button>
+
                     <!-- Notifications Dropdown (Simplified) -->
                     <div class="relative group">
                         <button class="p-2 text-[#8A8A8A] hover:bg-[#F5F4F2] rounded-lg transition-all relative">

@@ -15,8 +15,14 @@
 
     <!-- Log Table Area -->
     <div class="md:col-span-2 bg-white rounded-[56px] border border-[#EFEFEF] shadow-sm overflow-hidden flex flex-col">
-        <div class="p-8 border-b border-[#EFEFEF] bg-[#FCFBF9]/50">
+        <div class="p-8 border-b border-[#EFEFEF] bg-[#FCFBF9]/50 flex justify-between items-center">
             <h3 class="text-lg font-black text-[#1E2432]">Riwayat Akses Terbaru</h3>
+            <form action="{{ route('audit.clear') }}" method="POST" onsubmit="return confirm('Peringatan: Seluruh riwayat akan dihapus permanen. Lanjutkan?')">
+                @csrf @method('DELETE')
+                <button type="submit" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">
+                    Bersihkan Seluruh Log
+                </button>
+            </form>
         </div>
         <div class="flex-1 overflow-x-auto">
             <table class="w-full text-left border-collapse">

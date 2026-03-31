@@ -27,4 +27,10 @@ class AuditController extends Controller
 
         return view('audit.index', compact('logs', 'topDownloaders', 'activityOverTime'));
     }
+
+    public function destroyAll()
+    {
+        AuditLog::truncate();
+        return back()->with('success', 'Seluruh log audit telah dibersihkan.');
+    }
 }

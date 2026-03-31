@@ -86,7 +86,8 @@
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-    <!-- Chart Section (Spans 2 cols) -->
+    <!-- Chart Section -->
+    @if(\App\Models\Setting::getValue('widget_chart', 'on') === 'on')
     <div class="md:col-span-2 bg-white p-12 rounded-[56px] border border-[#EFEFEF] shadow-sm">
         <div class="flex justify-between items-center mb-10">
             <h3 class="text-xl font-black text-[#1E2432] tracking-tight">Sebaran Dokumen Kepegawaian</h3>
@@ -97,8 +98,10 @@
         </div>
         <canvas id="docChart" height="120"></canvas>
     </div>
+    @endif
 
     <!-- Quick Actions / Notifications -->
+    @if(\App\Models\Setting::getValue('widget_activity', 'on') === 'on')
     <div class="bg-[#FCFBF9] p-10 rounded-[56px] border border-[#EFEFEF] shadow-inner">
         <h3 class="text-lg font-black text-[#1E2432] mb-8 uppercase tracking-widest">Pengumuman</h3>
         <div class="bg-white p-8 rounded-[32px] border-l-8 border-[#E85A4F] shadow-sm mb-8">

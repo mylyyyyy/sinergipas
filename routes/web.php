@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
     
     // Audit Logs (Admin)
     Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
+    Route::delete('/audit/clear', [AuditController::class, 'destroyAll'])->name('audit.clear');
     
     // Profile Settings
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');

@@ -59,20 +59,22 @@
                     <td class="px-8 py-6 text-sm text-[#8A8A8A]">{{ $employee->nip }}</td>
                     <td class="px-8 py-6 text-sm text-[#8A8A8A] font-medium">{{ $employee->position }}</td>
                     <td class="px-8 py-6 text-sm text-center">
-                        <div class="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                        <div class="flex justify-center items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
                             @php
                                 $waMessage = "Halo " . $employee->full_name . ", mohon segera unggah dokumen SKP Anda di sistem Sinergi PAS Jombang. Terima kasih.";
                                 $waLink = "https://wa.me/" . preg_replace('/[^0-9]/', '', '628123456789') . "?text=" . urlencode($waMessage);
                             @endphp
-                            <a href="{{ $waLink }}" target="_blank" class="p-2.5 text-green-600 hover:bg-green-50 rounded-xl transition-all" title="Kirim Pengingat WA">
+                            <a href="{{ $waLink }}" target="_blank" class="w-9 h-9 flex items-center justify-center text-green-600 hover:bg-green-50 rounded-xl transition-all" title="Kirim Pengingat WA">
                                 <i data-lucide="message-circle" class="w-4 h-4"></i>
                             </a>
-                            <button onclick="openEditModal({{ $employee->toJson() }}, '{{ $employee->user->email }}')" class="p-2.5 text-blue-500 hover:bg-blue-50 rounded-xl transition-all">
+                            <button onclick="openEditModal({{ $employee->toJson() }}, '{{ $employee->user->email }}')" class="w-9 h-9 flex items-center justify-center text-blue-500 hover:bg-blue-50 rounded-xl transition-all">
                                 <i data-lucide="pencil" class="w-4 h-4"></i>
                             </button>
-                            <form action="{{ route('employees.destroy', $employee->id) }}" method="POST" onsubmit="return confirm('Hapus pegawai ini?')">
+                            <form action="{{ route('employees.destroy', $employee->id) }}" method="POST" onsubmit="return confirm('Hapus pegawai ini?')" class="m-0 p-0">
                                 @csrf @method('DELETE')
-                                <button type="submit" class="p-2.5 text-[#E85A4F] hover:bg-red-50 rounded-xl transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                <button type="submit" class="w-9 h-9 flex items-center justify-center text-[#E85A4F] hover:bg-red-50 rounded-xl transition-all">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
                             </form>
                         </div>
                     </td>
@@ -214,4 +216,3 @@
 </script>
 @endif
 @endsection
-ion
