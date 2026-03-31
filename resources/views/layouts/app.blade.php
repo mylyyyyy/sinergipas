@@ -28,32 +28,44 @@
             </div>
 
             <nav class="flex-1 space-y-2">
-                <a href="#" class="sidebar-item active flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
+                <a href="{{ route('dashboard') }}" class="sidebar-item {{ request()->routeIs('dashboard') ? 'active' : 'text-[#8A8A8A]' }} flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                     <span class="text-sm font-semibold">Dashboard</span>
                 </a>
-                <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-[#8A8A8A]">
+                <a href="{{ route('employees.index') }}" class="sidebar-item {{ request()->routeIs('employees.*') ? 'active' : 'text-[#8A8A8A]' }} flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
                     <i data-lucide="users" class="w-5 h-5"></i>
                     <span class="text-sm font-medium">Data Pegawai</span>
                 </a>
-                <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-[#8A8A8A]">
+                <a href="{{ route('documents.index') }}" class="sidebar-item {{ request()->routeIs('documents.*') ? 'active' : 'text-[#8A8A8A]' }} flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
                     <i data-lucide="file-text" class="w-5 h-5"></i>
-                    <span class="text-sm font-medium">Slip Gaji</span>
+                    <span class="text-sm font-medium">Dokumen & Slip Gaji</span>
                 </a>
-                <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-[#8A8A8A]">
+                <a href="{{ route('employees.index') }}" class="sidebar-item {{ request()->routeIs('employees.*') ? 'active' : 'text-[#8A8A8A]' }} flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                    <span class="text-sm font-medium">Data Pegawai</span>
+                </a>
+                <div class="hidden">
                     <i data-lucide="clipboard-list" class="w-5 h-5"></i>
-                    <span class="text-sm font-medium">SKP Pegawai</span>
-                </a>
+                </div>
             </nav>
 
             <div class="pt-6 border-t border-[#EFEFEF]">
-                <div class="flex items-center gap-3 px-2">
-                    <div class="w-10 h-10 bg-[#E85A4F] rounded-full flex items-center justify-center text-white font-bold">A</div>
+                <div class="flex items-center gap-3 px-2 mb-6">
+                    <div class="w-10 h-10 bg-[#E85A4F] rounded-full flex items-center justify-center text-white font-bold">
+                        {{ substr(auth()->user()->name, 0, 1) }}
+                    </div>
                     <div>
-                        <p class="text-sm font-semibold text-[#1E2432]">Super Admin</p>
-                        <p class="text-xs text-[#8A8A8A]">admin@sinergipas.test</p>
+                        <p class="text-sm font-semibold text-[#1E2432]">{{ auth()->user()->name }}</p>
+                        <p class="text-xs text-[#8A8A8A]">{{ auth()->user()->email }}</p>
                     </div>
                 </div>
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="w-full sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-red-500 hover:bg-red-50">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                        <span class="text-sm font-semibold">Keluar Aplikasi</span>
+                    </button>
+                </form>
             </div>
         </aside>
 
