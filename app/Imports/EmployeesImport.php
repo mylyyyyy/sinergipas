@@ -14,40 +14,38 @@ class EmployeesImport implements ToModel, WithHeadingRow, WithBatchInserts, With
 {
     public function model(array $row)
     {
-        $nip = $row['nip'] ?? $row['NIP'] ?? null;
-        $email = $row['email'] ?? $row['Email'] ?? null;
-        $nama = $row['nama_lengkap'] ?? $row['Nama Lengkap'] ?? $row['nama'] ?? null;
-        $jabatan = $row['jabatan'] ?? $row['Jabatan'] ?? null;
+        // Ambil data berdasarkan heading (case-insensitive)
+        $nip = $row['nip'] ?? null;
+        $email = $row['email'] ?? null;
+        $nama = $row['nama_lengkap'] ?? $row['nama'] ?? null;
+        $jabatan = $row['jabatan'] ?? $row['position'] ?? null;
 
         if (empty($nip) || empty($email)) return null;
 
-        // Use updateOrCreate for performance and stability
+        // 1. Update atau Create User (Berdasarkan Email)
         $user = User::updateOrCreate(
             ['email' => $email],
             [
                 'name' => $nama ?? 'Pegawai Baru',
-                'password' => Hash::make($row['password'] ?? 'password'),
+                'password' => Hash::make('password'),
                 'role' => 'pegawai'
             ]
         );
 
-        return Employee::updateOrCreate(
-            ['nip' => $nip],
+        // 2. Update atau Create Employee (Berdasarkan NIP)
+        // Kita HANYA mengirimkan data detail, BIARKAN ID diatur otomatis oleh database (Auto Increment)
+        Employee::updateOrCreate(
+            ['nip' => (string)$nip],
             [
                 'user_id' => $user->id,
                 'full_name' => $nama ?? 'Pegawai Baru',
                 'position' => $jabatan ?? 'Staf'
             ]
         );
+
+        return null; // Return null agar library tidak mencoba insert ulang baris yang sama
     }
 
-    public function batchSize(): int
-    {
-        return 100;
-    }
-
-    public function chunkSize(): int
-    {
-        return 100;
-    }
+    public function batchSize(): int { return 50; }
+    public function chunkSize(): int { return 50; }
 }

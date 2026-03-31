@@ -21,25 +21,63 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FCFBF9; }
-        .sidebar-item:hover { background-color: #F5F4F2; }
-        .sidebar-item.active { background-color: #E85A4F; color: white; }
+        :root {
+            --bg-body: #FCFBF9;
+            --bg-card: #FFFFFF;
+            --bg-sidebar: #FFFFFF;
+            --text-main: #1E2432;
+            --text-muted: #8A8A8A;
+            --border-color: #EFEFEF;
+            --input-bg: #FCFBF9;
+        }
+
+        .dark {
+            --bg-body: #0F1117;
+            --bg-card: #161922;
+            --bg-sidebar: #12141D;
+            --text-main: #FFFFFF;
+            --text-muted: #A0AEC0;
+            --border-color: #2D3748;
+            --input-bg: #1A202C;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-body); 
+            color: var(--text-main);
+            transition: background-color 0.3s ease, color 0.3s ease; 
+        }
+        
+        /* Force overrides for class utilities */
+        .bg-white { background-color: var(--bg-card) !important; }
+        .bg-[#FCFBF9] { background-color: var(--bg-body) !important; }
+        .text-[#1E2432] { color: var(--text-main) !important; }
+        .text-[#8A8A8A] { color: var(--text-muted) !important; }
+        .border-[#EFEFEF], .border-r, .border-b, .border-t { border-color: var(--border-color) !important; }
+        
+        aside { background-color: var(--bg-sidebar) !important; }
+        header { background-color: var(--bg-card) !important; }
+        input, select, textarea { 
+            background-color: var(--input-bg) !important; 
+            color: var(--text-main) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        .sidebar-item:hover { background-color: rgba(232, 90, 79, 0.1); }
+        .sidebar-item.active { background-color: #E85A4F; color: white !important; }
+        .sidebar-item.active i { color: white !important; }
         
         /* 3D Transform for folders */
-        .folder-3d {
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .folder-3d:hover {
-            transform: translateY(-8px) scale(1.02);
-        }
+        .folder-3d { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .folder-3d:hover { transform: translateY(-8px) scale(1.02); }
 
         /* Loading Overlay */
         #global-loading {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
             z-index: 9999;
             flex-direction: column;
             align-items: center;
