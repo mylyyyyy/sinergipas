@@ -244,7 +244,12 @@
             </div>
             <div class="space-y-2">
                 <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Foto Profil (JPEG/PNG)</label>
-                <input type="file" name="photo" class="w-full px-5 py-3 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-xs font-bold">
+                <div class="flex gap-2">
+                    <input type="file" name="photo" class="flex-1 px-5 py-3 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-xs font-bold">
+                    <button type="button" id="btnDeleteEmployeePhoto" onclick="confirmDeleteEmployeePhoto()" class="hidden px-4 bg-red-50 text-red-500 rounded-2xl border border-red-100 hover:bg-red-500 hover:text-white transition-all" title="Hapus Foto">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </div>
             <div class="md:col-span-2 pt-4">
                 <button type="submit" class="w-full bg-[#1E2432] text-white py-5 rounded-[24px] font-bold hover:bg-[#343b4d] transition-all shadow-xl active:scale-[0.98]">
@@ -256,7 +261,9 @@
 </div>
 
 <script>
+    let currentEmployeeId = null;
     function openEditModal(employee, email) {
+        currentEmployeeId = employee.id;
         const modal = document.getElementById('editModal');
         const form = document.getElementById('editForm');
         form.action = `/employees/${employee.id}`;
@@ -264,7 +271,39 @@
         document.getElementById('edit_nip').value = employee.nip;
         document.getElementById('edit_email').value = email;
         document.getElementById('edit_position').value = employee.position;
+        
+        const btnDelete = document.getElementById('btnDeleteEmployeePhoto');
+        if (employee.photo) {
+            btnDelete.classList.remove('hidden');
+        } else {
+            btnDelete.classList.add('hidden');
+        }
+        
         modal.classList.remove('hidden');
+    }
+
+    function confirmDeleteEmployeePhoto() {
+        if (!currentEmployeeId) return;
+        Swal.fire({
+            title: 'Hapus Foto Pegawai?',
+            text: "Foto profil pegawai akan dihapus secara permanen.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#E85A4F',
+            cancelButtonColor: '#8A8A8A',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            customClass: { popup: 'rounded-[32px]' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/employees/${currentEmployeeId}/photo`;
+                form.innerHTML = `@csrf @method('DELETE')`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
     }
 </script>
 

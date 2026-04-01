@@ -133,6 +133,18 @@ class EmployeeController extends Controller
         return back()->with('success', 'Pegawai berhasil dihapus.');
     }
 
+    public function deletePhoto(Employee $employee)
+    {
+        if ($employee->getRawOriginal('photo')) {
+            if (!str_starts_with($employee->getRawOriginal('photo'), 'data:image')) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($employee->getRawOriginal('photo'));
+            }
+            $employee->update(['photo' => null]);
+            return back()->with('success', 'Foto pegawai berhasil dihapus.');
+        }
+        return back()->with('error', 'Tidak ada foto untuk dihapus.');
+    }
+
     public function bulkDestroy(Request $request)
     {
         $ids = $request->ids;

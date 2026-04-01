@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/employees/export/excel', [EmployeeController::class, 'exportExcel'])->name('employees.export.excel');
     Route::get('/employees/export/pdf', [EmployeeController::class, 'exportPdf'])->name('employees.export.pdf');
     Route::delete('/employees/bulk-destroy', [EmployeeController::class, 'bulkDestroy'])->name('employees.bulk-destroy');
+    Route::delete('/employees/{employee}/photo', [EmployeeController::class, 'deletePhoto'])->name('employees.photo.destroy');
     Route::resource('employees', EmployeeController::class);
 
     // Document Management
@@ -75,6 +76,7 @@ Route::middleware('auth')->group(function () {
     // Profile Settings
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile/photo', [ProfileController::class, 'deletePhoto'])->name('profile.photo.destroy');
     Route::post('/profile/report', [ProfileController::class, 'report'])->name('profile.report');
 
     // System Settings (Superadmin)

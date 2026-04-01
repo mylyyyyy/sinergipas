@@ -33,6 +33,12 @@
                             <i data-lucide="camera" class="w-5 h-5 text-white"></i>
                             <input type="file" id="photoInput" name="photo" class="hidden" onchange="previewImage(this)">
                         </label>
+
+                        @if($employee && $employee->photo)
+                        <button type="button" onclick="confirmDeletePhoto()" class="absolute -top-2 -right-2 bg-white p-2 rounded-xl shadow-lg cursor-pointer hover:bg-red-50 text-red-500 transition-all hover:scale-110 active:scale-95 border-2 border-red-100" title="Hapus Foto">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                        @endif
                     </div>
 
                     <div class="flex-1 pb-2">
@@ -241,6 +247,29 @@
             }
             reader.readAsDataURL(input.files[0]);
         }
+    }
+
+    function confirmDeletePhoto() {
+        Swal.fire({
+            title: 'Hapus Foto Profil?',
+            text: "Foto profil Anda akan dihapus secara permanen.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#E85A4F',
+            cancelButtonColor: '#8A8A8A',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            customClass: { popup: 'rounded-[32px]' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ route('profile.photo.destroy') }}";
+                form.innerHTML = `@csrf @method('DELETE')`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
     }
 </script>
 

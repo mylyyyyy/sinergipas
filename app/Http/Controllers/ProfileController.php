@@ -60,6 +60,23 @@ class ProfileController extends Controller
         return back()->with('success', 'Profil berhasil diperbarui.');
     }
 
+    public function deletePhoto()
+    {
+        $user = auth()->user();
+        $employee = Employee::where('user_id', $user->id)->first();
+
+        if ($employee && $employee->getRawOriginal('photo')) {
+            // Delete from storage if it's a path
+            if (!str_starts_with($employee->getRawOriginal('photo'), 'data:image')) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($employee->getRawOriginal('photo'));
+            }
+            $employee->update(['photo' => null]);
+            return back()->with('success', 'Foto profil berhasil dihapus.');
+        }
+
+        return back()->with('error', 'Tidak ada foto profil untuk dihapus.');
+    }
+
     public function report(Request $request)
     {
         $request->validate([
