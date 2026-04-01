@@ -100,6 +100,10 @@ class DocumentController extends Controller
 
         if ($user->role === 'superadmin') {
             $doc->employee->user->notify(new \App\Notifications\NewDocumentNotification($doc));
+        } else {
+            // Notify all superadmins
+            $admins = \App\Models\User::where('role', 'superadmin')->get();
+            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\DocumentUploadedNotification($doc, $employee));
         }
 
         return back()->with('success', 'Dokumen berhasil diunggah.');
