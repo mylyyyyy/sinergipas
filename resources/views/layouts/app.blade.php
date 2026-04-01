@@ -100,12 +100,11 @@
                         @php $sidebarEmployee = \App\Models\Employee::where('user_id', auth()->id())->first(); @endphp
                         <div class="w-10 h-10 bg-[#E85A4F] rounded-xl flex items-center justify-center text-white font-black overflow-hidden text-xs shadow-lg shadow-red-100">
                             @if($sidebarEmployee && $sidebarEmployee->photo)
-                                <img src="{{ Storage::disk('public')->url($sidebarEmployee->photo) }}" class="w-full h-full object-cover">
+                                <img src="{{ $sidebarEmployee->photo }}" class="w-full h-full object-cover">
                             @else
                                 {{ substr(auth()->user()->name, 0, 1) }}
                             @endif
                         </div>
-
                         <span class="text-xs font-black text-[#1E2432] pr-2">{{ auth()->user()->name }}</span>
                     </a>
                 </div>

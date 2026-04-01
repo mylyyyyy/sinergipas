@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
@@ -36,11 +35,13 @@ class ProfileController extends Controller
         }
 
         if ($request->hasFile('photo')) {
-            if ($employee && $employee->photo) {
-                Storage::disk('public')->delete($employee->photo);
+            $image = $request->file('photo');
+            $imageData = base64_encode(file_get_contents($image->getRealPath()));
+            $base64Image = 'data:' . $image->getMimeType() . ';base64,' . $imageData;
+            
+            if ($employee) {
+                $employee->update(['photo' => $base64Image]);
             }
-            $path = $request->file('photo')->store('photos', 'public');
-            $employee->update(['photo' => $path]);
         }
 
         return back()->with('success', 'Profil berhasil diperbarui.');

@@ -62,7 +62,7 @@
                 <div class="w-20 h-20 rounded-[32px] bg-[#FCFBF9] border border-[#EFEFEF] p-1.5 shadow-inner">
                     <div class="w-full h-full rounded-[24px] overflow-hidden bg-[#E85A4F] flex items-center justify-center text-white text-xl font-black shadow-lg">
                         @if($employee->photo)
-                            <img src="{{ Storage::disk('public')->url($employee->photo) }}" class="w-full h-full object-cover">
+                            <img src="{{ $employee->photo }}" class="w-full h-full object-cover">
                         @else
                             {{ substr($employee->full_name, 0, 1) }}
                         @endif

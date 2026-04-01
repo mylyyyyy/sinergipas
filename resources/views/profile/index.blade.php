@@ -19,7 +19,7 @@
                     <div class="relative group">
                         <div class="w-40 h-40 rounded-[40px] border-[6px] border-white bg-[#F5F4F2] overflow-hidden shadow-2xl flex items-center justify-center text-[#8A8A8A]">
                             @if($employee && $employee->photo)
-                                <img id="avatar-preview" src="{{ Storage::disk('public')->url($employee->photo) }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                                <img id="avatar-preview" src="{{ $employee->photo }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                             @else
                                 <div id="avatar-placeholder" class="text-center">
                                     <i data-lucide="user" class="w-16 h-16 mx-auto opacity-20"></i>
