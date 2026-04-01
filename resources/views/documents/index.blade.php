@@ -38,7 +38,7 @@
         <div class="absolute -right-4 -top-4 w-24 h-24 bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700 scale-0 group-hover:scale-150"></div>
         <div class="relative z-10">
             <div class="w-12 h-12 bg-[#FCFBF9] rounded-2xl flex items-center justify-center border border-[#EFEFEF] group-hover:bg-[#E85A4F] group-hover:text-white transition-all duration-500 shadow-sm">
-                <i data-lucide="layers" class="w-6 h-6"></i>
+                <i data-lucide="layers" class="w-5 h-5"></i>
             </div>
         </div>
         <div class="relative z-10">
@@ -52,11 +52,6 @@
 <!-- Employee Intelligent Cards -->
 <div class="flex items-center justify-between mb-10">
     <h3 class="text-xs font-black text-[#8A8A8A] uppercase tracking-[0.4em]">Basis Data Pegawai</h3>
-    <form action="{{ route('documents.index') }}" method="GET" class="relative no-loader">
-        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#ABABAB]"></i>
-        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Pegawai..." 
-            class="pl-12 pr-6 py-3 rounded-2xl border border-[#EFEFEF] bg-white text-xs font-bold outline-none focus:ring-4 focus:ring-red-500/5 w-64 shadow-sm">
-    </form>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -88,8 +83,8 @@
                     <p class="text-lg font-black text-[#1E2432] mt-1">{{ $employee->documents_count }} <span class="text-xs text-[#8A8A8A]">File</span></p>
                 </div>
                 <div class="flex -space-x-3">
-                    <div class="w-10 h-10 rounded-full border-4 border-white bg-red-50 flex items-center justify-center text-[#E85A4F] text-[10px] font-black">PDF</div>
-                    <div class="w-10 h-10 rounded-full border-4 border-white bg-green-50 flex items-center justify-center text-green-600 text-[10px] font-black">XLS</div>
+                    <div class="w-10 h-10 rounded-full border-4 border-white bg-red-50 flex items-center justify-center text-[#E85A4F] text-[10px] font-black uppercase">PDF</div>
+                    <div class="w-10 h-10 rounded-full border-4 border-white bg-green-50 flex items-center justify-center text-green-600 text-[10px] font-black uppercase">XLS</div>
                 </div>
             </div>
         </div>
@@ -119,4 +114,10 @@
         </form>
     </div>
 </div>
+
+@if(session('success'))
+<script>
+    Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", confirmButtonColor: '#E85A4F', customClass: { popup: 'rounded-[40px]' } });
+</script>
+@endif
 @endsection
