@@ -83,10 +83,34 @@ class DocumentController extends Controller
         return response()->file($path, ['Content-Disposition' => 'inline']);
     }
 
+    public function reject(Request $request, Document $document)
+    {
+        $request->validate(['rejection_reason' => 'required|string|max:500']);
+        
+        $document->status = 'rejected';
+        $document->rejection_reason = $request->rejection_reason;
+        $document->is_locked = false; // Allow re-upload
+        $document->save();
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'document_id' => $document->id,
+            'activity' => 'reject_document',
+            'ip_address' => request()->ip(),
+            'details' => auth()->user()->name . ' menolak dokumen: ' . $document->title . ' Alasan: ' . $request->rejection_reason
+        ]);
+
+        return back()->with('success', 'Dokumen ditolak dengan alasan.');
+    }
+
     public function store(Request $request)
     {
         $user = auth()->user();
-        $request->validate(['document_category_id' => 'required|exists:document_categories,id', 'title' => 'required|string|max:255', 'file' => 'required|file|max:10240']);
+        $request->validate([
+            'document_category_id' => 'required|exists:document_categories,id',
+            'title' => 'required|string|max:255',
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240' // Strict validation
+        ]);
         
         $employeeId = $user->role === 'superadmin' ? $request->employee_id : Employee::where('user_id', $user->id)->first()->id;
         $path = $request->file('file')->store('documents', 'private');
@@ -124,7 +148,11 @@ class DocumentController extends Controller
 
     public function storeCategory(Request $request)
     {
-        DocumentCategory::create(['name' => $request->name, 'slug' => \Illuminate\Support\Str::slug($request->name)]);
+        DocumentCategory::create([
+            'name' => $request->name, 
+            'slug' => \Illuminate\Support\Str::slug($request->name),
+            'is_mandatory' => $request->has('is_mandatory')
+        ]);
         return back()->with('success', 'Kategori baru ditambahkan.');
     }
 

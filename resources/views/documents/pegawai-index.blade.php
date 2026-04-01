@@ -18,26 +18,28 @@
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
     @foreach($documents as $doc)
-    <div class="group bg-white p-8 rounded-[40px] border border-[#EFEFEF] hover:border-[#E85A4F] hover:shadow-2xl hover:shadow-red-100/50 transition-all duration-500 transform hover:-translate-y-2 flex flex-col justify-between h-[240px]">
+    <div class="group bg-white p-8 rounded-[40px] border border-[#EFEFEF] hover:border-[#E85A4F] hover:shadow-2xl hover:shadow-red-100/50 transition-all duration-500 transform hover:-translate-y-2 flex flex-col justify-between h-[280px]">
         <div class="flex justify-between items-start">
             <div class="w-14 h-14 bg-[#F5F4F2] rounded-2xl flex items-center justify-center text-[#8A8A8A] group-hover:bg-[#E85A4F] group-hover:text-white transition-all duration-500">
                 @if(str_contains($doc->file_path, '.pdf'))
                     <i data-lucide="file-text" class="w-7 h-7 text-red-500 group-hover:text-white"></i>
-                @elseif(str_contains($doc->file_path, '.xls'))
+                @elseif(str_contains($doc->file_path, '.xls') || str_contains($doc->file_path, '.xlsx'))
                     <i data-lucide="file-spreadsheet" class="w-7 h-7 text-green-600 group-hover:text-white"></i>
+                @elseif(str_contains($doc->file_path, '.jpg') || str_contains($doc->file_path, '.jpeg') || str_contains($doc->file_path, '.png'))
+                    <i data-lucide="image" class="w-7 h-7 text-blue-500 group-hover:text-white"></i>
                 @else
                     <i data-lucide="file" class="w-7 h-7"></i>
                 @endif
             </div>
             <div class="flex gap-2">
-                <button onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}')" class="bg-green-50 p-3 rounded-xl text-green-600 hover:bg-green-600 hover:text-white transition-all">
+                <button onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}', '{{ $doc->file_path }}')" class="bg-green-50 p-3 rounded-xl text-green-600 hover:bg-green-600 hover:text-white transition-all">
                     <i data-lucide="eye" class="w-4 h-4"></i>
                 </button>
                 <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="bg-[#FCFBF9] p-3 rounded-xl text-[#E85A4F] hover:bg-[#E85A4F] hover:text-white transition-all no-loader">
                     <i data-lucide="download" class="w-4 h-4"></i>
                 </a>
                 @if(!$doc->is_locked)
-                <form action="{{ route('documents.destroy', $doc->id) }}" method="POST" onsubmit="return confirm('Hapus dokumen ini?')">
+                <form action="{{ route('documents.destroy', $doc->id) }}" method="POST" onsubmit="return confirm('Hapus dokumen ini?')" class="no-loader">
                     @csrf @method('DELETE')
                     <button type="submit" class="bg-red-50 p-3 rounded-xl text-red-500 hover:bg-red-500 hover:text-white transition-all">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -51,6 +53,15 @@
             </div>
         </div>
         <div>
+            <div class="mb-2">
+                @if($doc->status === 'verified')
+                    <span class="px-3 py-1 bg-green-50 text-green-600 text-[9px] font-black rounded-lg uppercase tracking-widest border border-green-100">Verified</span>
+                @elseif($doc->status === 'rejected')
+                    <span class="px-3 py-1 bg-red-50 text-red-600 text-[9px] font-black rounded-lg uppercase tracking-widest border border-red-100 cursor-pointer" onclick="Swal.fire({title: 'Alasan Penolakan', text: '{{ $doc->rejection_reason }}', icon: 'info', confirmButtonColor: '#E85A4F', customClass: {popup: 'rounded-[32px]'}})">Rejected ?</span>
+                @else
+                    <span class="px-3 py-1 bg-blue-50 text-blue-600 text-[9px] font-black rounded-lg uppercase tracking-widest border border-blue-100">Pending Review</span>
+                @endif
+            </div>
             <h3 class="text-lg font-black text-[#1E2432] truncate group-hover:text-[#E85A4F] transition-all" title="{{ $doc->title }}">{{ $doc->title }}</h3>
             <div class="flex items-center gap-3 mt-2">
                 <span class="px-3 py-1 bg-gray-100 text-[#1E2432] text-[10px] font-black rounded-lg uppercase tracking-widest">{{ $doc->category->name }}</span>
@@ -89,7 +100,7 @@
                 <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Kategori Dokumen</label>
                 <select name="document_category_id" required class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/5 appearance-none cursor-pointer">
                     @foreach($categories as $category)
-                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                    <option value="{{ $category->id }}">{{ $category->name }} @if($category->is_mandatory) (Wajib) @endif</option>
                     @endforeach
                 </select>
             </div>
@@ -100,12 +111,12 @@
             </div>
             
             <div class="space-y-3">
-                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Pilih File (PDF/Excel)</label>
+                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Pilih File (PDF/Image)</label>
                 <div class="relative group">
-                    <input type="file" name="file" required class="w-full px-6 py-10 rounded-3xl border-2 border-dashed border-[#EFEFEF] bg-[#FCFBF9] text-xs font-bold text-[#8A8A8A] file:hidden cursor-pointer hover:border-[#E85A4F] transition-all text-center">
+                    <input type="file" name="file" required accept=".pdf,.jpg,.jpeg,.png" class="w-full px-6 py-10 rounded-3xl border-2 border-dashed border-[#EFEFEF] bg-[#FCFBF9] text-xs font-bold text-[#8A8A8A] file:hidden cursor-pointer hover:border-[#E85A4F] transition-all text-center">
                     <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity">
                         <i data-lucide="upload-cloud" class="w-10 h-10 text-[#E85A4F] mb-3"></i>
-                        <span class="text-[10px] uppercase font-black tracking-tighter">Klik atau Tarik File</span>
+                        <span class="text-[10px] uppercase font-black tracking-tighter">PDF, JPG, PNG (Max 10MB)</span>
                     </div>
                 </div>
             </div>
@@ -127,16 +138,42 @@
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
-        <div class="flex-1 bg-gray-100">
-            <iframe id="previewFrame" src="" class="w-full h-full border-none"></iframe>
+        <div class="flex-1 bg-gray-100 overflow-auto flex items-center justify-center p-10 relative" id="previewContent">
+            <!-- Content will be injected here -->
+            <div id="watermarkOverlay" class="absolute inset-0 pointer-events-none hidden flex-wrap gap-20 p-20 opacity-[0.03] overflow-hidden content-center justify-center select-none">
+                @for($i=0; $i<20; $i++)
+                    <div class="text-4xl font-black -rotate-45 uppercase tracking-[0.5em] whitespace-nowrap">SINERGI PAS JOMBANG - {{ auth()->user()->name }}</div>
+                @endfor
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    function openPreview(url, title) {
+    function openPreview(url, title, filePath) {
         document.getElementById('previewTitle').innerText = title;
-        document.getElementById('previewFrame').src = url;
+        const container = document.getElementById('previewContent');
+        const watermark = document.getElementById('watermarkOverlay');
+        
+        // Remove existing items except watermark
+        Array.from(container.children).forEach(child => {
+            if(child.id !== 'watermarkOverlay') child.remove();
+        });
+
+        if (filePath.toLowerCase().endsWith('.pdf')) {
+            const iframe = document.createElement('iframe');
+            iframe.src = url;
+            iframe.className = 'w-full h-full border-none relative z-0';
+            container.appendChild(iframe);
+        } else {
+            const img = document.createElement('img');
+            img.src = url;
+            img.className = 'max-w-full max-h-full object-contain shadow-2xl rounded-2xl border-8 border-white relative z-0';
+            container.appendChild(img);
+        }
+        
+        watermark.classList.remove('hidden');
+        watermark.classList.add('flex');
         document.getElementById('previewModal').classList.remove('hidden');
     }
 </script>

@@ -154,30 +154,76 @@
 
     <!-- Report Issue Section -->
     <div class="bg-white rounded-[56px] border border-[#EFEFEF] shadow-sm p-12 mb-10">
-        <div class="flex items-center gap-4 mb-10">
-            <div class="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center text-yellow-600 shadow-sm">
-                <i data-lucide="message-circle" class="w-7 h-7"></i>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
             <div>
-                <h3 class="text-2xl font-black text-[#1E2432]">Laporkan Masalah Data</h3>
-                <p class="text-xs text-[#8A8A8A] font-bold uppercase tracking-widest mt-1">Koreksi NIP, Jabatan, atau Data Pribadi ke Admin</p>
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center text-yellow-600 shadow-sm">
+                        <i data-lucide="message-circle" class="w-7 h-7"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-black text-[#1E2432]">Laporkan Masalah Data</h3>
+                        <p class="text-xs text-[#8A8A8A] font-bold uppercase tracking-widest mt-1">Koreksi NIP, Jabatan, atau Data Pribadi ke Admin</p>
+                    </div>
+                </div>
+
+                <form action="{{ route('profile.report') }}" method="POST" class="space-y-6">
+                    @csrf
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Subjek Laporan</label>
+                        <input type="text" name="subject" required placeholder="Contoh: Kesalahan Penulisan NIP" class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Detail Pesan</label>
+                        <textarea name="message" rows="4" required placeholder="Jelaskan detail kesalahan data Anda..." class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold"></textarea>
+                    </div>
+                    <button type="submit" class="bg-yellow-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-yellow-700 transition-all shadow-lg">
+                        Kirim Laporan
+                    </button>
+                </form>
+            </div>
+
+            <div>
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm">
+                        <i data-lucide="history" class="w-7 h-7"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-black text-[#1E2432]">Riwayat Laporan</h3>
+                        <p class="text-xs text-[#8A8A8A] font-bold uppercase tracking-widest mt-1">Pantau status tanggapan admin</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
+                    @forelse($myIssues as $issue)
+                    <div class="p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF] transition-all hover:shadow-md">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-xs font-black text-[#1E2432] uppercase tracking-tight">{{ $issue->subject }}</span>
+                            @if($issue->status === 'open')
+                                <span class="px-2 py-0.5 bg-red-50 text-red-600 text-[8px] font-black uppercase rounded-lg border border-red-100">Open</span>
+                            @elseif($issue->status === 'resolved')
+                                <span class="px-2 py-0.5 bg-green-50 text-green-600 text-[8px] font-black uppercase rounded-lg border border-green-100">Resolved</span>
+                            @else
+                                <span class="px-2 py-0.5 bg-gray-50 text-gray-600 text-[8px] font-black uppercase rounded-lg border border-gray-100">Closed</span>
+                            @endif
+                        </div>
+                        <p class="text-[11px] text-[#8A8A8A] leading-relaxed mb-4">{{ $issue->message }}</p>
+                        
+                        @if($issue->admin_note)
+                        <div class="mt-4 p-4 bg-white rounded-2xl border border-blue-50">
+                            <p class="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-1 italic">Tanggapan Admin:</p>
+                            <p class="text-[10px] font-bold text-[#1E2432] leading-relaxed">{{ $issue->admin_note }}</p>
+                        </div>
+                        @endif
+                        <p class="text-[8px] text-[#ABABAB] font-bold uppercase mt-4">{{ $issue->created_at->diffForHumans() }}</p>
+                    </div>
+                    @empty
+                    <div class="text-center py-10">
+                        <p class="text-xs font-bold text-[#ABABAB] italic">Belum ada riwayat laporan.</p>
+                    </div>
+                    @endforelse
+                </div>
             </div>
         </div>
-
-        <form action="{{ route('profile.report') }}" method="POST" class="space-y-6">
-            @csrf
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Subjek Laporan</label>
-                <input type="text" name="subject" required placeholder="Contoh: Kesalahan Penulisan NIP" class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold">
-            </div>
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Detail Pesan</label>
-                <textarea name="message" rows="4" required placeholder="Jelaskan detail kesalahan data Anda..." class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold"></textarea>
-            </div>
-            <button type="submit" class="bg-yellow-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-yellow-700 transition-all shadow-lg">
-                Kirim Laporan
-            </button>
-        </form>
     </div>
 </div>
 

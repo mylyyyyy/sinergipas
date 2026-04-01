@@ -66,11 +66,29 @@
                     <span class="text-sm font-bold">Data Pegawai</span>
                 </a>
                 @endif
-                <a href="{{ route('documents.index') }}" class="sidebar-item {{ request()->routeIs('documents.*') ? 'active shadow-lg shadow-red-100' : 'text-[#8A8A8A]' }} flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <i data-lucide="file-text" class="w-5 h-5"></i>
-                    <span class="text-sm font-bold">Pusat Dokumen</span>
+                <a href="{{ route('documents.index') }}" class="sidebar-item {{ request()->routeIs('documents.*') ? 'active shadow-lg shadow-red-100' : 'text-[#8A8A8A]' }} flex items-center justify-between px-4 py-3 rounded-xl transition-all">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="text-sm font-bold">Pusat Dokumen</span>
+                    </div>
+                    @if(auth()->user()->role === 'superadmin')
+                        @php $pendingCount = \App\Models\Document::where('status', 'pending')->count(); @endphp
+                        @if($pendingCount > 0)
+                            <span class="bg-[#1E2432] text-white text-[9px] font-black px-2 py-0.5 rounded-lg group-hover:bg-white group-hover:text-[#E85A4F] transition-all">{{ $pendingCount }}</span>
+                        @endif
+                    @endif
                 </a>
                 @if(auth()->user()->role === 'superadmin')
+                <a href="{{ route('admin.report-issues.index') }}" class="sidebar-item {{ request()->routeIs('admin.report-issues.*') ? 'active shadow-lg shadow-red-100' : 'text-[#8A8A8A]' }} flex items-center justify-between px-4 py-3 rounded-xl transition-all">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="message-square" class="w-5 h-5"></i>
+                        <span class="text-sm font-bold">Laporan Masalah</span>
+                    </div>
+                    @php $openIssuesCount = \App\Models\ReportIssue::where('status', 'open')->count(); @endphp
+                    @if($openIssuesCount > 0)
+                        <span class="bg-white text-[#E85A4F] text-[9px] font-black px-2 py-0.5 rounded-lg shadow-sm">{{ $openIssuesCount }}</span>
+                    @endif
+                </a>
                 <a href="{{ route('audit.index') }}" class="sidebar-item {{ request()->routeIs('audit.*') ? 'active shadow-lg shadow-red-100' : 'text-[#8A8A8A]' }} flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
                     <i data-lucide="shield-check" class="w-5 h-5"></i>
                     <span class="text-sm font-bold">Laporan Audit</span>

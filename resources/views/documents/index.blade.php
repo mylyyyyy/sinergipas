@@ -11,9 +11,13 @@
             class="px-8 py-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all {{ !request('status') ? 'bg-[#1E2432] text-white shadow-xl' : 'text-[#8A8A8A] hover:bg-[#FCFBF9]' }}">
             Seluruh Pegawai
         </a>
+        @php $pendingGlobal = \App\Models\Document::where('status', 'pending')->count(); @endphp
         <a href="{{ route('documents.index', ['status' => 'pending']) }}" 
-            class="px-8 py-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all {{ request('status') === 'pending' ? 'bg-[#E85A4F] text-white shadow-xl' : 'text-[#8A8A8A] hover:bg-[#FCFBF9]' }}">
+            class="px-8 py-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all {{ request('status') === 'pending' ? 'bg-[#E85A4F] text-white shadow-xl' : 'text-[#8A8A8A] hover:bg-[#FCFBF9]' }} flex items-center gap-2">
             Perlu Tinjauan
+            @if($pendingGlobal > 0)
+                <span class="bg-white text-[#E85A4F] px-1.5 py-0.5 rounded-md text-[8px] font-black">{{ $pendingGlobal }}</span>
+            @endif
         </a>
     </div>
 
@@ -34,16 +38,19 @@
 <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
     @foreach($categories as $cat)
     <a href="{{ route('documents.index', ['category_id' => $cat->id]) }}" 
-        class="group relative overflow-hidden bg-white p-8 rounded-[48px] border border-[#EFEFEF] hover:border-[#E85A4F] transition-all duration-500 shadow-sm hover:shadow-2xl hover:shadow-red-100 flex flex-col justify-between h-48">
+        class="group relative overflow-hidden bg-white p-8 rounded-[48px] border {{ $cat->is_mandatory ? 'border-red-100 shadow-red-50' : 'border-[#EFEFEF]' }} hover:border-[#E85A4F] transition-all duration-500 shadow-sm hover:shadow-2xl hover:shadow-red-100 flex flex-col justify-between h-48">
         <div class="absolute -right-4 -top-4 w-24 h-24 bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-700 scale-0 group-hover:scale-150"></div>
-        <div class="relative z-10">
-            <div class="w-12 h-12 bg-[#FCFBF9] rounded-2xl flex items-center justify-center border border-[#EFEFEF] group-hover:bg-[#E85A4F] group-hover:text-white transition-all duration-500 shadow-sm">
-                <i data-lucide="layers" class="w-5 h-5"></i>
+        <div class="relative z-10 flex justify-between items-start">
+            <div class="w-12 h-12 {{ $cat->is_mandatory ? 'bg-red-50 text-[#E85A4F]' : 'bg-[#FCFBF9]' }} rounded-2xl flex items-center justify-center border border-[#EFEFEF] group-hover:bg-[#E85A4F] group-hover:text-white transition-all duration-500 shadow-sm">
+                <i data-lucide="{{ $cat->is_mandatory ? 'alert-circle' : 'layers' }}" class="w-5 h-5"></i>
             </div>
+            @if($cat->is_mandatory)
+                <span class="bg-red-500 text-white text-[7px] font-black uppercase px-2 py-1 rounded-lg tracking-widest animate-pulse">Wajib</span>
+            @endif
         </div>
         <div class="relative z-10">
             <h4 class="text-lg font-black text-[#1E2432] group-hover:text-[#E85A4F] transition-all">{{ $cat->name }}</h4>
-            <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em] mt-1">{{ $cat->documents_count ?? 0 }} Dokumen Terverifikasi</p>
+            <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em] mt-1">{{ $cat->documents_count ?? 0 }} Dokumen</p>
         </div>
     </a>
     @endforeach
@@ -109,6 +116,12 @@
                 <input type="text" name="name" required placeholder="Contoh: SK Kenaikan Pangkat" 
                     class="w-full px-6 py-4 rounded-[20px] border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/5">
             </div>
+            
+            <div class="flex items-center gap-3 px-2">
+                <input type="checkbox" name="is_mandatory" value="1" id="is_mandatory" class="w-5 h-5 rounded-lg border-[#EFEFEF] text-[#E85A4F] focus:ring-0">
+                <label for="is_mandatory" class="text-xs font-bold text-[#1E2432] cursor-pointer">Tandai sebagai Dokumen Wajib (Mandatory)</label>
+            </div>
+
             <button type="submit" class="w-full bg-[#E85A4F] text-white py-5 rounded-[24px] font-black text-lg hover:bg-[#d44d42] transition-all shadow-xl shadow-red-200 active:scale-95">
                 Simpan Kategori
             </button>

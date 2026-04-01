@@ -16,6 +16,11 @@ class Document extends Model
         'title',
         'file_path',
         'description',
+        'status',
+        'year',
+        'verified_at',
+        'is_locked',
+        'rejection_reason',
     ];
 
     public function employee(): BelongsTo

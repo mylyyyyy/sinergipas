@@ -13,6 +13,7 @@ class DocumentCategory extends Model
     protected $fillable = [
         'name',
         'slug',
+        'is_mandatory',
     ];
 
     public function documents(): HasMany

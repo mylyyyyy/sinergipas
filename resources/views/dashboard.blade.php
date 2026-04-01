@@ -11,12 +11,16 @@
     <div class="flex-1">
         <h2 class="text-3xl font-black text-[#1E2432] tracking-tight italic">Status Operasional</h2>
         <div class="flex items-center gap-4 mt-2">
-            <span class="px-4 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-green-100">Sistem Normal</span>
+            @if($storagePercent > 90)
+                <span class="px-4 py-1 bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-red-100 animate-pulse">Peringatan: Penyimpanan Penuh</span>
+            @else
+                <span class="px-4 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-green-100">Sistem Normal</span>
+            @endif
             <div class="flex items-center gap-2">
                 <div class="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div class="bg-[#E85A4F] h-full" style="width: {{ $storagePercent }}%"></div>
                 </div>
-                <span class="text-[10px] font-black text-[#8A8A8A]">PENYIMPANAN: {{ number_format($storagePercent, 1) }}%</span>
+                <span class="text-[10px] font-black text-[#8A8A8A]">PENYIMPANAN: {{ $storageUsed }} MB ({{ number_format($storagePercent, 1) }}%)</span>
             </div>
         </div>
     </div>
@@ -31,7 +35,9 @@
         </div>
         <h3 class="text-xl font-black text-[#1E2432] mb-8 flex items-center gap-3">
             Smart Action Center
-            <span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-md animate-pulse">URGENT</span>
+            @if($pendingDocs > 0 || $openIssues > 0)
+                <span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-md animate-pulse">URGENT</span>
+            @endif
         </h3>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -72,10 +78,47 @@
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-    <!-- Chart: Sebaran (Customized) -->
-    <div class="md:col-span-2 bg-white p-12 rounded-[56px] border border-[#EFEFEF] shadow-sm">
-        <h3 class="text-xl font-black text-[#1E2432] mb-10">Distribusi Arsip Digital</h3>
-        <canvas id="docChart" height="120"></canvas>
+    <!-- Compliance Tracking List -->
+    <div class="md:col-span-2 bg-white p-10 rounded-[56px] border border-[#EFEFEF] shadow-sm overflow-hidden flex flex-col">
+        <h3 class="text-xl font-black text-[#1E2432] mb-8">Analitik Kepatuhan Pegawai</h3>
+        <div class="overflow-x-auto flex-1">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest border-b border-[#EFEFEF]">
+                        <th class="pb-4">Nama Pegawai</th>
+                        <th class="pb-4">Status</th>
+                        <th class="pb-4 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#EFEFEF]">
+                    @foreach($nonCompliantEmployees as $emp)
+                    <tr class="group">
+                        <td class="py-5">
+                            <p class="text-sm font-bold text-[#1E2432]">{{ $emp->full_name }}</p>
+                            <p class="text-[10px] text-[#8A8A8A] font-bold uppercase tracking-widest">NIP. {{ $emp->nip }}</p>
+                        </td>
+                        <td class="py-5">
+                            <span class="px-3 py-1 bg-red-50 text-red-600 text-[9px] font-black uppercase rounded-lg border border-red-100">Belum Lengkap</span>
+                        </td>
+                        <td class="py-5 text-center">
+                            @php
+                                $waMsg = "Halo " . $emp->full_name . ", kelengkapan dokumen administrasi Anda di Sinergi PAS belum terpenuhi. Mohon segera lengkapi dokumen wajib Anda. Terima kasih.";
+                                $waUrl = "https://wa.me/" . preg_replace('/[^0-9]/', '', '628123456789') . "?text=" . urlencode($waMsg);
+                            @endphp
+                            <a href="{{ $waUrl }}" target="_blank" class="inline-flex items-center gap-2 bg-green-50 text-green-600 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all">
+                                <i data-lucide="message-circle" class="w-3 h-3"></i> Kirim WA
+                            </a>
+                        </td>
+                    </tr>
+                    @endforeach
+                    @if($nonCompliantEmployees->isEmpty())
+                        <tr>
+                            <td colspan="3" class="py-10 text-center text-xs text-[#8A8A8A] italic font-bold">Seluruh pegawai telah patuh mengunggah dokumen wajib.</td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Latest Uploads / System Logs -->
@@ -88,12 +131,20 @@
                 <div class="w-1 h-10 bg-[#EFEFEF] group-hover:bg-[#E85A4F] transition-all rounded-full"></div>
                 <div>
                     <p class="text-xs font-black text-[#1E2432]">{{ $log->user->name }}</p>
-                    <p class="text-[10px] text-[#8A8A8A] font-bold mt-0.5 uppercase tracking-widest">{{ $log->activity }} - {{ $log->created_at->diffForHumans() }}</p>
+                    <p class="text-[10px] text-[#8A8A8A] font-bold mt-0.5 uppercase tracking-widest">{{ str_replace('_', ' ', $log->activity) }} - {{ $log->created_at->diffForHumans() }}</p>
                 </div>
             </div>
             @endforeach
         </div>
         <a href="{{ route('audit.index') }}" class="mt-8 text-center text-[10px] font-black text-[#ABABAB] hover:text-[#E85A4F] uppercase tracking-[0.3em] transition-all">Lihat Seluruh Log</a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 mt-10">
+    <!-- Chart: Sebaran (Customized) -->
+    <div class="bg-white p-12 rounded-[56px] border border-[#EFEFEF] shadow-sm">
+        <h3 class="text-xl font-black text-[#1E2432] mb-10">Distribusi Arsip Digital per Kategori</h3>
+        <canvas id="docChart" height="80"></canvas>
     </div>
 </div>
 

@@ -8,12 +8,29 @@ use Illuminate\Support\Facades\DB;
 
 class AuditController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Auto-cleanup
         AuditLog::where('created_at', '<', now()->subDays(30))->delete();
 
-        $logs = AuditLog::with(['user', 'document'])->latest()->paginate(20);
+        $query = AuditLog::with(['user', 'document']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('activity', 'like', "%$search%")
+                  ->orWhere('details', 'like', "%$search%")
+                  ->orWhereHas('user', function($qu) use ($search) {
+                      $qu->where('name', 'like', "%$search%");
+                  });
+            });
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        $logs = $query->latest()->paginate(20)->withQueryString();
         
         $topDownloaders = AuditLog::select('user_id', DB::raw('count(*) as total'))
             ->groupBy('user_id')

@@ -28,10 +28,36 @@ class DashboardController extends Controller
             $pendingDocs = Document::where('status', 'pending')->count();
             $openIssues = ReportIssue::where('status', 'open')->count();
 
-            // Storage Analytics (Simulation based on count)
-            $storageUsed = $totalDocuments * 0.5; // Avg 0.5MB per file
+            // Storage Analytics
+            // Calculate actual storage used in MB
+            $totalSizeBytes = 0;
+            $disk = Storage::disk('private');
+            if ($disk->exists('documents')) {
+                $files = $disk->allFiles('documents');
+                foreach ($files as $file) {
+                    $totalSizeBytes += $disk->size($file);
+                }
+            }
+            $storageUsed = round($totalSizeBytes / (1024 * 1024), 2); // MB
             $storageLimit = 1024; // 1GB Limit
-            $storagePercent = ($storageUsed / $storageLimit) * 100;
+            $storagePercent = min(($storageUsed / $storageLimit) * 100, 100);
+
+            // Compliance Tracking: Find employees missing mandatory documents
+            $mandatoryCategories = DocumentCategory::where('is_mandatory', true)->get();
+            $nonCompliantEmployees = Employee::with('user')
+                ->whereHas('user', function($q) { $q->where('role', 'pegawai'); })
+                ->get()
+                ->filter(function($emp) use ($mandatoryCategories) {
+                    $uploadedCatIds = Document::where('employee_id', $emp->id)
+                        ->where('status', 'verified')
+                        ->pluck('document_category_id')
+                        ->toArray();
+                    
+                    foreach ($mandatoryCategories as $cat) {
+                        if (!in_array($cat->id, $uploadedCatIds)) return true;
+                    }
+                    return false;
+                })->take(5);
 
             // Unit Performance
             $unitPerformance = WorkUnit::withCount('employees')->get();
@@ -42,8 +68,8 @@ class DashboardController extends Controller
 
             return view('dashboard', compact(
                 'totalEmployees', 'totalDocuments', 'docsToday', 'pendingDocs', 
-                'openIssues', 'storagePercent', 'unitPerformance', 
-                'latestEmployees', 'chartData', 'workUnits'
+                'openIssues', 'storagePercent', 'storageUsed', 'unitPerformance', 
+                'latestEmployees', 'chartData', 'workUnits', 'nonCompliantEmployees'
             ));
         } 
         
@@ -55,12 +81,20 @@ class DashboardController extends Controller
             $myDocumentsCount = $myDocs->count();
             $verifiedDocs = $myDocs->where('status', 'verified')->count();
             
-            // Career Progress Calculation (Dynamic based on categories)
-            $totalCats = DocumentCategory::count();
-            $uploadedCats = Document::where('employee_id', $employee?->id)
-                ->distinct('document_category_id')
-                ->count();
-            $careerProgress = $totalCats > 0 ? ($uploadedCats / $totalCats) * 100 : 0;
+            // Career Progress: Percentage of mandatory categories uploaded
+            $mandatoryCats = DocumentCategory::where('is_mandatory', true)->get();
+            $totalMandatory = $mandatoryCats->count();
+            
+            if ($totalMandatory > 0) {
+                $uploadedMandatory = Document::where('employee_id', $employee?->id)
+                    ->whereIn('document_category_id', $mandatoryCats->pluck('id'))
+                    ->where('status', 'verified')
+                    ->distinct('document_category_id')
+                    ->count();
+                $careerProgress = ($uploadedMandatory / $totalMandatory) * 100;
+            } else {
+                $careerProgress = 100;
+            }
 
             // Latest Salary
             $latestSalary = Document::where('employee_id', $employee?->id)

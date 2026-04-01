@@ -67,13 +67,16 @@
                     <button type="button" onclick="verifyDoc({{ $doc->id }})" class="p-2 text-green-600 bg-green-50 hover:bg-green-600 hover:text-white rounded-xl transition-all" title="Verifikasi">
                         <i data-lucide="check-circle" class="w-4 h-4"></i>
                     </button>
+                    <button type="button" onclick="rejectDoc({{ $doc->id }})" class="p-2 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white rounded-xl transition-all" title="Tolak">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i>
+                    </button>
                     @endif
                     
                     <button type="button" onclick="toggleLock({{ $doc->id }})" class="p-2 {{ $doc->is_locked ? 'text-red-600 bg-red-100' : 'text-gray-400 bg-gray-50' }} hover:bg-red-600 hover:text-white rounded-xl transition-all" title="Kunci/Buka">
                         <i data-lucide="{{ $doc->is_locked ? 'lock' : 'unlock' }}" class="w-4 h-4"></i>
                     </button>
 
-                    <button type="button" onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}')" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl no-loader"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                    <button type="button" onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}', '{{ $doc->file_path }}')" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl no-loader"><i data-lucide="eye" class="w-4 h-4"></i></button>
                     <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="p-2 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader"><i data-lucide="download" class="w-4 h-4"></i></a>
                 </div>
             </div>
@@ -82,8 +85,10 @@
                 <div class="w-16 h-16 bg-[#F5F4F2] rounded-3xl flex items-center justify-center text-[#8A8A8A] group-hover:bg-[#E85A4F] group-hover:text-white transition-all duration-500 shadow-sm">
                     @if(str_contains($doc->file_path, '.pdf'))
                         <i data-lucide="file-text" class="w-8 h-8 text-red-500 group-hover:text-white"></i>
-                    @elseif(str_contains($doc->file_path, '.xls'))
+                    @elseif(str_contains($doc->file_path, '.xls') || str_contains($doc->file_path, '.xlsx'))
                         <i data-lucide="file-spreadsheet" class="w-8 h-8 text-green-600 group-hover:text-white"></i>
+                    @elseif(str_contains($doc->file_path, '.jpg') || str_contains($doc->file_path, '.jpeg') || str_contains($doc->file_path, '.png'))
+                        <i data-lucide="image" class="w-8 h-8 text-blue-500 group-hover:text-white"></i>
                     @else
                         <i data-lucide="file" class="w-8 h-8"></i>
                     @endif
@@ -93,8 +98,14 @@
             <div>
                 <h4 class="text-sm font-black text-[#1E2432] truncate text-center mb-2" title="{{ $doc->title }}">{{ $doc->title }}</h4>
                 <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#F5F4F2]">
-                    <span class="text-[10px] font-black {{ $doc->status === 'verified' ? 'text-blue-600' : 'text-[#8A8A8A]' }} uppercase tracking-widest">{{ $doc->status }}</span>
-                    <span class="text-[10px] font-bold text-[#ABABAB]">{{ $doc->created_at->format('d/m/y') }}</span>
+                    @if($doc->status === 'verified')
+                        <span class="text-[9px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 italic">Verified</span>
+                    @elseif($doc->status === 'rejected')
+                        <span class="text-[9px] font-black text-red-600 uppercase tracking-widest bg-red-50 px-2 py-0.5 rounded-md border border-red-100 italic cursor-help" title="Alasan: {{ $doc->rejection_reason }}">Rejected</span>
+                    @else
+                        <span class="text-[9px] font-black text-[#8A8A8A] uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100 italic">Pending</span>
+                    @endif
+                    <span class="text-[9px] font-bold text-[#ABABAB]">{{ $doc->created_at->format('d/m/y') }}</span>
                 </div>
             </div>
         </div>
@@ -137,12 +148,51 @@
     }
 
     function verifyDoc(id) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/documents/${id}/verify`;
-        form.innerHTML = `@csrf`;
-        document.body.appendChild(form);
-        form.submit();
+        Swal.fire({
+            title: 'Verifikasi Dokumen?',
+            text: "Dokumen akan ditandai valid dan dikunci.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#1E2432',
+            confirmButtonText: 'Ya, Verifikasi!',
+            customClass: { popup: 'rounded-[32px]' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/documents/${id}/verify`;
+                form.innerHTML = `@csrf`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
+
+    function rejectDoc(id) {
+        Swal.fire({
+            title: 'Tolak Dokumen?',
+            input: 'textarea',
+            inputLabel: 'Alasan Penolakan',
+            inputPlaceholder: 'Berikan alasan mengapa dokumen ini ditolak...',
+            inputAttributes: { 'aria-label': 'Alasan Penolakan' },
+            showCancelButton: true,
+            confirmButtonColor: '#E85A4F',
+            confirmButtonText: 'Tolak Dokumen',
+            cancelButtonText: 'Batal',
+            customClass: { popup: 'rounded-[32px]' },
+            inputValidator: (value) => {
+                if (!value) return 'Alasan harus diisi!'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/documents/${id}/reject`;
+                form.innerHTML = `@csrf <input type="hidden" name="rejection_reason" value="${result.value}">`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
     }
 
     function toggleLock(id) {
@@ -152,6 +202,33 @@
         form.innerHTML = `@csrf`;
         document.body.appendChild(form);
         form.submit();
+    }
+
+    function openPreview(url, title, filePath) {
+        document.getElementById('previewTitle').innerText = title;
+        const container = document.getElementById('previewContent');
+        const watermark = document.getElementById('watermarkOverlay');
+        
+        // Remove existing items except watermark
+        Array.from(container.children).forEach(child => {
+            if(child.id !== 'watermarkOverlay') child.remove();
+        });
+
+        if (filePath.toLowerCase().endsWith('.pdf')) {
+            const iframe = document.createElement('iframe');
+            iframe.src = url;
+            iframe.className = 'w-full h-full border-none relative z-0';
+            container.appendChild(iframe);
+        } else {
+            const img = document.createElement('img');
+            img.src = url;
+            img.className = 'max-w-full max-h-full object-contain shadow-2xl rounded-2xl border-8 border-white relative z-0';
+            container.appendChild(img);
+        }
+        
+        watermark.classList.remove('hidden');
+        watermark.classList.add('flex');
+        document.getElementById('previewModal').classList.remove('hidden');
     }
 </script>
 
@@ -207,7 +284,14 @@
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
-        <div class="flex-1 bg-gray-100"><iframe id="previewFrame" src="" class="w-full h-full border-none"></iframe></div>
+        <div class="flex-1 bg-gray-100 overflow-auto flex items-center justify-center p-10 relative" id="previewContent">
+            <!-- Content will be injected here -->
+            <div id="watermarkOverlay" class="absolute inset-0 pointer-events-none hidden flex-wrap gap-20 p-20 opacity-[0.03] overflow-hidden content-center justify-center select-none">
+                @for($i=0; $i<20; $i++)
+                    <div class="text-4xl font-black -rotate-45 uppercase tracking-[0.5em] whitespace-nowrap">SINERGI PAS JOMBANG</div>
+                @endfor
+            </div>
+        </div>
     </div>
 </div>
 

@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('report_issues', function (Blueprint $table) {
-            $table->string('status')->default('open')->after('message');
-            $table->text('admin_note')->nullable()->after('status');
+            if (!Schema::hasColumn('report_issues', 'status')) {
+                $table->string('status')->default('open')->after('message');
+            }
+            if (!Schema::hasColumn('report_issues', 'admin_note')) {
+                $table->text('admin_note')->nullable()->after('status');
+            }
         });
     }
 

@@ -61,6 +61,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::post('/documents/{document}/verify', [DocumentController::class, 'verify'])->name('documents.verify');
+    Route::post('/documents/{document}/reject', [DocumentController::class, 'reject'])->name('documents.reject');
     Route::post('/documents/{document}/toggle-lock', [DocumentController::class, 'toggleLock'])->name('documents.toggle-lock');
 
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
