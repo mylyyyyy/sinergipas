@@ -46,8 +46,8 @@ class Employee extends Model
             return $value;
         }
         
-        // Otherwise, assume it's a storage path (for backward compatibility)
-        return \Illuminate\Support\Facades\Storage::disk('public')->url($value);
+        // Return relative URL for storage files (avoids APP_URL issues)
+        return '/storage/' . $value;
     }
 
     public function documents(): HasMany
