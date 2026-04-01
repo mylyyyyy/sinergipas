@@ -45,4 +45,20 @@ class ProfileController extends Controller
 
         return back()->with('success', 'Profil berhasil diperbarui.');
     }
+
+    public function report(Request $request)
+    {
+        $request->validate([
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
+        ]);
+
+        \App\Models\ReportIssue::create([
+            'user_id' => auth()->id(),
+            'subject' => $request->subject,
+            'message' => $request->message,
+        ]);
+
+        return back()->with('success', 'Laporan Anda telah terkirim ke Admin.');
+    }
 }

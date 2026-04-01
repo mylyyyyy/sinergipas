@@ -73,6 +73,7 @@ Route::middleware('auth')->group(function () {
     // Profile Settings
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/report', [ProfileController::class, 'report'])->name('profile.report');
 
     // System Settings (Superadmin)
     Route::middleware('can:superadmin')->group(function () {

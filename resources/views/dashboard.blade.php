@@ -1,170 +1,112 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Premium')
-@section('header-title', 'Overview Analytics')
+@section('title', 'Admin Control Center')
+@section('header-title', 'Control Center Analytics')
 
 @section('content')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Greeting Section -->
-<div class="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-    <div>
-        @php
-            $hour = date('H');
-            $greeting = $hour < 12 ? 'Selamat Pagi' : ($hour < 17 ? 'Selamat Siang' : 'Selamat Sore');
-        @endphp
-        <h2 class="text-3xl font-black text-[#1E2432] tracking-tight">{{ $greeting }}, {{ auth()->user()->name }}!</h2>
-        <p class="text-[#8A8A8A] font-bold mt-1 uppercase tracking-[0.2em] text-xs">Pantau aktivitas dan data kepegawaian Anda hari ini.</p>
+<!-- Filter & Storage Info Row -->
+<div class="flex flex-col md:flex-row justify-between items-center gap-8 mb-12">
+    <div class="flex-1">
+        <h2 class="text-3xl font-black text-[#1E2432] tracking-tight italic">Status Operasional</h2>
+        <div class="flex items-center gap-4 mt-2">
+            <span class="px-4 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-green-100">Sistem Normal</span>
+            <div class="flex items-center gap-2">
+                <div class="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="bg-[#E85A4F] h-full" style="width: {{ $storagePercent }}%"></div>
+                </div>
+                <span class="text-[10px] font-black text-[#8A8A8A]">PENYIMPANAN: {{ number_format($storagePercent, 1) }}%</span>
+            </div>
+        </div>
     </div>
-
-    @if(auth()->user()->role === 'superadmin')
-    <form action="{{ route('dashboard') }}" method="GET" class="w-full md:w-auto no-loader">
+    
+    <form action="{{ route('dashboard') }}" method="GET" class="no-loader">
         <select name="work_unit_id" onchange="this.form.submit()" 
-            class="w-full md:w-64 px-6 py-3.5 rounded-2xl border border-[#EFEFEF] bg-white text-sm font-bold text-[#1E2432] outline-none focus:ring-4 focus:ring-red-500/5 transition-all shadow-sm cursor-pointer appearance-none">
+            class="bg-white border border-[#EFEFEF] px-8 py-4 rounded-[24px] font-black text-xs uppercase tracking-widest text-[#1E2432] shadow-xl shadow-gray-100 outline-none focus:ring-4 focus:ring-red-500/5 cursor-pointer">
             <option value="">Seluruh Unit Kerja</option>
             @foreach($workUnits as $unit)
                 <option value="{{ $unit->id }}" {{ request('work_unit_id') == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
             @endforeach
         </select>
     </form>
-    @endif
 </div>
 
-@if(\App\Models\Setting::getValue('widget_stats', 'on') === 'on')
-<div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-    <!-- Stats with Glassmorphism -->
-    <div class="group bg-gradient-to-br from-[#E85A4F] to-[#d44d42] p-8 rounded-[48px] shadow-2xl shadow-red-100 flex flex-col justify-between h-56 transform hover:-translate-y-2 transition-all duration-500">
-        <div class="flex justify-between items-center">
-            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                <i data-lucide="users" class="w-6 h-6 text-white"></i>
-            </div>
-            <span class="text-xs font-black text-white/60 uppercase tracking-widest">Pegawai</span>
+<!-- Bento Grid: Smart Action Center -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+    <!-- Urgent Task Hub -->
+    <div class="md:col-span-2 bg-white p-10 rounded-[56px] border border-[#EFEFEF] shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 right-0 p-10 opacity-5">
+            <i data-lucide="zap" class="w-32 h-32 text-[#E85A4F]"></i>
         </div>
-        <div>
-            <h3 class="text-5xl font-black text-white">{{ $totalEmployees }}</h3>
-            <p class="text-xs font-bold text-white/80 mt-2 uppercase tracking-widest">Total Terdaftar</p>
+        <h3 class="text-xl font-black text-[#1E2432] mb-8 flex items-center gap-3">
+            Smart Action Center
+            <span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-md animate-pulse">URGENT</span>
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF] hover:border-[#E85A4F] transition-all">
+                <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">Verifikasi Pending</p>
+                <h4 class="text-2xl font-black text-[#1E2432] mt-1">{{ $pendingDocs }} <span class="text-xs font-bold text-[#8A8A8A]">Dokumen</span></h4>
+                <a href="{{ route('documents.index') }}" class="mt-4 inline-flex items-center gap-2 text-[#E85A4F] text-[10px] font-black uppercase tracking-widest hover:underline">
+                    Tinjau Sekarang <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                </a>
+            </div>
+            
+            <div class="p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF] hover:border-[#1E2432] transition-all">
+                <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">Laporan Masalah</p>
+                <h4 class="text-2xl font-black text-[#1E2432] mt-1">{{ $openIssues }} <span class="text-xs font-bold text-[#8A8A8A]">Pesan</span></h4>
+                <a href="#" class="mt-4 inline-flex items-center gap-2 text-[#1E2432] text-[10px] font-black uppercase tracking-widest hover:underline">
+                    Balas Pegawai <i data-lucide="message-square" class="w-3 h-3"></i>
+                </a>
+            </div>
         </div>
     </div>
 
-    <div class="group bg-[#1E2432] p-8 rounded-[48px] shadow-2xl shadow-gray-300 flex flex-col justify-between h-56 transform hover:-translate-y-2 transition-all duration-500">
-        <div class="flex justify-between items-center">
-            <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                <i data-lucide="file-text" class="w-6 h-6 text-white"></i>
-            </div>
-            <span class="text-xs font-black text-white/40 uppercase tracking-widest">Arsip</span>
-        </div>
+    <!-- Analytics Small -->
+    <div class="bg-[#1E2432] p-10 rounded-[56px] text-white flex flex-col justify-between shadow-2xl shadow-gray-400">
         <div>
-            <h3 class="text-5xl font-black text-white">{{ $totalDocuments }}</h3>
-            <p class="text-xs font-bold text-white/60 mt-2 uppercase tracking-widest">File Digital</p>
+            <p class="text-[10px] font-black opacity-60 uppercase tracking-[0.3em]">Performa Unit</p>
+            <h4 class="text-lg font-bold mt-4 leading-relaxed italic">Unit "{{ $workUnits->where('id', request('work_unit_id'))->first()->name ?? 'Global' }}" menunjukkan tren positif bulan ini.</h4>
         </div>
-    </div>
-
-    <div class="bg-white p-8 rounded-[48px] border border-[#EFEFEF] shadow-sm flex flex-col justify-between h-56 transform hover:-translate-y-2 transition-all duration-500 text-[#1E2432]">
-        <div class="flex justify-between items-start">
-            <div class="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center">
-                <i data-lucide="upload-cloud" class="w-6 h-6 text-orange-600"></i>
+        <div class="pt-8 border-t border-white/10">
+            <div class="flex justify-between items-end">
+                <div>
+                    <p class="text-3xl font-black">{{ $totalEmployees }}</p>
+                    <p class="text-[10px] font-bold opacity-60 uppercase tracking-widest">Pegawai Aktif</p>
+                </div>
+                <i data-lucide="trending-up" class="w-10 h-10 text-[#E85A4F]"></i>
             </div>
-            <span class="text-xs font-black text-[#8A8A8A] uppercase tracking-widest">Hari Ini</span>
-        </div>
-        <div>
-            <h3 class="text-4xl font-black">{{ $docsToday }}</h3>
-            <p class="text-[10px] font-black text-[#8A8A8A] mt-1 uppercase tracking-widest leading-relaxed">Unggahan Dokumen Baru</p>
-        </div>
-    </div>
-
-    <div class="bg-white p-8 rounded-[48px] border border-[#EFEFEF] shadow-sm flex flex-col justify-between h-56 transform hover:-translate-y-2 transition-all duration-500 text-[#1E2432]">
-        <div class="flex justify-between items-start">
-            <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center">
-                <i data-lucide="alert-circle" class="w-6 h-6 text-red-600"></i>
-            </div>
-            <span class="text-xs font-black text-[#8A8A8A] uppercase tracking-widest">Atensi</span>
-        </div>
-        <div>
-            <h3 class="text-4xl font-black text-red-600">{{ $employeesWithoutSkp }}</h3>
-            <p class="text-[10px] font-black text-[#8A8A8A] mt-1 uppercase tracking-widest leading-relaxed">Pegawai Belum Upload SKP</p>
         </div>
     </div>
 </div>
-@endif
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-    <!-- Chart Section -->
-    @if(\App\Models\Setting::getValue('widget_chart', 'on') === 'on')
+    <!-- Chart: Sebaran (Customized) -->
     <div class="md:col-span-2 bg-white p-12 rounded-[56px] border border-[#EFEFEF] shadow-sm">
-        <div class="flex justify-between items-center mb-10">
-            <h3 class="text-xl font-black text-[#1E2432] tracking-tight">Sebaran Dokumen Kepegawaian</h3>
-            <div class="flex gap-2">
-                <div class="w-3 h-3 bg-[#E85A4F] rounded-full"></div>
-                <div class="w-3 h-3 bg-[#1E2432] rounded-full"></div>
-            </div>
-        </div>
+        <h3 class="text-xl font-black text-[#1E2432] mb-10">Distribusi Arsip Digital</h3>
         <canvas id="docChart" height="120"></canvas>
     </div>
-    @endif
 
-    <!-- Quick Actions / Notifications -->
-    @if(\App\Models\Setting::getValue('widget_activity', 'on') === 'on')
-    <div class="bg-[#FCFBF9] p-10 rounded-[56px] border border-[#EFEFEF] shadow-inner">
-        <h3 class="text-lg font-black text-[#1E2432] mb-8 uppercase tracking-widest">Pengumuman</h3>
-        <div class="bg-white p-8 rounded-[32px] border-l-8 border-[#E85A4F] shadow-sm mb-8">
-            <p class="text-sm font-bold text-[#1E2432] leading-relaxed">
-                {{ \App\Models\Setting::getValue('announcement', 'Belum ada pengumuman terbaru hari ini.') }}
-            </p>
-            <p class="text-[10px] font-black text-[#ABABAB] uppercase tracking-widest mt-4">Pesan Admin</p>
-        </div>
-
-        <h3 class="text-lg font-black text-[#1E2432] mb-8 uppercase tracking-widest">Aktivitas Terbaru</h3>
-        <div class="space-y-6">
-            @php
-                $recentLogs = \App\Models\AuditLog::with(['user', 'document'])->latest()->take(3)->get();
-            @endphp
+    <!-- Latest Uploads / System Logs -->
+    <div class="bg-white p-10 rounded-[56px] border border-[#EFEFEF] shadow-sm flex flex-col">
+        <h3 class="text-xs font-black text-[#8A8A8A] uppercase tracking-[0.3em] mb-8">Aktivitas Terakhir</h3>
+        <div class="space-y-8 flex-1">
+            @php $recentLogs = \App\Models\AuditLog::with(['user', 'document'])->latest()->take(4)->get(); @endphp
             @foreach($recentLogs as $log)
-            <div class="flex items-start gap-4">
-                <div class="w-2 h-2 bg-[#E85A4F] rounded-full mt-1.5"></div>
+            <div class="flex gap-4 group">
+                <div class="w-1 h-10 bg-[#EFEFEF] group-hover:bg-[#E85A4F] transition-all rounded-full"></div>
                 <div>
-                    <p class="text-xs font-bold text-[#1E2432]">{{ $log->user->name }} {{ $log->activity === 'upload' ? 'mengunggah' : 'mengunduh' }} {{ $log->document->title ?? 'file' }}</p>
-                    <p class="text-[10px] text-[#8A8A8A] font-bold mt-0.5">{{ $log->created_at->diffForHumans() }}</p>
+                    <p class="text-xs font-black text-[#1E2432]">{{ $log->user->name }}</p>
+                    <p class="text-[10px] text-[#8A8A8A] font-bold mt-0.5 uppercase tracking-widest">{{ $log->activity }} - {{ $log->created_at->diffForHumans() }}</p>
                 </div>
             </div>
             @endforeach
         </div>
-    </div>
-    @endif
-</div>
-
-@if(auth()->user()->role === 'superadmin' && \App\Models\Setting::getValue('widget_employees', 'on') === 'on')
-<!-- Table Section (Superadmin only) -->
-<div class="bg-white rounded-2xl border border-[#EFEFEF] shadow-sm overflow-hidden mt-12">
-    <div class="p-8 border-b border-[#EFEFEF] flex justify-between items-center bg-[#FCFBF9]/50">
-        <h3 class="text-lg font-bold text-[#1E2432]">Daftar Pegawai Terbaru</h3>
-        <a href="{{ route('employees.index') }}" class="text-[#E85A4F] text-sm font-semibold hover:underline flex items-center gap-2">
-            Lihat Semua <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </a>
-    </div>
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-[#FCFBF9]">
-                    <th class="px-8 py-4 text-xs font-bold text-[#8A8A8A] uppercase tracking-wider">Nama Pegawai</th>
-                    <th class="px-8 py-4 text-xs font-bold text-[#8A8A8A] uppercase tracking-wider">NIP</th>
-                    <th class="px-8 py-4 text-xs font-bold text-[#8A8A8A] uppercase tracking-wider">Jabatan</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-[#EFEFEF]">
-                @foreach($latestEmployees as $employee)
-                <tr class="hover:bg-[#FCFBF9] transition-all">
-                    <td class="px-8 py-5 text-sm font-semibold text-[#1E2432]">{{ $employee->full_name }}</td>
-                    <td class="px-8 py-5 text-sm text-[#8A8A8A]">{{ $employee->nip }}</td>
-                    <td class="px-8 py-5 text-sm text-[#8A8A8A]">{{ $employee->position }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+        <a href="{{ route('audit.index') }}" class="mt-8 text-center text-[10px] font-black text-[#ABABAB] hover:text-[#E85A4F] uppercase tracking-[0.3em] transition-all">Lihat Seluruh Log</a>
     </div>
 </div>
-@endif
 
-@if(\App\Models\Setting::getValue('widget_chart', 'on') === 'on')
 <script>
     const ctx = document.getElementById('docChart').getContext('2d');
     new Chart(ctx, {
@@ -172,21 +114,19 @@
         data: {
             labels: {!! json_encode($chartData->pluck('name')) !!},
             datasets: [{
-                label: 'Jumlah File',
                 data: {!! json_encode($chartData->pluck('documents_count')) !!},
                 backgroundColor: '#E85A4F',
-                borderRadius: 16,
-                barThickness: 40,
+                borderRadius: 20,
+                barThickness: 35,
             }]
         },
         options: {
             plugins: { legend: { display: false } },
             scales: {
-                y: { beginAtZero: true, grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', weight: 'bold' } } },
-                x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', weight: 'bold' } } }
+                y: { beginAtZero: true, grid: { display: false }, border: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 10 } } },
+                x: { grid: { display: false }, border: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 10 } } }
             }
         }
     });
 </script>
-@endif
 @endsection

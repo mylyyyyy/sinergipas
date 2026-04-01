@@ -149,6 +149,34 @@
             </div>
         </div>
     </form>
+
+    <!-- Report Issue Section -->
+    <div class="bg-white rounded-[56px] border border-[#EFEFEF] shadow-sm p-12 mb-10">
+        <div class="flex items-center gap-4 mb-10">
+            <div class="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center text-yellow-600 shadow-sm">
+                <i data-lucide="message-circle" class="w-7 h-7"></i>
+            </div>
+            <div>
+                <h3 class="text-2xl font-black text-[#1E2432]">Laporkan Masalah Data</h3>
+                <p class="text-xs text-[#8A8A8A] font-bold uppercase tracking-widest mt-1">Koreksi NIP, Jabatan, atau Data Pribadi ke Admin</p>
+            </div>
+        </div>
+
+        <form action="{{ route('profile.report') }}" method="POST" class="space-y-6">
+            @csrf
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Subjek Laporan</label>
+                <input type="text" name="subject" required placeholder="Contoh: Kesalahan Penulisan NIP" class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold">
+            </div>
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Detail Pesan</label>
+                <textarea name="message" rows="4" required placeholder="Jelaskan detail kesalahan data Anda..." class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold"></textarea>
+            </div>
+            <button type="submit" class="bg-yellow-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-yellow-700 transition-all shadow-lg">
+                Kirim Laporan
+            </button>
+        </form>
+    </div>
 </div>
 
 <script>

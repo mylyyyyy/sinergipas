@@ -26,6 +26,14 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
+            
+            \App\Models\AuditLog::create([
+                'user_id' => auth()->id(),
+                'activity' => 'login',
+                'ip_address' => $request->ip(),
+                'details' => 'Berhasil masuk ke sistem.'
+            ]);
+
             return redirect()->intended('dashboard');
         }
 
@@ -46,10 +54,6 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/');
-    }
-}
-();
         return redirect('/');
     }
 }
