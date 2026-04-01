@@ -4,31 +4,36 @@
 @section('header-title', 'Manajemen Data Pegawai')
 
 @section('content')
+<div class="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center mb-10">
+    <!-- Search Bar (Separated from bulkForm) -->
+    <form action="{{ route('employees.index') }}" method="GET" class="relative w-full md:w-96 group no-loader">
+        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8A8A8A] group-focus-within:text-[#E85A4F] transition-all"></i>
+        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Nama, NIP, atau Jabatan..." 
+            class="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-[#EFEFEF] bg-white text-sm outline-none focus:ring-2 focus:ring-[#E85A4F] focus:border-transparent transition-all shadow-sm group-hover:shadow-md">
+        @if(request('search'))
+            <a href="{{ route('employees.index') }}" class="absolute right-4 top-1/2 -translate-y-1/2 text-[#8A8A8A] hover:text-red-500 transition-all">
+                <i data-lucide="x-circle" class="w-5 h-5"></i>
+            </a>
+        @endif
+    </form>
+
+    <div class="flex gap-3 w-full md:w-auto">
+        <button type="button" id="bulkDeleteBtn" class="hidden bg-red-50 text-red-600 px-6 py-3 rounded-2xl font-bold hover:bg-red-600 hover:text-white transition-all items-center justify-center gap-2 shadow-lg shadow-red-100">
+            <i data-lucide="trash-2" class="w-5 h-5"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
+        </button>
+        <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="flex-1 md:flex-none bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-100">
+            <i data-lucide="file-up" class="w-5 h-5"></i> Impor Excel
+        </button>
+        <button type="button" onclick="document.getElementById('addModal').classList.remove('hidden')" class="flex-1 md:flex-none bg-[#E85A4F] text-white px-6 py-3 rounded-2xl font-bold hover:bg-[#d44d42] transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-100">
+            <i data-lucide="plus" class="w-5 h-5"></i> Tambah Pegawai
+        </button>
+    </div>
+</div>
+
 <form id="bulkForm" action="{{ route('employees.bulk-destroy') }}" method="POST">
     @csrf
     @method('DELETE')
     
-    <div class="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center mb-10">
-        <!-- Search Bar -->
-        <div class="relative w-full md:w-96 group">
-            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8A8A8A] group-focus-within:text-[#E85A4F] transition-all"></i>
-            <input type="text" id="searchInput" placeholder="Cari Nama, NIP, atau Jabatan..." 
-                class="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-[#EFEFEF] bg-white text-sm outline-none focus:ring-2 focus:ring-[#E85A4F] focus:border-transparent transition-all shadow-sm group-hover:shadow-md">
-        </div>
-
-        <div class="flex gap-3 w-full md:w-auto">
-            <button type="button" id="bulkDeleteBtn" class="hidden bg-red-50 text-red-600 px-6 py-3 rounded-2xl font-bold hover:bg-red-600 hover:text-white transition-all items-center justify-center gap-2 shadow-lg shadow-red-100">
-                <i data-lucide="trash-2" class="w-5 h-5"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
-            </button>
-            <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="flex-1 md:flex-none bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-100">
-                <i data-lucide="file-up" class="w-5 h-5"></i> Impor Excel
-            </button>
-            <button type="button" onclick="document.getElementById('addModal').classList.remove('hidden')" class="flex-1 md:flex-none bg-[#E85A4F] text-white px-6 py-3 rounded-2xl font-bold hover:bg-[#d44d42] transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-100">
-                <i data-lucide="plus" class="w-5 h-5"></i> Tambah Pegawai
-            </button>
-        </div>
-    </div>
-
     <!-- Table Section -->
     <div class="bg-white rounded-[40px] border border-[#EFEFEF] shadow-sm overflow-hidden">
         <div class="p-8 border-b border-[#EFEFEF] flex justify-between items-center bg-[#FCFBF9]/50">
@@ -80,7 +85,13 @@
                                 <a href="{{ $waLink }}" target="_blank" class="w-9 h-9 flex items-center justify-center text-green-600 hover:bg-green-50 rounded-xl transition-all" title="Kirim Pengingat WA">
                                     <i data-lucide="message-circle" class="w-4 h-4"></i>
                                 </a>
-                                <button type="button" onclick="openEditModal({{ $employee->toJson() }}, '{{ $employee->user->email }}')" class="w-9 h-9 flex items-center justify-center text-blue-500 hover:bg-blue-50 rounded-xl transition-all">
+                                <button type="button" onclick="openEditModal({{ json_encode([
+                                    'id' => $employee->id,
+                                    'full_name' => $employee->full_name,
+                                    'nip' => $employee->nip,
+                                    'position' => $employee->position,
+                                    'photo' => $employee->photo,
+                                ]) }}, '{{ $employee->user->email }}')" class="w-9 h-9 flex items-center justify-center text-blue-500 hover:bg-blue-50 rounded-xl transition-all">
                                     <i data-lucide="pencil" class="w-4 h-4"></i>
                                 </button>
                                 <form action="{{ route('employees.destroy', $employee->id) }}" method="POST" onsubmit="return confirm('Hapus pegawai ini?')" class="m-0 p-0 no-loader">

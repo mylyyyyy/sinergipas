@@ -303,14 +303,6 @@
     </div>
 </div>
 
-<script>
-    function openPreview(url, title) {
-        document.getElementById('previewTitle').innerText = title;
-        document.getElementById('previewFrame').src = url;
-        document.getElementById('previewModal').classList.remove('hidden');
-    }
-</script>
-
 @if(session('success'))
 <script>
     Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", confirmButtonColor: '#E85A4F', customClass: { popup: 'rounded-[40px]' } });
