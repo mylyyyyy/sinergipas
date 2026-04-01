@@ -8,77 +8,73 @@
     @csrf
     <input type="hidden" name="action" id="bulkActionInput" value="">
 
+    <!-- Sub Header & Tabs -->
     <div class="mb-12 flex flex-col md:flex-row items-center justify-between gap-8">
         <div class="flex items-center gap-3 text-sm">
-            <a href="{{ route('documents.index') }}" class="text-[#8A8A8A] hover:text-[#E85A4F] transition-all font-bold">Semua Pegawai</a>
+            <a href="{{ route('documents.index') }}" class="text-[#8A8A8A] hover:text-[#E85A4F] transition-all font-bold uppercase tracking-widest text-[10px]">Pusat Dokumen</a>
             <span class="text-[#8A8A8A]">/</span>
             <span class="text-[#E85A4F] font-black italic">{{ $employee->full_name }}</span>
         </div>
         
-        <div class="flex bg-white p-1.5 rounded-[24px] border border-[#EFEFEF] shadow-sm overflow-x-auto max-w-full">
-            <a href="{{ route('documents.employee', $employee->id) }}" 
-                class="px-6 py-2.5 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all {{ !request('category_id') ? 'bg-[#1E2432] text-white shadow-lg' : 'text-[#8A8A8A] hover:bg-[#FCFBF9]' }}">
-                Semua File
-            </a>
-            @foreach($categories as $cat)
-            <a href="{{ route('documents.employee', ['employee' => $employee->id, 'category_id' => $cat->id]) }}" 
-                class="px-6 py-2.5 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all {{ request('category_id') == $cat->id ? 'bg-[#E85A4F] text-white shadow-lg' : 'text-[#8A8A8A] hover:bg-[#FCFBF9]' }}">
-                {{ $cat->name }}
-            </a>
-            @endforeach
-        </div>
+        <div class="flex gap-3 items-center">
+            <!-- Dynamic Bulk Actions -->
+            <div id="bulkActions" class="hidden gap-3 animate-in fade-in zoom-in duration-300">
+                <button type="button" onclick="submitBulk('unlock')" class="bg-gray-100 text-[#1E2432] px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all border border-[#EFEFEF]">
+                    Buka Kunci
+                </button>
+                <button type="button" onclick="submitBulk('lock')" class="bg-blue-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
+                    Kunci
+                </button>
+                <button type="button" onclick="submitBulk('delete')" class="bg-red-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-100">
+                    Hapus
+                </button>
+            </div>
 
-        <button type="button" onclick="document.getElementById('uploadModal').classList.remove('hidden')" 
-            class="bg-[#E85A4F] text-white px-8 py-3.5 rounded-2xl font-black hover:bg-[#d44d42] transition-all flex items-center gap-2 shadow-xl shadow-red-100 active:scale-90">
-            <i data-lucide="upload-cloud" class="w-5 h-5"></i>
-            Unggah Ke Folder
-        </button>
+            <button type="button" onclick="document.getElementById('uploadModal').classList.remove('hidden')" 
+                class="bg-[#E85A4F] text-white px-8 py-3.5 rounded-2xl font-black hover:bg-[#d44d42] transition-all flex items-center gap-2 shadow-xl shadow-red-100 active:scale-90">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                Unggah File
+            </button>
+        </div>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="flex bg-white p-1.5 rounded-[24px] border border-[#EFEFEF] shadow-sm overflow-x-auto max-w-full mb-10 inline-flex">
+        <a href="{{ route('documents.employee', $employee->id) }}" 
+            class="px-8 py-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all {{ !request('category_id') ? 'bg-[#1E2432] text-white shadow-lg' : 'text-[#8A8A8A] hover:bg-[#FCFBF9]' }}">
+            Semua File
+        </a>
+        @foreach($categories as $cat)
+        <a href="{{ route('documents.employee', ['employee' => $employee->id, 'category_id' => $cat->id]) }}" 
+            class="px-8 py-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all {{ request('category_id') == $cat->id ? 'bg-[#E85A4F] text-white shadow-lg' : 'text-[#8A8A8A] hover:bg-[#FCFBF9]' }}">
+            {{ $cat->name }}
+        </a>
+        @endforeach
     </div>
 
     <!-- Files Grid -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         @foreach($documents as $doc)
         <div class="group relative bg-white p-8 rounded-[40px] border border-[#EFEFEF] hover:border-[#E85A4F] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 flex flex-col justify-between h-[280px]">
-            <!-- Checkbox for Bulk -->
+            <!-- Checkbox for Bulk (Always Visible for Easy Interaction) -->
             <div class="absolute top-6 left-6 z-10">
-                <input type="checkbox" name="ids[]" value="{{ $doc->id }}" class="doc-checkbox w-6 h-6 rounded-xl border-[#EFEFEF] text-[#E85A4F] focus:ring-0 cursor-pointer">
+                <input type="checkbox" name="ids[]" value="{{ $doc->id }}" class="doc-checkbox w-6 h-6 rounded-xl border-2 border-[#EFEFEF] text-[#E85A4F] focus:ring-0 cursor-pointer transition-all checked:border-[#E85A4F]">
             </div>
 
             <div class="flex justify-end items-start mb-4">
-                <div class="flex gap-1 flex-wrap justify-end">
-                    <!-- Verification Badge/Button -->
+                <div class="flex gap-1 flex-wrap justify-end opacity-0 group-hover:opacity-100 transition-all duration-300">
                     @if($doc->status === 'pending')
-                    <form action="{{ route('documents.verify', $doc->id) }}" method="POST" class="no-loader">
-                        @csrf
-                        <button type="submit" class="p-2 text-green-600 bg-green-50 hover:bg-green-600 hover:text-white rounded-xl transition-all" title="Verifikasi">
-                            <i data-lucide="check-circle" class="w-4 h-4"></i>
-                        </button>
-                    </form>
-                    @else
-                    <div class="p-2 text-blue-600 bg-blue-50 rounded-xl" title="Terverifikasi">
-                        <i data-lucide="verified" class="w-4 h-4"></i>
-                    </div>
+                    <button type="button" onclick="verifyDoc({{ $doc->id }})" class="p-2 text-green-600 bg-green-50 hover:bg-green-600 hover:text-white rounded-xl transition-all" title="Verifikasi">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    </button>
                     @endif
                     
-                    <!-- Lock Toggle -->
-                    <form action="{{ route('documents.toggle-lock', $doc->id) }}" method="POST" class="no-loader">
-                        @csrf
-                        <button type="submit" class="p-2 {{ $doc->is_locked ? 'text-red-600 bg-red-100' : 'text-gray-400 bg-gray-50' }} hover:bg-red-600 hover:text-white rounded-xl transition-all" title="{{ $doc->is_locked ? 'Buka Kunci' : 'Kunci Dokumen' }}">
-                            <i data-lucide="{{ $doc->is_locked ? 'lock' : 'unlock' }}" class="w-4 h-4"></i>
-                        </button>
-                    </form>
+                    <button type="button" onclick="toggleLock({{ $doc->id }})" class="p-2 {{ $doc->is_locked ? 'text-red-600 bg-red-100' : 'text-gray-400 bg-gray-50' }} hover:bg-red-600 hover:text-white rounded-xl transition-all" title="Kunci/Buka">
+                        <i data-lucide="{{ $doc->is_locked ? 'lock' : 'unlock' }}" class="w-4 h-4"></i>
+                    </button>
 
-                    <!-- Preview -->
-                    <button type="button" onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}')" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl no-loader" title="Pratinjau"><i data-lucide="eye" class="w-4 h-4"></i></button>
-                    
-                    <!-- Download -->
-                    <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="p-2 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader" title="Unduh"><i data-lucide="download" class="w-4 h-4"></i></a>
-                    
-                    <!-- Delete -->
-                    <form action="{{ route('documents.destroy', $doc->id) }}" method="POST" onsubmit="return confirm('Hapus file ini?')" class="m-0 p-0 no-loader">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="p-2 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white rounded-xl transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </form>
+                    <button type="button" onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}')" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl no-loader"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                    <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="p-2 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader"><i data-lucide="download" class="w-4 h-4"></i></a>
                 </div>
             </div>
 
@@ -97,20 +93,14 @@
             <div>
                 <h4 class="text-sm font-black text-[#1E2432] truncate text-center mb-2" title="{{ $doc->title }}">{{ $doc->title }}</h4>
                 <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#F5F4F2]">
-                    <span class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">{{ $doc->category->name }}</span>
-                    <span class="text-[10px] font-bold text-[#ABABAB]">{{ $doc->created_at->format('d/m/Y') }}</span>
+                    <span class="text-[10px] font-black {{ $doc->status === 'verified' ? 'text-blue-600' : 'text-[#8A8A8A]' }} uppercase tracking-widest">{{ $doc->status }}</span>
+                    <span class="text-[10px] font-bold text-[#ABABAB]">{{ $doc->created_at->format('d/m/y') }}</span>
                 </div>
             </div>
         </div>
         @endforeach
     </div>
 </form>
-
-@if($documents->isEmpty())
-<div class="py-24 text-center bg-white rounded-[56px] border-4 border-dashed border-[#F5F4F2]">
-    <p class="text-[#8A8A8A] font-black uppercase tracking-widest text-xs">Folder ini kosong.</p>
-</div>
-@endif
 
 <script>
     const docCheckboxes = document.querySelectorAll('.doc-checkbox');
@@ -130,11 +120,10 @@
     });
 
     function submitBulk(action) {
-        let text = "Anda akan " + (action === 'delete' ? 'menghapus' : (action === 'lock' ? 'mengunci' : 'membuka kunci')) + " dokumen terpilih.";
         Swal.fire({
             title: 'Konfirmasi Aksi Massal',
-            text: text,
-            icon: action === 'delete' ? 'warning' : 'info',
+            text: "Anda akan menjalankan " + action + " pada dokumen terpilih.",
+            icon: 'info',
             showCancelButton: true,
             confirmButtonColor: '#E85A4F',
             confirmButtonText: 'Ya, Jalankan!',
@@ -146,9 +135,27 @@
             }
         });
     }
+
+    function verifyDoc(id) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/documents/${id}/verify`;
+        form.innerHTML = `@csrf`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function toggleLock(id) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/documents/${id}/toggle-lock`;
+        form.innerHTML = `@csrf`;
+        document.body.appendChild(form);
+        form.submit();
+    }
 </script>
 
-<!-- Upload Modal -->
+<!-- Upload & Preview Modals (Tetap Ada) -->
 <div id="uploadModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-md">
     <div class="bg-white w-full max-w-lg rounded-[48px] p-12 shadow-2xl animate-in zoom-in duration-300">
         <div class="flex justify-between items-center mb-10">
@@ -160,7 +167,6 @@
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
-        
         <form action="{{ route('documents.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
             @csrf
             <input type="hidden" name="employee_id" value="{{ $employee->id }}">
