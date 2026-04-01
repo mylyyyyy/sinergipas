@@ -128,36 +128,51 @@
     }
 </script>
 
-<!-- Keep Upload Modal & Preview Modal from previous code -->
-<div id="uploadModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+<!-- Upload Modal -->
+<div id="uploadModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-md">
     <div class="bg-white w-full max-w-lg rounded-[48px] p-12 shadow-2xl animate-in zoom-in duration-300">
-        <div class="flex justify-between items-center mb-8">
-            <h3 class="text-xl font-black text-[#1E2432]">Unggah ke {{ $employee->full_name }}</h3>
-            <button onclick="document.getElementById('uploadModal').classList.add('hidden')" class="text-[#8A8A8A] hover:text-red-500">
-                <i data-lucide="x" class="w-8 h-8"></i>
+        <div class="flex justify-between items-center mb-10">
+            <div>
+                <h3 class="text-2xl font-black text-[#1E2432] tracking-tight">Unggah Arsip Baru</h3>
+                <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-widest mt-1">Ke Akun: {{ $employee->full_name }}</p>
+            </div>
+            <button onclick="document.getElementById('uploadModal').classList.add('hidden')" class="bg-[#FCFBF9] p-3 rounded-2xl text-[#8A8A8A] hover:text-red-500 transition-all border border-[#EFEFEF]">
+                <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
+        
         <form action="{{ route('documents.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
             @csrf
             <input type="hidden" name="employee_id" value="{{ $employee->id }}">
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-widest ml-1">Pilih Kategori</label>
-                <select name="document_category_id" required class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/5">
+            
+            <div class="space-y-3">
+                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Jenis Dokumen</label>
+                <select name="document_category_id" required class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/5 appearance-none cursor-pointer">
                     @foreach($categories as $category)
                     <option value="{{ $category->id }}">{{ $category->name }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-widest ml-1">Judul File</label>
-                <input type="text" name="title" required placeholder="Nama dokumen" class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold">
+            
+            <div class="space-y-3">
+                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Judul Dokumen</label>
+                <input type="text" name="title" required placeholder="Contoh: SK Pengangkatan 2026" class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/5 transition-all">
             </div>
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-widest ml-1">Pilih File</label>
-                <input type="file" name="file" required class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-xs font-bold file:hidden">
+            
+            <div class="space-y-3">
+                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Pilih File</label>
+                <div class="relative group">
+                    <input type="file" name="file" required class="w-full px-6 py-10 rounded-3xl border-2 border-dashed border-[#EFEFEF] bg-[#FCFBF9] text-xs font-bold text-[#8A8A8A] file:hidden cursor-pointer hover:border-[#E85A4F] transition-all text-center">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity">
+                        <i data-lucide="file-up" class="w-10 h-10 text-[#E85A4F] mb-3"></i>
+                        <span class="text-[10px] uppercase font-black tracking-tighter">Klik atau Seret File Kesini</span>
+                    </div>
+                </div>
             </div>
-            <button type="submit" class="w-full bg-[#E85A4F] text-white py-5 rounded-[28px] font-black text-lg hover:bg-[#d44d42] transition-all shadow-xl shadow-red-200">
-                Mulai Unggah
+
+            <button type="submit" class="w-full bg-[#E85A4F] text-white py-5 rounded-[28px] font-black text-lg hover:bg-[#d44d42] transition-all shadow-xl shadow-red-200 active:scale-95 flex items-center justify-center gap-3">
+                Proses Sinkronisasi
+                <i data-lucide="zap" class="w-5 h-5"></i>
             </button>
         </form>
     </div>

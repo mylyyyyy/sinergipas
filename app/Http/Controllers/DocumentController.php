@@ -50,7 +50,17 @@ class DocumentController extends Controller
             $employee = Employee::where('user_id', $user->id)->first();
             if ($document->employee_id !== $employee?->id) abort(403);
         }
-        return response()->file(storage_path('app/private/' . $document->file_path));
+        
+        $path = storage_path('app/private/' . $document->file_path);
+        if (!file_exists($path)) abort(404);
+
+        $mimeType = mime_content_type($path);
+        
+        // Ensure inline headers for PDF and Images
+        return response()->file($path, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . $document->title . '"'
+        ]);
     }
 
     public function store(Request $request)
@@ -81,12 +91,13 @@ class DocumentController extends Controller
             'description' => $request->description,
         ]);
 
+        // RECORD LOG IMMEDIATELY
         AuditLog::create([
             'user_id' => $user->id,
             'document_id' => $doc->id,
             'activity' => $user->role === 'superadmin' ? 'upload_admin' : 'upload_pegawai',
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
+            'ip_address' => $request->ip(),
+            'details' => $user->name . ' mengunggah dokumen: ' . $doc->title
         ]);
 
         if ($user->role === 'superadmin') {
@@ -107,6 +118,7 @@ class DocumentController extends Controller
             'document_id' => $document->id,
             'activity' => $document->is_locked ? 'lock_document' : 'unlock_document',
             'ip_address' => request()->ip(),
+            'details' => auth()->user()->name . ($document->is_locked ? ' mengunci ' : ' membuka ') . 'dokumen: ' . $document->title
         ]);
         return back()->with('success', $document->is_locked ? 'Dokumen berhasil dikunci.' : 'Kunci dokumen dibuka.');
     }
@@ -123,6 +135,7 @@ class DocumentController extends Controller
             'document_id' => $document->id,
             'activity' => 'download',
             'ip_address' => request()->ip(),
+            'details' => $user->name . ' mengunduh dokumen: ' . $document->title
         ]);
         return Storage::disk('private')->download($document->file_path);
     }
@@ -131,12 +144,20 @@ class DocumentController extends Controller
     {
         $user = auth()->user();
         if ($document->is_locked && $user->role !== 'superadmin') {
-            return back()->with('error', 'Dokumen ini telah dikunci oleh Admin dan tidak dapat dihapus.');
+            return back()->with('error', 'Dokumen ini telah dikunci oleh Admin.');
         }
         if ($user->role !== 'superadmin') {
             $employee = Employee::where('user_id', $user->id)->first();
             if ($document->employee_id !== $employee?->id) abort(403);
         }
+        
+        AuditLog::create([
+            'user_id' => $user->id,
+            'activity' => 'delete_document',
+            'ip_address' => request()->ip(),
+            'details' => $user->name . ' menghapus dokumen: ' . $document->title
+        ]);
+
         Storage::disk('private')->delete($document->file_path);
         $document->delete();
         return back()->with('success', 'Dokumen berhasil dihapus.');
@@ -152,31 +173,32 @@ class DocumentController extends Controller
     public function bulkAction(Request $request)
     {
         $ids = $request->ids;
-        $action = $request->action; // 'delete', 'lock', 'unlock'
-        
-        if (empty($ids)) return back()->with('error', 'Tidak ada dokumen terpilih.');
+        $action = $request->action;
+        if (empty($ids)) return back()->with('error', 'Tidak ada data terpilih.');
 
         if ($action === 'delete') {
-            $documents = Document::whereIn('id', $ids)->get();
-            foreach ($documents as $doc) {
-                if (auth()->user()->role === 'superadmin' || (!$doc->is_locked)) {
+            foreach (Document::whereIn('id', $ids)->get() as $doc) {
+                if (auth()->user()->role === 'superadmin' || !$doc->is_locked) {
                     Storage::disk('private')->delete($doc->file_path);
                     $doc->delete();
                 }
             }
-            return back()->with('success', count($ids) . ' dokumen berhasil dihapus.');
-        }
-
-        if ($action === 'lock') {
+            $msg = 'Dokumen terpilih berhasil dihapus.';
+        } elseif ($action === 'lock') {
             Document::whereIn('id', $ids)->update(['is_locked' => true]);
-            return back()->with('success', count($ids) . ' dokumen berhasil dikunci.');
-        }
-
-        if ($action === 'unlock') {
+            $msg = 'Dokumen terpilih berhasil dikunci.';
+        } elseif ($action === 'unlock') {
             Document::whereIn('id', $ids)->update(['is_locked' => false]);
-            return back()->with('success', count($ids) . ' kunci dokumen berhasil dibuka.');
+            $msg = 'Kunci dokumen terpilih dibuka.';
         }
 
-        return back();
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'bulk_' . $action,
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . ' melakukan aksi massal ' . $action
+        ]);
+
+        return back()->with('success', $msg);
     }
 }
