@@ -105,6 +105,7 @@
                                 {{ substr(auth()->user()->name, 0, 1) }}
                             @endif
                         </div>
+
                         <span class="text-xs font-black text-[#1E2432] pr-2">{{ auth()->user()->name }}</span>
                     </a>
                 </div>

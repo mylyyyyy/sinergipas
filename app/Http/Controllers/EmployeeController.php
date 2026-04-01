@@ -71,6 +71,7 @@ class EmployeeController extends Controller
             'position' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $employee->user_id,
             'password' => 'nullable|min:8',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         $userData = [
@@ -84,11 +85,20 @@ class EmployeeController extends Controller
 
         $employee->user->update($userData);
 
-        $employee->update([
+        $employeeData = [
             'nip' => $request->nip,
             'full_name' => $request->full_name,
             'position' => $request->position,
-        ]);
+        ];
+
+        if ($request->hasFile('photo')) {
+            $image = $request->file('photo');
+            $imageData = base64_encode(file_get_contents($image->getRealPath()));
+            $base64Image = 'data:' . $image->getMimeType() . ';base64,' . $imageData;
+            $employeeData['photo'] = $base64Image;
+        }
+
+        $employee->update($employeeData);
 
         return back()->with('success', 'Data pegawai berhasil diperbarui.');
     }

@@ -28,6 +28,7 @@
                             @endif
                         </div>
 
+
                         <label for="photoInput" class="absolute -bottom-2 -right-2 bg-[#E85A4F] p-3 rounded-2xl shadow-xl cursor-pointer hover:bg-[#d44d42] transition-all hover:scale-110 active:scale-95 border-4 border-white">
                             <i data-lucide="camera" class="w-5 h-5 text-white"></i>
                             <input type="file" id="photoInput" name="photo" class="hidden" onchange="previewImage(this)">

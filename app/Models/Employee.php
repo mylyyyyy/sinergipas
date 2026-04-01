@@ -37,6 +37,19 @@ class Employee extends Model
         return $this->belongsTo(WorkUnit::class, 'work_unit_id');
     }
 
+    public function getPhotoAttribute($value)
+    {
+        if (!$value) return null;
+        
+        // If it's already a Base64 string, return it
+        if (str_starts_with($value, 'data:image')) {
+            return $value;
+        }
+        
+        // Otherwise, assume it's a storage path (for backward compatibility)
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($value);
+    }
+
     public function documents(): HasMany
     {
         return $this->hasMany(Document::class);

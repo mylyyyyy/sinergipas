@@ -68,6 +68,7 @@
                         @endif
                     </div>
                 </div>
+
                 <a href="{{ route('documents.employee', $employee->id) }}" 
                     class="bg-[#1E2432] text-white p-4 rounded-[24px] hover:bg-[#E85A4F] transition-all shadow-xl active:scale-90">
                     <i data-lucide="arrow-up-right" class="w-6 h-6"></i>

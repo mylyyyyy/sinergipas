@@ -220,7 +220,7 @@
                 <i data-lucide="x" class="w-8 h-8"></i>
             </button>
         </div>
-        <form id="editForm" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <form id="editForm" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-8">
             @csrf @method('PUT')
             <div class="space-y-2">
                 <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Nama Lengkap</label>
@@ -241,6 +241,10 @@
             <div class="space-y-2">
                 <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Kata Sandi Baru</label>
                 <input type="password" name="password" placeholder="Kosongkan jika tidak ingin ganti" class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm outline-none focus:ring-2 focus:ring-[#E85A4F]">
+            </div>
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Foto Profil (JPEG/PNG)</label>
+                <input type="file" name="photo" class="w-full px-5 py-3 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-xs font-bold">
             </div>
             <div class="md:col-span-2 pt-4">
                 <button type="submit" class="w-full bg-[#1E2432] text-white py-5 rounded-[24px] font-bold hover:bg-[#343b4d] transition-all shadow-xl active:scale-[0.98]">
