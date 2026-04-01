@@ -62,6 +62,20 @@
                         <option value="off" {{ ($settings['widget_activity'] ?? 'on') == 'off' ? 'selected' : '' }}>Sembunyikan</option>
                     </select>
                 </div>
+                <div class="flex items-center justify-between p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF]">
+                    <span class="text-sm font-bold text-[#1E2432]">Analitik Kepatuhan Pegawai</span>
+                    <select name="widget_compliance" class="bg-white border border-[#EFEFEF] rounded-xl px-4 py-2 text-xs font-bold outline-none">
+                        <option value="on" {{ ($settings['widget_compliance'] ?? 'on') == 'on' ? 'selected' : '' }}>Tampilkan</option>
+                        <option value="off" {{ ($settings['widget_compliance'] ?? 'on') == 'off' ? 'selected' : '' }}>Sembunyikan</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF]">
+                    <span class="text-sm font-bold text-[#1E2432]">Antrean Verifikasi Cepat</span>
+                    <select name="widget_feed" class="bg-white border border-[#EFEFEF] rounded-xl px-4 py-2 text-xs font-bold outline-none">
+                        <option value="on" {{ ($settings['widget_feed'] ?? 'on') == 'on' ? 'selected' : '' }}>Tampilkan</option>
+                        <option value="off" {{ ($settings['widget_feed'] ?? 'on') == 'off' ? 'selected' : '' }}>Sembunyikan</option>
+                    </select>
+                </div>
             </div>
         </div>
 

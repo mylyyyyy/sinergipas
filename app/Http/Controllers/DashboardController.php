@@ -69,11 +69,15 @@ class DashboardController extends Controller
             $latestEmployees = (clone $employeeQuery)->with('user')->latest()->take(5)->get();
             $chartData = DocumentCategory::withCount('documents')->get();
             $workUnits = WorkUnit::all();
+            
+            // Widget Settings
+            $widgets = \App\Models\Setting::where('key', 'like', 'widget_%')->pluck('value', 'key');
 
             return view('dashboard', compact(
                 'totalEmployees', 'totalDocuments', 'docsToday', 'pendingDocs', 
                 'openIssues', 'storagePercent', 'storageUsed', 'unitPerformance', 
-                'latestEmployees', 'chartData', 'workUnits', 'nonCompliantEmployees'
+                'latestEmployees', 'chartData', 'workUnits', 'nonCompliantEmployees',
+                'widgets'
             ));
         } 
         
