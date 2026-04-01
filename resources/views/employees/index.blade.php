@@ -61,7 +61,7 @@
                             <a href="{{ route('employees.show', $employee->id) }}" class="flex items-center gap-4 group/item text-sm font-bold text-[#1E2432] hover:text-[#E85A4F] transition-all">
                                 <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-[#8A8A8A] group-hover/item:bg-[#E85A4F] group-hover/item:text-white transition-all overflow-hidden text-xs">
                                     @if($employee->photo)
-                                        <img src="{{ Storage::url($employee->photo) }}" class="w-full h-full object-cover">
+                                        <img src="{{ $employee->photo }}" class="w-full h-full object-cover">
                                     @else
                                         <i data-lucide="user" class="w-5 h-5"></i>
                                     @endif

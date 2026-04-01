@@ -36,11 +36,15 @@ class ProfileController extends Controller
 
         if ($request->hasFile('photo')) {
             $image = $request->file('photo');
-            $imageData = base64_encode(file_get_contents($image->getRealPath()));
-            $base64Image = 'data:' . $image->getMimeType() . ';base64,' . $imageData;
+            $path = $image->store('photos', 'public');
             
             if ($employee) {
-                $employee->update(['photo' => $base64Image]);
+                // Delete old photo if it exists and is a file path (not base64)
+                if ($employee->getRawOriginal('photo') && !str_starts_with($employee->getRawOriginal('photo'), 'data:image')) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($employee->getRawOriginal('photo'));
+                }
+                
+                $employee->update(['photo' => $path]);
             }
         }
 

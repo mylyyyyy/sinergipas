@@ -44,6 +44,7 @@ class EmployeeController extends Controller
             'position' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         $user = User::create([
@@ -53,12 +54,18 @@ class EmployeeController extends Controller
             'role' => 'pegawai',
         ]);
 
-        Employee::create([
+        $employeeData = [
             'user_id' => $user->id,
             'nip' => $request->nip,
             'full_name' => $request->full_name,
             'position' => $request->position,
-        ]);
+        ];
+
+        if ($request->hasFile('photo')) {
+            $employeeData['photo'] = $request->file('photo')->store('photos', 'public');
+        }
+
+        Employee::create($employeeData);
 
         return back()->with('success', 'Pegawai berhasil ditambahkan.');
     }
@@ -92,10 +99,11 @@ class EmployeeController extends Controller
         ];
 
         if ($request->hasFile('photo')) {
-            $image = $request->file('photo');
-            $imageData = base64_encode(file_get_contents($image->getRealPath()));
-            $base64Image = 'data:' . $image->getMimeType() . ';base64,' . $imageData;
-            $employeeData['photo'] = $base64Image;
+            // Delete old photo if it exists and is a file path
+            if ($employee->getRawOriginal('photo') && !str_starts_with($employee->getRawOriginal('photo'), 'data:image')) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($employee->getRawOriginal('photo'));
+            }
+            $employeeData['photo'] = $request->file('photo')->store('photos', 'public');
         }
 
         $employee->update($employeeData);
