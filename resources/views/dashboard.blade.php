@@ -30,6 +30,7 @@
     @endif
 </div>
 
+@if(\App\Models\Setting::getValue('widget_stats', 'on') === 'on')
 <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
     <!-- Stats with Glassmorphism -->
     <div class="group bg-gradient-to-br from-[#E85A4F] to-[#d44d42] p-8 rounded-[48px] shadow-2xl shadow-red-100 flex flex-col justify-between h-56 transform hover:-translate-y-2 transition-all duration-500">
@@ -84,6 +85,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
     <!-- Chart Section -->
@@ -120,7 +122,7 @@
             <div class="flex items-start gap-4">
                 <div class="w-2 h-2 bg-[#E85A4F] rounded-full mt-1.5"></div>
                 <div>
-                    <p class="text-xs font-bold text-[#1E2432]">{{ $log->user->name }} mengunduh {{ $log->document->title ?? 'file' }}</p>
+                    <p class="text-xs font-bold text-[#1E2432]">{{ $log->user->name }} {{ $log->activity === 'upload' ? 'mengunggah' : 'mengunduh' }} {{ $log->document->title ?? 'file' }}</p>
                     <p class="text-[10px] text-[#8A8A8A] font-bold mt-0.5">{{ $log->created_at->diffForHumans() }}</p>
                 </div>
             </div>
@@ -129,6 +131,38 @@
     </div>
     @endif
 </div>
+
+@if(auth()->user()->role === 'superadmin' && \App\Models\Setting::getValue('widget_employees', 'on') === 'on')
+<!-- Table Section (Superadmin only) -->
+<div class="bg-white rounded-2xl border border-[#EFEFEF] shadow-sm overflow-hidden mt-12">
+    <div class="p-8 border-b border-[#EFEFEF] flex justify-between items-center bg-[#FCFBF9]/50">
+        <h3 class="text-lg font-bold text-[#1E2432]">Daftar Pegawai Terbaru</h3>
+        <a href="{{ route('employees.index') }}" class="text-[#E85A4F] text-sm font-semibold hover:underline flex items-center gap-2">
+            Lihat Semua <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-[#FCFBF9]">
+                    <th class="px-8 py-4 text-xs font-bold text-[#8A8A8A] uppercase tracking-wider">Nama Pegawai</th>
+                    <th class="px-8 py-4 text-xs font-bold text-[#8A8A8A] uppercase tracking-wider">NIP</th>
+                    <th class="px-8 py-4 text-xs font-bold text-[#8A8A8A] uppercase tracking-wider">Jabatan</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[#EFEFEF]">
+                @foreach($latestEmployees as $employee)
+                <tr class="hover:bg-[#FCFBF9] transition-all">
+                    <td class="px-8 py-5 text-sm font-semibold text-[#1E2432]">{{ $employee->full_name }}</td>
+                    <td class="px-8 py-5 text-sm text-[#8A8A8A]">{{ $employee->nip }}</td>
+                    <td class="px-8 py-5 text-sm text-[#8A8A8A]">{{ $employee->position }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
 
 @if(\App\Models\Setting::getValue('widget_chart', 'on') === 'on')
 <script>

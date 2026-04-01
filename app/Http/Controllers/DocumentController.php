@@ -106,6 +106,15 @@ class DocumentController extends Controller
             \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\DocumentUploadedNotification($doc, $employee));
         }
 
+        // Log the upload activity
+        AuditLog::create([
+            'user_id' => $user->id,
+            'document_id' => $doc->id,
+            'activity' => 'upload',
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
         return back()->with('success', 'Dokumen berhasil diunggah.');
     }
 

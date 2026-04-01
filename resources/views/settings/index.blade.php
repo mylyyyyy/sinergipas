@@ -35,6 +35,20 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="flex items-center justify-between p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF]">
+                    <span class="text-sm font-bold text-[#1E2432]">Kartu Statistik Ringkasan</span>
+                    <select name="widget_stats" class="bg-white border border-[#EFEFEF] rounded-xl px-4 py-2 text-xs font-bold outline-none">
+                        <option value="on" {{ ($settings['widget_stats'] ?? 'on') == 'on' ? 'selected' : '' }}>Tampilkan</option>
+                        <option value="off" {{ ($settings['widget_stats'] ?? 'on') == 'off' ? 'selected' : '' }}>Sembunyikan</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF]">
+                    <span class="text-sm font-bold text-[#1E2432]">Daftar Pegawai Terbaru</span>
+                    <select name="widget_employees" class="bg-white border border-[#EFEFEF] rounded-xl px-4 py-2 text-xs font-bold outline-none">
+                        <option value="on" {{ ($settings['widget_employees'] ?? 'on') == 'on' ? 'selected' : '' }}>Tampilkan</option>
+                        <option value="off" {{ ($settings['widget_employees'] ?? 'on') == 'off' ? 'selected' : '' }}>Sembunyikan</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF]">
                     <span class="text-sm font-bold text-[#1E2432]">Grafik Sebaran Dokumen</span>
                     <select name="widget_chart" class="bg-white border border-[#EFEFEF] rounded-xl px-4 py-2 text-xs font-bold outline-none">
                         <option value="on" {{ ($settings['widget_chart'] ?? 'on') == 'on' ? 'selected' : '' }}>Tampilkan</option>
@@ -42,7 +56,7 @@
                     </select>
                 </div>
                 <div class="flex items-center justify-between p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF]">
-                    <span class="text-sm font-bold text-[#1E2432]">Log Aktivitas Terbaru</span>
+                    <span class="text-sm font-bold text-[#1E2432]">Log Aktivitas & Pengumuman</span>
                     <select name="widget_activity" class="bg-white border border-[#EFEFEF] rounded-xl px-4 py-2 text-xs font-bold outline-none">
                         <option value="on" {{ ($settings['widget_activity'] ?? 'on') == 'on' ? 'selected' : '' }}>Tampilkan</option>
                         <option value="off" {{ ($settings['widget_activity'] ?? 'on') == 'off' ? 'selected' : '' }}>Sembunyikan</option>
