@@ -56,11 +56,46 @@ class DocumentController extends Controller
 
         $mimeType = mime_content_type($path);
         
-        // Ensure inline headers for PDF and Images
-        return response()->file($path, [
+        // Use stream response for better "inline" behavior
+        return response()->make(file_get_contents($path), 200, [
             'Content-Type' => $mimeType,
             'Content-Disposition' => 'inline; filename="' . $document->title . '"'
         ]);
+    }
+
+    public function verify(Document $document)
+    {
+        $document->update([
+            'status' => 'verified',
+            'verified_at' => now(),
+            'is_locked' => true // Auto-lock when verified
+        ]);
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'document_id' => $document->id,
+            'activity' => 'verify_document',
+            'ip_address' => request()->ip(),
+            'details' => auth()->user()->name . ' memverifikasi dokumen: ' . $document->title
+        ]);
+
+        return back()->with('success', 'Dokumen berhasil diverifikasi dan dikunci.');
+    }
+
+    public function toggleLock(Document $document)
+    {
+        $document->is_locked = !$document->is_locked;
+        $document->save();
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'document_id' => $document->id,
+            'activity' => $document->is_locked ? 'lock_document' : 'unlock_document',
+            'ip_address' => request()->ip(),
+            'details' => auth()->user()->name . ($document->is_locked ? ' mengunci ' : ' membuka ') . 'dokumen: ' . $document->title
+        ]);
+
+        return back()->with('success', $document->is_locked ? 'Dokumen berhasil dikunci.' : 'Kunci dokumen dibuka.');
     }
 
     public function store(Request $request)
@@ -88,10 +123,9 @@ class DocumentController extends Controller
             'document_category_id' => $request->document_category_id,
             'title' => $request->title,
             'file_path' => $path,
-            'description' => $request->description,
+            'status' => 'pending',
         ]);
 
-        // RECORD LOG IMMEDIATELY
         AuditLog::create([
             'user_id' => $user->id,
             'document_id' => $doc->id,
@@ -108,19 +142,6 @@ class DocumentController extends Controller
         }
 
         return back()->with('success', 'Dokumen berhasil diunggah.');
-    }
-
-    public function toggleLock(Document $document)
-    {
-        $document->update(['is_locked' => !$document->is_locked]);
-        AuditLog::create([
-            'user_id' => auth()->id(),
-            'document_id' => $document->id,
-            'activity' => $document->is_locked ? 'lock_document' : 'unlock_document',
-            'ip_address' => request()->ip(),
-            'details' => auth()->user()->name . ($document->is_locked ? ' mengunci ' : ' membuka ') . 'dokumen: ' . $document->title
-        ]);
-        return back()->with('success', $document->is_locked ? 'Dokumen berhasil dikunci.' : 'Kunci dokumen dibuka.');
     }
 
     public function download(Document $document)

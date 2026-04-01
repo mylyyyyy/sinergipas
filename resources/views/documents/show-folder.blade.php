@@ -39,25 +39,46 @@
     <!-- Files Grid -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         @foreach($documents as $doc)
-        <div class="group relative bg-white p-8 rounded-[40px] border border-[#EFEFEF] hover:border-[#E85A4F] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 flex flex-col justify-between h-[260px]">
+        <div class="group relative bg-white p-8 rounded-[40px] border border-[#EFEFEF] hover:border-[#E85A4F] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 flex flex-col justify-between h-[280px]">
             <!-- Checkbox for Bulk -->
             <div class="absolute top-6 left-6 z-10">
                 <input type="checkbox" name="ids[]" value="{{ $doc->id }}" class="doc-checkbox w-6 h-6 rounded-xl border-[#EFEFEF] text-[#E85A4F] focus:ring-0 cursor-pointer">
             </div>
 
             <div class="flex justify-end items-start mb-4">
-                <div class="flex gap-1">
+                <div class="flex gap-1 flex-wrap justify-end">
+                    <!-- Verification Badge/Button -->
+                    @if($doc->status === 'pending')
+                    <form action="{{ route('documents.verify', $doc->id) }}" method="POST" class="no-loader">
+                        @csrf
+                        <button type="submit" class="p-2 text-green-600 bg-green-50 hover:bg-green-600 hover:text-white rounded-xl transition-all" title="Verifikasi">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                    @else
+                    <div class="p-2 text-blue-600 bg-blue-50 rounded-xl" title="Terverifikasi">
+                        <i data-lucide="verified" class="w-4 h-4"></i>
+                    </div>
+                    @endif
+                    
+                    <!-- Lock Toggle -->
                     <form action="{{ route('documents.toggle-lock', $doc->id) }}" method="POST" class="no-loader">
                         @csrf
-                        <button type="submit" class="p-2 {{ $doc->is_locked ? 'text-red-600 bg-red-50' : 'text-gray-400' }} hover:bg-gray-100 rounded-xl transition-all">
+                        <button type="submit" class="p-2 {{ $doc->is_locked ? 'text-red-600 bg-red-100' : 'text-gray-400 bg-gray-50' }} hover:bg-red-600 hover:text-white rounded-xl transition-all" title="{{ $doc->is_locked ? 'Buka Kunci' : 'Kunci Dokumen' }}">
                             <i data-lucide="{{ $doc->is_locked ? 'lock' : 'unlock' }}" class="w-4 h-4"></i>
                         </button>
                     </form>
-                    <button type="button" onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}')" class="p-2 text-green-600 hover:bg-green-50 rounded-xl no-loader"><i data-lucide="eye" class="w-4 h-4"></i></button>
-                    <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="p-2 text-blue-500 hover:bg-blue-50 rounded-xl no-loader"><i data-lucide="download" class="w-4 h-4"></i></a>
+
+                    <!-- Preview -->
+                    <button type="button" onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}')" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl no-loader" title="Pratinjau"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                    
+                    <!-- Download -->
+                    <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="p-2 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader" title="Unduh"><i data-lucide="download" class="w-4 h-4"></i></a>
+                    
+                    <!-- Delete -->
                     <form action="{{ route('documents.destroy', $doc->id) }}" method="POST" onsubmit="return confirm('Hapus file ini?')" class="m-0 p-0 no-loader">
                         @csrf @method('DELETE')
-                        <button type="submit" class="p-2 text-[#E85A4F] hover:bg-red-50 rounded-xl transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button type="submit" class="p-2 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white rounded-xl transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </form>
                 </div>
             </div>
@@ -144,7 +165,6 @@
         <form action="{{ route('documents.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
             @csrf
             <input type="hidden" name="employee_id" value="{{ $employee->id }}">
-            
             <div class="space-y-3">
                 <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Jenis Dokumen</label>
                 <select name="document_category_id" required class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/5 appearance-none cursor-pointer">
@@ -153,12 +173,10 @@
                     @endforeach
                 </select>
             </div>
-            
             <div class="space-y-3">
                 <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Judul Dokumen</label>
                 <input type="text" name="title" required placeholder="Contoh: SK Pengangkatan 2026" class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/5 transition-all">
             </div>
-            
             <div class="space-y-3">
                 <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Pilih File</label>
                 <div class="relative group">
@@ -169,10 +187,8 @@
                     </div>
                 </div>
             </div>
-
             <button type="submit" class="w-full bg-[#E85A4F] text-white py-5 rounded-[28px] font-black text-lg hover:bg-[#d44d42] transition-all shadow-xl shadow-red-200 active:scale-95 flex items-center justify-center gap-3">
-                Proses Sinkronisasi
-                <i data-lucide="zap" class="w-5 h-5"></i>
+                Proses Sinkronisasi <i data-lucide="zap" class="w-5 h-5"></i>
             </button>
         </form>
     </div>
