@@ -141,7 +141,9 @@ class DocumentController extends Controller
 
     public function download(Document $document)
     {
-        return Storage::disk('private')->download($document->file_path);
+        $extension = pathinfo($document->file_path, PATHINFO_EXTENSION);
+        $filename = $document->title . '.' . $extension;
+        return Storage::disk('private')->download($document->file_path, $filename);
     }
 
     public function destroy(Document $document)

@@ -223,48 +223,92 @@
     </div>
 </div>
 
-<div id="editModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-2xl rounded-[40px] p-10 shadow-2xl animate-in zoom-in duration-300">
-        <div class="flex justify-between items-center mb-10">
-            <h3 class="text-2xl font-bold text-[#1E2432]">Edit Data Pegawai</h3>
-            <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')" class="text-[#8A8A8A] hover:text-[#1E2432]">
-                <i data-lucide="x" class="w-8 h-8"></i>
+<div id="editModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-md">
+    <div class="bg-white w-full max-w-3xl rounded-[56px] shadow-2xl animate-in zoom-in duration-300 overflow-hidden border border-[#EFEFEF]">
+        <!-- Premium Header -->
+        <div class="bg-[#1E2432] p-10 text-white flex justify-between items-center relative">
+            <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+            <div class="relative">
+                <h3 class="text-2xl font-black italic tracking-tight">Edit Profil Pegawai</h3>
+                <p class="text-[10px] font-black opacity-60 uppercase tracking-[0.3em] mt-1">Sinergi PAS Management System</p>
+            </div>
+            <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')" class="relative w-12 h-12 flex items-center justify-center rounded-2xl bg-white/10 hover:bg-white/20 transition-all border border-white/20">
+                <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
-        <form id="editForm" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+        <form id="editForm" method="POST" enctype="multipart/form-data" class="p-10">
             @csrf @method('PUT')
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Nama Lengkap</label>
-                <input type="text" name="full_name" id="edit_full_name" required class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm outline-none focus:ring-2 focus:ring-[#E85A4F]">
-            </div>
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">NIP</label>
-                <input type="text" name="nip" id="edit_nip" required class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm outline-none focus:ring-2 focus:ring-[#E85A4F]">
-            </div>
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Email Akun</label>
-                <input type="email" name="email" id="edit_email" required class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm outline-none focus:ring-2 focus:ring-[#E85A4F]">
-            </div>
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Jabatan</label>
-                <input type="text" name="position" id="edit_position" required class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm outline-none focus:ring-2 focus:ring-[#E85A4F]">
-            </div>
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Kata Sandi Baru</label>
-                <input type="password" name="password" placeholder="Kosongkan jika tidak ingin ganti" class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm outline-none focus:ring-2 focus:ring-[#E85A4F]">
-            </div>
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Foto Profil (JPEG/PNG)</label>
-                <div class="flex gap-2">
-                    <input type="file" name="photo" class="flex-1 px-5 py-3 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-xs font-bold">
-                    <button type="button" id="btnDeleteEmployeePhoto" onclick="confirmDeleteEmployeePhoto()" class="hidden px-4 bg-red-50 text-red-500 rounded-2xl border border-red-100 hover:bg-red-500 hover:text-white transition-all" title="Hapus Foto">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                <!-- Left Column: Personal Data -->
+                <div class="space-y-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                        </div>
+                        <h4 class="text-xs font-black text-[#1E2432] uppercase tracking-widest italic">Informasi Kepegawaian</h4>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em] ml-1">Nama Lengkap</label>
+                        <input type="text" name="full_name" id="edit_full_name" required class="w-full px-6 py-4 rounded-[20px] border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold text-[#1E2432] focus:ring-4 focus:ring-red-500/5 focus:border-[#E85A4F] outline-none transition-all">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em] ml-1">Nomor Induk Pegawai (NIP)</label>
+                        <input type="text" name="nip" id="edit_nip" required class="w-full px-6 py-4 rounded-[20px] border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold text-[#1E2432] focus:ring-4 focus:ring-red-500/5 focus:border-[#E85A4F] outline-none transition-all">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em] ml-1">Jabatan Struktural</label>
+                        <input type="text" name="position" id="edit_position" required class="w-full px-6 py-4 rounded-[20px] border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold text-[#1E2432] focus:ring-4 focus:ring-red-500/5 focus:border-[#E85A4F] outline-none transition-all">
+                    </div>
+                </div>
+
+                <!-- Right Column: Account & Media -->
+                <div class="space-y-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-8 h-8 bg-green-50 rounded-xl flex items-center justify-center text-green-600 shadow-sm">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i>
+                        </div>
+                        <h4 class="text-xs font-black text-[#1E2432] uppercase tracking-widest italic">Keamanan & Media</h4>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em] ml-1">Alamat Email Aktif</label>
+                        <input type="email" name="email" id="edit_email" required class="w-full px-6 py-4 rounded-[20px] border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold text-[#1E2432] focus:ring-4 focus:ring-red-500/5 focus:border-[#E85A4F] outline-none transition-all">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em] ml-1">Kata Sandi Baru (Opsional)</label>
+                        <input type="password" name="password" placeholder="Biarkan kosong jika tidak diubah" class="w-full px-6 py-4 rounded-[20px] border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold text-[#1E2432] focus:ring-4 focus:ring-red-500/5 focus:border-[#E85A4F] outline-none transition-all">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em] ml-1">Foto Profil Baru</label>
+                        <div class="flex gap-3">
+                            <label class="flex-1 relative group cursor-pointer">
+                                <input type="file" name="photo" class="hidden" onchange="this.nextElementSibling.innerText = this.files[0].name">
+                                <div class="w-full px-6 py-4 rounded-[20px] border-2 border-dashed border-[#EFEFEF] bg-[#FCFBF9] text-[10px] font-black text-[#8A8A8A] uppercase text-center group-hover:border-[#E85A4F] transition-all">
+                                    Pilih File Gambar
+                                </div>
+                            </label>
+                            <button type="button" id="btnDeleteEmployeePhoto" onclick="confirmDeleteEmployeePhoto()" class="hidden w-14 h-14 bg-red-50 text-red-500 rounded-[20px] border border-red-100 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center shadow-lg shadow-red-100" title="Hapus Foto Saat Ini">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="md:col-span-2 pt-4">
-                <button type="submit" class="w-full bg-[#1E2432] text-white py-5 rounded-[24px] font-bold hover:bg-[#343b4d] transition-all shadow-xl active:scale-[0.98]">
-                    Perbarui Data Pegawai
+
+            <div class="mt-12 flex flex-col md:flex-row gap-4">
+                <button type="submit" class="flex-1 bg-[#E85A4F] text-white py-5 rounded-[28px] font-black text-lg hover:bg-[#d44d42] transition-all shadow-xl shadow-red-200 active:scale-[0.98] flex items-center justify-center gap-3">
+                    Simpan Perubahan Data
+                    <i data-lucide="save" class="w-6 h-6"></i>
+                </button>
+                <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')" class="px-10 py-5 rounded-[28px] border border-[#EFEFEF] text-[#8A8A8A] font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all">
+                    Batalkan
                 </button>
             </div>
         </form>
