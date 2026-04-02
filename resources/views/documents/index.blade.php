@@ -44,9 +44,15 @@
             <div class="w-12 h-12 {{ $cat->is_mandatory ? 'bg-red-50 text-[#E85A4F]' : 'bg-[#FCFBF9]' }} rounded-2xl flex items-center justify-center border border-[#EFEFEF] group-hover:bg-[#E85A4F] group-hover:text-white transition-all duration-500 shadow-sm">
                 <i data-lucide="{{ $cat->is_mandatory ? 'alert-circle' : 'layers' }}" class="w-5 h-5"></i>
             </div>
-            @if($cat->is_mandatory)
-                <span class="bg-red-500 text-white text-[7px] font-black uppercase px-2 py-1 rounded-lg tracking-widest animate-pulse">Wajib</span>
-            @endif
+            <div class="flex flex-col items-end gap-2">
+                @if($cat->is_mandatory)
+                    <span class="bg-red-500 text-white text-[7px] font-black uppercase px-2 py-1 rounded-lg tracking-widest animate-pulse">Wajib</span>
+                @endif
+                <form action="{{ route('documents.category.destroy', $cat->id) }}" method="POST" onsubmit="return confirm('Hapus kategori ini?')" class="opacity-0 group-hover:opacity-100 transition-all no-loader">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                </form>
+            </div>
         </div>
         <div class="relative z-10">
             <h4 class="text-lg font-black text-[#1E2432] group-hover:text-[#E85A4F] transition-all">{{ $cat->name }}</h4>

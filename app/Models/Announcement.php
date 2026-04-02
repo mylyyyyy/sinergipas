@@ -6,18 +6,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class DocumentVersion extends Model
+class Announcement extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'document_id',
-        'file_path',
-        'version_number',
+        'user_id',
+        'message',
+        'type',
+        'is_active',
     ];
 
-    public function document(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Document::class);
+        return $this->belongsTo(User::class);
     }
 }

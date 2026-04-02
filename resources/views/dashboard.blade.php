@@ -25,6 +25,14 @@
             </div>
         </div>
     </div>
+    <div class="flex gap-3">
+        <a href="{{ route('dashboard.export.excel') }}" class="bg-green-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-green-700 transition-all shadow-lg shadow-green-100 flex items-center gap-2 no-loader">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Ekspor Excel
+        </a>
+        <a href="{{ route('dashboard.export.pdf') }}" class="bg-[#1E2432] text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#E85A4F] transition-all shadow-lg shadow-gray-100 flex items-center gap-2 no-loader">
+            <i data-lucide="file-text" class="w-4 h-4"></i> Ekspor PDF
+        </a>
+    </div>
 </div>
 @endif
 

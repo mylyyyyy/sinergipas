@@ -106,6 +106,81 @@
             </div>
         </div>
 
+        <!-- Broadcast Announcements -->
+        <div class="bg-white rounded-[40px] border border-[#EFEFEF] shadow-sm p-10 mb-8">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600">
+                    <i data-lucide="megaphone" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black text-[#1E2432]">Siaran Pengumuman</h3>
+                    <p class="text-xs text-[#8A8A8A] font-bold uppercase tracking-widest mt-1">Kirim pesan penting ke seluruh pegawai</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <!-- Form Create -->
+                <div class="md:col-span-1 border-r border-[#EFEFEF] pr-10">
+                    <form action="{{ route('announcements.store') }}" method="POST" class="space-y-6">
+                        @csrf
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest ml-1">Isi Pesan</label>
+                            <textarea name="message" rows="3" required class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none" placeholder="Tulis pengumuman..."></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest ml-1">Tipe Tampilan</label>
+                            <select name="type" class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none">
+                                <option value="banner">Running Text (Banner)</option>
+                                <option value="popup">Pop-up Modal</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-[#1E2432] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#E85A4F] transition-all shadow-lg">
+                            Siarkan Sekarang
+                        </button>
+                    </form>
+                </div>
+
+                <!-- List Announcements -->
+                <div class="md:col-span-2 space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    @forelse($announcements as $ann)
+                    <div class="p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF] flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2 py-0.5 {{ $ann->type == 'popup' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600' }} text-[8px] font-black uppercase rounded-md border border-opacity-20">{{ $ann->type }}</span>
+                                @if($ann->is_active)
+                                    <span class="px-2 py-0.5 bg-green-50 text-green-600 text-[8px] font-black uppercase rounded-md">Active</span>
+                                @else
+                                    <span class="px-2 py-0.5 bg-gray-100 text-gray-400 text-[8px] font-black uppercase rounded-md">Inactive</span>
+                                @endif
+                            </div>
+                            <p class="text-xs font-bold text-[#1E2432] leading-relaxed">{{ $ann->message }}</p>
+                            <p class="text-[8px] text-[#ABABAB] font-bold mt-2">Dibuat oleh: {{ $ann->user->name }} • {{ $ann->created_at->diffForHumans() }}</p>
+                        </div>
+                        <div class="flex flex-col gap-2 ml-4">
+                            <form action="{{ route('announcements.toggle', $ann->id) }}" method="POST" class="no-loader">
+                                @csrf
+                                <button type="submit" class="p-2 bg-white rounded-xl border border-[#EFEFEF] text-[#1E2432] hover:bg-[#1E2432] hover:text-white transition-all shadow-sm">
+                                    <i data-lucide="{{ $ann->is_active ? 'eye-off' : 'eye' }}" class="w-4 h-4"></i>
+                                </button>
+                            </form>
+                            <form action="{{ route('announcements.destroy', $ann->id) }}" method="POST" onsubmit="return confirm('Hapus pengumuman?')" class="no-loader">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="p-2 bg-white rounded-xl border border-[#EFEFEF] text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="text-center py-10 opacity-40">
+                        <i data-lucide="megaphone" class="w-10 h-10 mx-auto mb-3"></i>
+                        <p class="text-xs font-bold uppercase tracking-widest">Belum ada pengumuman</p>
+                    </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
         <!-- Kop Surat Settings -->
         <div class="bg-white rounded-[40px] border border-[#EFEFEF] shadow-sm p-10">
             <div class="flex items-center gap-4 mb-8">

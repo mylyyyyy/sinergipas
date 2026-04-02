@@ -76,7 +76,7 @@
                         <i data-lucide="{{ $doc->is_locked ? 'lock' : 'unlock' }}" class="w-4 h-4"></i>
                     </button>
 
-                    <button type="button" onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}', '{{ $doc->file_path }}')" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl no-loader"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                    <button type="button" onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}', '{{ $doc->file_path }}', {{ json_encode($doc->versions) }})" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl no-loader"><i data-lucide="eye" class="w-4 h-4"></i></button>
                     
                     @if(!$doc->is_locked)
                     <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="p-2 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader"><i data-lucide="download" class="w-4 h-4"></i></a>
@@ -213,11 +213,29 @@
         form.submit();
     }
 
-    function openPreview(url, title, filePath) {
+    function openPreview(url, title, filePath, versions = []) {
         document.getElementById('previewTitle').innerText = title;
         const container = document.getElementById('previewContent');
         const watermark = document.getElementById('watermarkOverlay');
+        const sidebar = document.getElementById('versionSidebar');
+        const list = document.getElementById('versionList');
         
+        // Handle Sidebar
+        if (versions && versions.length > 0) {
+            sidebar.classList.remove('hidden');
+            list.innerHTML = versions.map(v => `
+                <div class="p-5 bg-[#FCFBF9] rounded-2xl border border-[#EFEFEF]">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-black text-[#1E2432] uppercase">Versi ${v.version_number}</span>
+                        <a href="/documents/preview-version/${v.id}" target="_blank" class="text-[9px] font-black text-[#E85A4F] uppercase hover:underline">Lihat</a>
+                    </div>
+                    <p class="text-[9px] text-[#ABABAB] font-bold">${new Date(v.created_at).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'})}</p>
+                </div>
+            `).join('');
+        } else {
+            sidebar.classList.add('hidden');
+        }
+
         // Remove existing items except watermark
         Array.from(container.children).forEach(child => {
             if(child.id !== 'watermarkOverlay') child.remove();
@@ -240,6 +258,7 @@
             watermark.classList.add('flex');
         }
         document.getElementById('previewModal').classList.remove('hidden');
+        lucide.createIcons();
     }
 </script>
 
@@ -288,22 +307,31 @@
 </div>
 
 <div id="previewModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[100] p-10 backdrop-blur-xl">
-    <div class="bg-white w-full h-full max-w-6xl rounded-[48px] overflow-hidden flex flex-col shadow-2xl">
+    <div class="bg-white w-full h-full max-w-7xl rounded-[48px] overflow-hidden flex flex-col shadow-2xl">
         <div class="p-8 border-b border-[#EFEFEF] flex justify-between items-center bg-[#FCFBF9]/50">
             <h3 id="previewTitle" class="text-xl font-black text-[#1E2432]">Pratinjau Dokumen</h3>
             <button onclick="document.getElementById('previewModal').classList.add('hidden')" class="bg-white p-3 rounded-2xl shadow-sm border border-[#EFEFEF] hover:bg-red-50 hover:text-red-500 transition-all">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
-        <div class="flex-1 bg-gray-100 overflow-auto flex items-center justify-center p-10 relative" id="previewContent">
-            <!-- Content will be injected here -->
-            @if($watermarkEnabled)
-            <div id="watermarkOverlay" class="absolute inset-0 pointer-events-none hidden flex-wrap gap-20 p-20 opacity-[0.03] overflow-hidden content-center justify-center select-none">
-                @for($i=0; $i<20; $i++)
-                    <div class="text-4xl font-black -rotate-45 uppercase tracking-[0.5em] whitespace-nowrap">{{ $watermarkText }}</div>
-                @endfor
+        <div class="flex-1 flex overflow-hidden">
+            <div class="flex-1 bg-gray-100 overflow-auto flex items-center justify-center p-10 relative" id="previewContent">
+                <!-- Content will be injected here -->
+                @if($watermarkEnabled)
+                <div id="watermarkOverlay" class="absolute inset-0 pointer-events-none hidden flex-wrap gap-20 p-20 opacity-[0.03] overflow-hidden content-center justify-center select-none">
+                    @for($i=0; $i<20; $i++)
+                        <div class="text-4xl font-black -rotate-45 uppercase tracking-[0.5em] whitespace-nowrap">{{ $watermarkText }}</div>
+                    @endfor
+                </div>
+                @endif
             </div>
-            @endif
+            <!-- Version History Sidebar -->
+            <div id="versionSidebar" class="w-80 border-l border-[#EFEFEF] bg-white p-8 overflow-y-auto hidden">
+                <h4 class="text-xs font-black text-[#8A8A8A] uppercase tracking-[0.3em] mb-8">Riwayat Versi</h4>
+                <div id="versionList" class="space-y-6">
+                    <!-- Versions injected here -->
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -111,6 +111,24 @@
         </aside>
 
         <main class="flex-1 ml-64 min-h-screen">
+            @php 
+                $activeBanner = \App\Models\Announcement::where('is_active', true)->where('type', 'banner')->latest()->first();
+                $activePopup = \App\Models\Announcement::where('is_active', true)->where('type', 'popup')->latest()->first();
+            @endphp
+
+            @if($activeBanner)
+            <div class="bg-[#1E2432] text-white py-2 overflow-hidden relative border-b border-white/10">
+                <div class="whitespace-nowrap animate-marquee inline-block font-bold text-[10px] uppercase tracking-[0.2em]">
+                    <span class="mx-10"><i data-lucide="megaphone" class="w-3 h-3 inline mr-2"></i> PENGUMUMAN: {{ $activeBanner->message }}</span>
+                    <span class="mx-10"><i data-lucide="megaphone" class="w-3 h-3 inline mr-2"></i> PENGUMUMAN: {{ $activeBanner->message }}</span>
+                </div>
+            </div>
+            <style>
+                @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+                .animate-marquee { animation: marquee 20s linear infinite; }
+            </style>
+            @endif
+
             <header class="h-20 bg-white border-b border-[#EFEFEF] flex items-center justify-between px-10 sticky top-0 z-10">
                 <h2 class="text-xl font-black text-[#1E2432] tracking-tight">@yield('header-title')</h2>
                 <div class="flex items-center gap-4">
@@ -197,6 +215,21 @@
         function showLoading() {
             document.getElementById('global-loading').style.display = 'flex';
         }
+
+        @if(isset($activePopup))
+        if (!sessionStorage.getItem('announcement_seen_{{ $activePopup->id }}')) {
+            Swal.fire({
+                title: 'Informasi Penting!',
+                text: '{{ $activePopup->message }}',
+                icon: 'info',
+                confirmButtonColor: '#1E2432',
+                confirmButtonText: 'Saya Mengerti',
+                customClass: { popup: 'rounded-[40px]' }
+            }).then(() => {
+                sessionStorage.setItem('announcement_seen_{{ $activePopup->id }}', 'true');
+            });
+        }
+        @endif
     </script>
 </body>
 </html>

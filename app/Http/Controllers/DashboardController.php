@@ -10,6 +10,8 @@ use App\Models\ReportIssue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DashboardController extends Controller
 
@@ -114,5 +116,53 @@ class DashboardController extends Controller
                 'myDocumentsCount', 'verifiedDocs', 'careerProgress', 'latestSalary'
             ));
         }
+    }
+
+    public function exportPdf()
+    {
+        $data = $this->getDashboardData();
+        $pdf = Pdf::loadView('reports.dashboard', $data);
+        return $pdf->download('laporan-sinergi-pas.pdf');
+    }
+
+    public function exportExcel()
+    {
+        $data = $this->getDashboardData();
+        return Excel::download(new class($data) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+            protected $data;
+            public function __construct($data) { $this->data = $data; }
+            public function collection() {
+                return collect([
+                    ['Total Pegawai', $this->data['totalEmployees']],
+                    ['Total Dokumen', $this->data['totalDocuments']],
+                    ['Dokumen Baru Hari Ini', $this->data['docsToday']],
+                    ['Menunggu Verifikasi', $this->data['pendingDocs']],
+                    ['Laporan Masalah Terbuka', $this->data['openIssues']],
+                    ['Penyimpanan Digunakan (MB)', $this->data['storageUsed']],
+                ]);
+            }
+            public function headings(): array { return ['Metrik', 'Nilai']; }
+        }, 'laporan-sinergi-pas.xlsx');
+    }
+
+    private function getDashboardData()
+    {
+        $totalEmployees = Employee::count();
+        $totalDocuments = Document::count();
+        $docsToday = Document::whereDate('created_at', now())->count();
+        $pendingDocs = Document::where('status', 'pending')->count();
+        $openIssues = ReportIssue::where('status', 'open')->count();
+
+        $totalSizeBytes = 0;
+        $disk = Storage::disk('private');
+        if ($disk->exists('documents')) {
+            $files = $disk->allFiles('documents');
+            foreach ($files as $file) {
+                $totalSizeBytes += $disk->size($file);
+            }
+        }
+        $storageUsed = round($totalSizeBytes / (1024 * 1024), 2);
+
+        return compact('totalEmployees', 'totalDocuments', 'docsToday', 'pendingDocs', 'openIssues', 'storageUsed');
     }
 }
