@@ -114,10 +114,13 @@
             @php 
                 $activeBanner = \App\Models\Announcement::where('is_active', true)->where('type', 'banner')->latest()->first();
                 $activePopup = \App\Models\Announcement::where('is_active', true)->where('type', 'popup')->latest()->first();
+                $bannerBg = \App\Models\Setting::getValue('running_text_bg', '#1E2432');
+                $bannerColor = \App\Models\Setting::getValue('running_text_color', '#FFFFFF');
+                $bannerSpeed = \App\Models\Setting::getValue('running_text_speed', '20');
             @endphp
 
             @if($activeBanner)
-            <div class="bg-[#1E2432] text-white py-2 overflow-hidden relative border-b border-white/10">
+            <div class="py-2 overflow-hidden relative border-b border-white/10" style="background-color: {{ $bannerBg }}; color: {{ $bannerColor }};">
                 <div class="whitespace-nowrap animate-marquee inline-block font-bold text-[10px] uppercase tracking-[0.2em]">
                     <span class="mx-10"><i data-lucide="megaphone" class="w-3 h-3 inline mr-2"></i> PENGUMUMAN: {{ $activeBanner->message }}</span>
                     <span class="mx-10"><i data-lucide="megaphone" class="w-3 h-3 inline mr-2"></i> PENGUMUMAN: {{ $activeBanner->message }}</span>
@@ -125,7 +128,7 @@
             </div>
             <style>
                 @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-                .animate-marquee { animation: marquee 20s linear infinite; }
+                .animate-marquee { animation: marquee {{ $bannerSpeed }}s linear infinite; }
             </style>
             @endif
 
