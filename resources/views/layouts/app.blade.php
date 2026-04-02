@@ -114,6 +114,56 @@
             <header class="h-20 bg-white border-b border-[#EFEFEF] flex items-center justify-between px-10 sticky top-0 z-10">
                 <h2 class="text-xl font-black text-[#1E2432] tracking-tight">@yield('header-title')</h2>
                 <div class="flex items-center gap-4">
+                    <!-- Notification Bell -->
+                    <div class="relative" x-data="{ open: false }">
+                        @php $unreadCount = auth()->user()->unreadNotifications->count(); @endphp
+                        <button onclick="toggleNotifications()" class="relative w-10 h-10 bg-[#FCFBF9] rounded-xl border border-[#EFEFEF] flex items-center justify-center text-[#8A8A8A] hover:text-[#E85A4F] hover:shadow-md transition-all">
+                            <i data-lucide="bell" class="w-5 h-5"></i>
+                            @if($unreadCount > 0)
+                                <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-black rounded-full border-2 border-white flex items-center justify-center animate-bounce">{{ $unreadCount }}</span>
+                            @endif
+                        </button>
+
+                        <div id="notificationDropdown" class="hidden absolute right-0 mt-4 w-80 bg-white rounded-[32px] border border-[#EFEFEF] shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div class="p-6 border-b border-[#EFEFEF] flex justify-between items-center bg-[#FCFBF9]/50">
+                                <h3 class="text-xs font-black text-[#1E2432] uppercase tracking-widest">Notifikasi</h3>
+                                @if($unreadCount > 0)
+                                    <form action="{{ route('notifications.mark-read') }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="text-[9px] font-black text-[#E85A4F] uppercase hover:underline">Tandai Baca</button>
+                                    </form>
+                                @endif
+                            </div>
+                            <div class="max-h-96 overflow-y-auto custom-scrollbar">
+                                @forelse(auth()->user()->unreadNotifications as $notification)
+                                    <div class="p-5 border-b border-[#EFEFEF] hover:bg-[#FCFBF9] transition-all cursor-pointer">
+                                        <p class="text-xs font-bold text-[#1E2432] mb-1">{{ $notification->data['message'] }}</p>
+                                        <p class="text-[9px] text-[#ABABAB] font-black uppercase">{{ $notification->created_at->diffForHumans() }}</p>
+                                    </div>
+                                @empty
+                                    <div class="p-10 text-center">
+                                        <i data-lucide="bell-off" class="w-10 h-10 text-gray-100 mx-auto mb-3"></i>
+                                        <p class="text-[10px] font-bold text-[#ABABAB] uppercase tracking-widest">Tidak ada notifikasi baru</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                        function toggleNotifications() {
+                            const dropdown = document.getElementById('notificationDropdown');
+                            dropdown.classList.toggle('hidden');
+                        }
+                        // Close dropdown when clicking outside
+                        window.addEventListener('click', function(e) {
+                            const dropdown = document.getElementById('notificationDropdown');
+                            if (!e.target.closest('.relative')) {
+                                dropdown.classList.add('hidden');
+                            }
+                        });
+                    </script>
+
                     <a href="{{ route('profile.index') }}" class="flex items-center gap-3 p-2 bg-[#FCFBF9] rounded-2xl border border-[#EFEFEF] hover:shadow-md transition-all">
                         @php $sidebarEmployee = \App\Models\Employee::where('user_id', auth()->id())->first(); @endphp
                         <div class="w-10 h-10 bg-[#E85A4F] rounded-xl flex items-center justify-center text-white font-black overflow-hidden text-xs shadow-lg shadow-red-100">

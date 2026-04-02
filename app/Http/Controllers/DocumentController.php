@@ -141,6 +141,13 @@ class DocumentController extends Controller
 
     public function download(Document $document)
     {
+        $user = auth()->user();
+        
+        // Prevent download if locked and not superadmin
+        if ($document->is_locked && $user->role !== 'superadmin') {
+            return back()->with('error', 'Dokumen ini dikunci oleh Admin dan tidak dapat diunduh.');
+        }
+
         $extension = pathinfo($document->file_path, PATHINFO_EXTENSION);
         $filename = $document->title . '.' . $extension;
         return Storage::disk('private')->download($document->file_path, $filename);

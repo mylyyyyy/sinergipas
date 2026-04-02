@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\ReportIssue;
 use Illuminate\Http\Request;
 
+use App\Notifications\IssueRepliedNotification;
+
 class ReportIssueController extends Controller
 {
     public function index()
@@ -26,7 +28,10 @@ class ReportIssueController extends Controller
             'admin_note' => $request->admin_note
         ]);
 
-        return back()->with('success', 'Laporan berhasil diperbarui.');
+        // Send notification to the user
+        $issue->user->notify(new IssueRepliedNotification($issue));
+
+        return back()->with('success', 'Laporan berhasil diperbarui dan notifikasi terkirim.');
     }
 
     public function destroy(ReportIssue $issue)

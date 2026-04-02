@@ -79,6 +79,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile/photo', [ProfileController::class, 'deletePhoto'])->name('profile.photo.destroy');
     Route::post('/profile/report', [ProfileController::class, 'report'])->name('profile.report');
 
+    // Notifications
+    Route::post('/notifications/mark-read', function() {
+        auth()->user()->unreadNotifications->markAsRead();
+        return back();
+    })->name('notifications.mark-read');
+
     // System Settings (Superadmin)
     Route::middleware('can:superadmin')->group(function () {
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
