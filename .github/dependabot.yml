@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: "composer" # Memantau PHP dependencies
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"      # Memantau JS dependencies
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "github-actions" # Memantau GitHub Actions
+    directory: "/"
+    schedule:
+      interval: "weekly"
