@@ -237,32 +237,82 @@
     @endif
 
     <!-- Activity Feed -->
-    @if(($widgets['widget_activity'] ?? 'on') == 'on')
-    <div class="bg-white p-12 rounded-[56px] border border-[#EFEFEF] shadow-sm flex flex-col {{ ($widgets['widget_compliance'] ?? 'on') == 'off' ? 'md:col-span-3' : '' }} bento-card">
-        <h3 class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.4em] mb-12 flex items-center gap-3">
-            <i data-lucide="activity" class="w-4 h-4 text-[#E85A4F]"></i> Aktivitas Terakhir
-        </h3>
-        <div class="space-y-10 flex-1 relative">
-            <div class="absolute left-[19px] top-0 bottom-0 w-px bg-gray-100"></div>
-            @php $recentLogs = \App\Models\AuditLog::with(['user', 'document'])->latest()->take(5)->get(); @endphp
-            @foreach($recentLogs as $log)
-            <div class="flex gap-6 group relative">
-                <div class="w-10 h-10 bg-white border-2 border-[#EFEFEF] group-hover:border-[#E85A4F] transition-all rounded-full flex items-center justify-center z-10 shadow-sm">
-                    <i data-lucide="{{ $log->activity == 'login' ? 'log-in' : 'zap' }}" class="w-4 h-4 text-[#8A8A8A] group-hover:text-[#E85A4F] transition-all"></i>
+    <div class="flex flex-col gap-10 {{ ($widgets['widget_compliance'] ?? 'on') == 'off' ? 'md:col-span-3' : '' }}">
+        @if(($widgets['widget_activity'] ?? 'on') == 'on')
+        <div class="bg-white p-12 rounded-[56px] border border-[#EFEFEF] shadow-sm flex flex-col bento-card flex-1">
+            <h3 class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.4em] mb-12 flex items-center gap-3">
+                <i data-lucide="activity" class="w-4 h-4 text-[#E85A4F]"></i> Aktivitas Terakhir
+            </h3>
+            <div class="space-y-10 flex-1 relative">
+                <div class="absolute left-[19px] top-0 bottom-0 w-px bg-gray-100"></div>
+                @php $recentLogs = \App\Models\AuditLog::with(['user', 'document'])->latest()->take(5)->get(); @endphp
+                @foreach($recentLogs as $log)
+                <div class="flex gap-6 group relative">
+                    <div class="w-10 h-10 bg-white border-2 border-[#EFEFEF] group-hover:border-[#E85A4F] transition-all rounded-full flex items-center justify-center z-10 shadow-sm">
+                        <i data-lucide="{{ $log->activity == 'login' ? 'log-in' : 'zap' }}" class="w-4 h-4 text-[#8A8A8A] group-hover:text-[#E85A4F] transition-all"></i>
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-sm font-black text-[#1E2432] group-hover:text-[#E85A4F] transition-all">{{ $log->user->name }}</p>
+                        <p class="text-[11px] text-[#1E2432] font-medium leading-relaxed mt-1 opacity-80 truncate">{{ $log->details }}</p>
+                        <p class="text-[9px] text-[#ABABAB] font-bold mt-2 uppercase tracking-widest italic">{{ $log->created_at->diffForHumans() }}</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-sm font-black text-[#1E2432] group-hover:text-[#E85A4F] transition-all">{{ $log->user->name }}</p>
-                    <p class="text-[11px] text-[#1E2432] font-medium leading-relaxed mt-1 opacity-80">{{ $log->details }}</p>
-                    <p class="text-[9px] text-[#ABABAB] font-bold mt-2 uppercase tracking-widest italic">{{ $log->created_at->diffForHumans() }}</p>
-                </div>
+                @endforeach
             </div>
-            @endforeach
+            <a href="{{ route('audit.index') }}" class="mt-12 text-center text-[10px] font-black text-[#ABABAB] hover:text-[#1E2432] uppercase tracking-[0.4em] transition-all border-t border-[#FCFBF9] pt-8 group">
+                Buka Arsip Audit <i data-lucide="external-link" class="w-3 h-3 inline ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all"></i>
+            </a>
         </div>
-        <a href="{{ route('audit.index') }}" class="mt-12 text-center text-[10px] font-black text-[#ABABAB] hover:text-[#1E2432] uppercase tracking-[0.4em] transition-all border-t border-[#FCFBF9] pt-8 group">
-            Buka Arsip Audit <i data-lucide="external-link" class="w-3 h-3 inline ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all"></i>
-        </a>
+        @endif
+
+        <!-- Incoming Document Feed Widget -->
+        @if(($widgets['widget_feed'] ?? 'on') == 'on')
+        <div class="bg-white p-12 rounded-[56px] border border-[#EFEFEF] shadow-sm flex flex-col bento-card flex-1 overflow-hidden relative">
+            <div class="absolute top-0 right-0 p-8 opacity-5">
+                <i data-lucide="zap" class="w-20 h-20 text-[#E85A4F]"></i>
+            </div>
+            <div class="flex justify-between items-center mb-10 relative">
+                <h3 class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.4em]">Antrean Verifikasi</h3>
+                <span class="bg-[#1E2432] text-white text-[8px] font-black px-3 py-1 rounded-full tracking-widest">FEED</span>
+            </div>
+            <div class="space-y-6 flex-1 relative">
+                @php 
+                    $latestPending = \App\Models\Document::where('status', 'pending')->with('employee')->latest()->take(3)->get();
+                @endphp
+                @foreach($latestPending as $pDoc)
+                <div class="p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF] hover:border-[#E85A4F] transition-all group/feed relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-3 relative z-10">
+                        <div class="flex-1 overflow-hidden mr-4">
+                            <p class="text-xs font-black text-[#1E2432] truncate group-hover:text-[#E85A4F] transition-all">{{ $pDoc->title }}</p>
+                            <p class="text-[9px] text-[#8A8A8A] font-bold uppercase tracking-widest mt-1">{{ $pDoc->employee->full_name }}</p>
+                        </div>
+                        <form action="{{ route('documents.verify', $pDoc->id) }}" method="POST" class="no-loader">
+                            @csrf
+                            <button type="submit" class="w-10 h-10 bg-white border border-[#EFEFEF] rounded-xl flex items-center justify-center text-green-600 hover:bg-green-600 hover:text-white transition-all shadow-sm">
+                                <i data-lucide="check" class="w-5 h-5"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="flex items-center justify-between relative z-10 border-t border-gray-100 pt-4">
+                        <span class="text-[8px] font-black text-[#ABABAB] uppercase tracking-tighter">{{ $pDoc->created_at->diffForHumans() }}</span>
+                        <a href="{{ route('documents.employee', $pDoc->employee_id) }}" class="text-[8px] font-black text-[#E85A4F] uppercase tracking-[0.2em] hover:underline flex items-center gap-1">
+                            Tinjau File <i data-lucide="chevron-right" class="w-2 h-2"></i>
+                        </a>
+                    </div>
+                </div>
+                @endforeach
+                @if($latestPending->isEmpty())
+                    <div class="text-center py-12 flex flex-col items-center">
+                        <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4 text-green-200">
+                            <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+                        </div>
+                        <p class="text-[10px] font-black text-[#ABABAB] uppercase tracking-[0.3em]">Antrean Bersih</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+        @endif
     </div>
-    @endif
 </div>
 
 @if(($widgets['widget_chart'] ?? 'on') == 'on')
