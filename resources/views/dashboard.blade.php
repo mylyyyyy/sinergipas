@@ -152,10 +152,15 @@
 <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
     <!-- Compliance Tracking List -->
     @if(($widgets['widget_compliance'] ?? 'on') == 'on')
-    <div class="md:col-span-2 bg-white p-12 rounded-[56px] border border-[#EFEFEF] shadow-sm overflow-hidden flex flex-col transition-all hover:shadow-2xl hover:shadow-gray-100/50 bento-card">
-        <div class="flex justify-between items-center mb-10">
+    <div class="md:col-span-2 bg-white p-10 rounded-[48px] border border-[#EFEFEF] shadow-sm overflow-hidden flex flex-col transition-all hover:shadow-xl bento-card">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
-                <h3 class="text-xl font-black text-[#1E2432] tracking-tight italic">Analitik Kepatuhan Pegawai</h3>
+                <div class="flex items-center gap-3">
+                    <h3 class="text-xl font-black text-[#1E2432] tracking-tight italic">Analitik Kepatuhan Pegawai</h3>
+                    @if($nonCompliantEmployees->count() > 0)
+                        <span class="bg-red-100 text-red-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">{{ $nonCompliantEmployees->count() }} Perlu Tindakan</span>
+                    @endif
+                </div>
                 <p class="text-[9px] font-bold text-[#8A8A8A] uppercase tracking-widest mt-1">Data sinkronisasi terakhir: {{ now()->format('H:i') }} WIB</p>
             </div>
             <div class="flex items-center gap-3 bg-[#FCFBF9] px-4 py-2 rounded-2xl border border-[#EFEFEF]">
@@ -163,75 +168,95 @@
                 <span class="text-[9px] font-black text-[#1E2432] uppercase tracking-widest">LIVE SYNC</span>
             </div>
         </div>
-        <div class="overflow-y-auto flex-1 pr-4 custom-scrollbar" style="max-height: 440px;">
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em] border-b border-[#EFEFEF]">
-                        <th class="pb-6">Nama Pegawai</th>
-                        <th class="pb-6">Status Dokumen</th>
-                        <th class="pb-6 text-center">Interaksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-[#EFEFEF]">
-                    @php $hasMandatory = \App\Models\DocumentCategory::where('is_mandatory', true)->exists(); @endphp
-                    
-                    @if(!$hasMandatory)
-                        <tr>
-                            <td colspan="3" class="py-20 text-center">
-                                <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 text-[#E85A4F]">
-                                    <i data-lucide="alert-circle" class="w-10 h-10"></i>
-                                </div>
-                                <p class="text-sm font-black text-[#1E2432] uppercase tracking-widest mb-3">Aturan Kepatuhan Kosong</p>
-                                <p class="text-[11px] text-[#8A8A8A] font-medium leading-relaxed max-w-xs mx-auto">Tandai kategori dokumen sebagai <span class="font-black text-[#1E2432]">"Wajib"</span> untuk memulai pelacakan.</p>
-                                <a href="{{ route('documents.index') }}" class="mt-8 inline-flex items-center gap-3 bg-[#1E2432] text-white px-8 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-widest hover:bg-[#E85A4F] transition-all shadow-lg">Buka Pengaturan Dokumen <i data-lucide="settings" class="w-4 h-4"></i></a>
-                            </td>
+        
+        <div class="flex-1 overflow-hidden">
+            <div class="overflow-y-auto pr-4 custom-scrollbar" style="max-height: 850px;">
+                <table class="w-full text-left border-separate border-spacing-y-3">
+                    <thead>
+                        <tr class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em]">
+                            <th class="pb-2 pl-4">Identitas Pegawai</th>
+                            <th class="pb-2">Kepatuhan Dokumen</th>
+                            <th class="pb-2 text-right pr-4">Aksi Cepat</th>
                         </tr>
-                    @else
-                        @foreach($nonCompliantEmployees as $emp)
-                        <tr class="group hover:bg-[#FCFBF9]/80 transition-all">
-                            <td class="py-6">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-[10px] font-black text-[#1E2432] group-hover:bg-[#E85A4F] group-hover:text-white transition-all">
-                                        {{ substr($emp->full_name, 0, 1) }}
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-black text-[#1E2432] group-hover:translate-x-1 transition-all">{{ $emp->full_name }}</p>
-                                        <p class="text-[10px] text-[#8A8A8A] font-bold uppercase tracking-widest mt-0.5">NIP. {{ $emp->nip }}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-6">
-                                <div class="flex items-center gap-2">
-                                    <span class="w-2 h-2 bg-red-500 rounded-full"></span>
-                                    <span class="text-[10px] font-black text-red-600 uppercase tracking-widest italic">Belum Terpenuhi</span>
-                                </div>
-                            </td>
-                            <td class="py-6 text-center">
-                                @php
-                                    $waMsg = "Halo " . $emp->full_name . ", kelengkapan dokumen administrasi Anda di Sinergi PAS belum terpenuhi. Mohon segera lengkapi dokumen wajib Anda. Terima kasih.";
-                                    $waUrl = "https://wa.me/" . preg_replace('/[^0-9]/', '', '628123456789') . "?text=" . urlencode($waMsg);
-                                @endphp
-                                <a href="{{ $waUrl }}" target="_blank" class="inline-flex items-center gap-3 bg-white border border-[#EFEFEF] text-[#1E2432] px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-green-600 hover:text-white hover:border-green-600 transition-all shadow-sm">
-                                    <i data-lucide="message-circle" class="w-4 h-4 text-green-600 group-hover:text-white"></i> WhatsApp Blast
-                                </a>
-                            </td>
-                        </tr>
-                        @endforeach
+                    </thead>
+                    <tbody>
+                        @php $hasMandatory = \App\Models\DocumentCategory::where('is_mandatory', true)->exists(); @endphp
                         
-                        @if($nonCompliantEmployees->isEmpty())
+                        @if(!$hasMandatory)
                             <tr>
-                                <td colspan="3" class="py-24 text-center">
-                                    <div class="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600 shadow-inner">
-                                        <i data-lucide="check-circle" class="w-12 h-12"></i>
+                                <td colspan="3" class="py-16 text-center">
+                                    <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#E85A4F] rotate-3">
+                                        <i data-lucide="alert-triangle" class="w-8 h-8"></i>
                                     </div>
-                                    <p class="text-lg font-black text-[#1E2432] italic">Sempurna!</p>
-                                    <p class="text-[10px] text-[#8A8A8A] font-black uppercase tracking-[0.3em] mt-2">Seluruh pegawai telah patuh administrasi.</p>
+                                    <p class="text-sm font-black text-[#1E2432] uppercase tracking-widest mb-2">Aturan Kepatuhan Belum Diatur</p>
+                                    <p class="text-[11px] text-[#8A8A8A] font-medium leading-relaxed max-w-xs mx-auto mb-6">Aktifkan status <span class="font-black text-[#1E2432]">"Wajib"</span> pada kategori dokumen untuk mengaktifkan pelacakan.</p>
+                                    <a href="{{ route('documents.index') }}" class="inline-flex items-center gap-3 bg-[#1E2432] text-white px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[#E85A4F] transition-all">Buka Pengaturan <i data-lucide="arrow-right" class="w-3 h-3"></i></a>
                                 </td>
                             </tr>
+                        @else
+                            @foreach($nonCompliantEmployees as $emp)
+                            <tr class="group">
+                                <td class="py-4 pl-4 bg-[#FCFBF9]/50 rounded-l-2xl border-y border-l border-[#EFEFEF] group-hover:bg-white group-hover:border-[#1E2432]/10 transition-all">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-11 h-11 rounded-xl overflow-hidden bg-white border border-[#EFEFEF] flex items-center justify-center text-xs font-black text-[#1E2432] group-hover:scale-110 transition-all shadow-sm">
+                                            @if($emp->photo_path)
+                                                <img src="{{ asset('storage/' . $emp->photo_path) }}" class="w-full h-full object-cover">
+                                            @else
+                                                {{ substr($emp->full_name, 0, 1) }}
+                                            @endif
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-black text-[#1E2432] leading-none mb-1.5">{{ $emp->full_name }}</p>
+                                            <p class="text-[9px] text-[#8A8A8A] font-black uppercase tracking-widest">NIP. {{ $emp->nip }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 bg-[#FCFBF9]/50 border-y border-[#EFEFEF] group-hover:bg-white group-hover:border-[#1E2432]/10 transition-all">
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex -space-x-1.5 overflow-hidden">
+                                            @php 
+                                                $mandatoryCats = \App\Models\DocumentCategory::where('is_mandatory', true)->get();
+                                                $uploadedCount = \App\Models\Document::where('employee_id', $emp->id)
+                                                    ->whereIn('document_category_id', $mandatoryCats->pluck('id'))
+                                                    ->where('status', 'verified')
+                                                    ->distinct('document_category_id')
+                                                    ->count();
+                                                $totalMandatory = $mandatoryCats->count();
+                                            @endphp
+                                            <div class="h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden">
+                                                <div class="h-full bg-red-500 rounded-full" style="width: {{ $totalMandatory > 0 ? ($uploadedCount / $totalMandatory) * 100 : 0 }}%"></div>
+                                            </div>
+                                        </div>
+                                        <span class="text-[9px] font-black text-red-600 uppercase tracking-tighter">{{ $uploadedCount }}/{{ $totalMandatory }} Dokumen</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 pr-4 bg-[#FCFBF9]/50 rounded-r-2xl border-y border-r border-[#EFEFEF] text-right group-hover:bg-white group-hover:border-[#1E2432]/10 transition-all">
+                                    @php
+                                        $waMsg = "Halo " . $emp->full_name . ", kelengkapan dokumen administrasi Anda di Sinergi PAS belum terpenuhi (" . $uploadedCount . "/" . $totalMandatory . "). Mohon segera lengkapi dokumen wajib Anda. Terima kasih.";
+                                        $waUrl = "https://wa.me/" . preg_replace('/[^0-9]/', '', '628123456789') . "?text=" . urlencode($waMsg);
+                                    @endphp
+                                    <a href="{{ $waUrl }}" target="_blank" class="inline-flex items-center gap-2 bg-white border border-[#EFEFEF] text-[#1E2432] px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-green-600 hover:text-white hover:border-green-600 transition-all shadow-sm">
+                                        <i data-lucide="bell" class="w-3 h-3"></i> Blast
+                                    </a>
+                                </td>
+                            </tr>
+                            @endforeach
+                            
+                            @if($nonCompliantEmployees->isEmpty())
+                                <tr>
+                                    <td colspan="3" class="py-20 text-center">
+                                        <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600 shadow-inner rotate-6">
+                                            <i data-lucide="shield-check" class="w-10 h-10"></i>
+                                        </div>
+                                        <p class="text-base font-black text-[#1E2432] italic">Zero Compliance Issues</p>
+                                        <p class="text-[10px] text-[#8A8A8A] font-black uppercase tracking-[0.3em] mt-1">Seluruh pegawai telah mematuhi aturan administrasi.</p>
+                                    </td>
+                                </tr>
+                            @endif
                         @endif
-                    @endif
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
     @endif
