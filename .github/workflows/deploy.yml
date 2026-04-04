@@ -1,32 +1,53 @@
-name: Deploy to Server
+name: Deploy to Shared Hosting
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  deploy:
+  web-deploy:
+    name: Deploying
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
     steps:
-      - name: Checkout Code
+      - name: Get latest code
         uses: actions/checkout@v4
 
-      - name: Deploy to Server via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          script: |
-            cd /var/www/sinergi-pas
-            git pull origin main
-            composer install --no-dev --optimize-autoloader
-            npm install
-            npm run build
-            php artisan migrate --force
-            php artisan optimize
-            php artisan view:clear
-            php artisan storage:link
+          php-version: '8.2'
+
+      - name: Install Composer Dependencies
+        run: composer install --no-ansi --no-dev --no-interaction --no-plugins --no-progress --no-scripts --optimize-autoloader
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Assets (Vite)
+        run: |
+          npm install
+          npm run build
+
+      - name: Sync Files via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Ubah 'server-dir' ke folder tujuan di hosting Anda (misal: sinergi-app/)
+          server-dir: sinergi-app/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/tests/**
+            **/.env
+            **/storage/*.key
+            **/phpunit.xml
+            **/vite.config.js
+            **/package.json
+            **/package-lock.json
+            **/composer.json
+            **/composer.lock
