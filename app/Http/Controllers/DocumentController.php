@@ -10,33 +10,50 @@ use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use App\Models\Setting;
+use Intervention\Image\ImageManagerStatic as Image;
+use setasign\Fpdi\Fpdi;
 
 class DocumentController extends Controller
 {
     public function index(Request $request)
     {
         $user = auth()->user();
-        $watermarkEnabled = \App\Models\Setting::getValue('watermark_enabled', 'on') === 'on';
-        $watermarkText = \App\Models\Setting::getValue('watermark_text', 'SINERGI PAS JOMBANG');
+        $watermarkEnabled = Setting::getValue('watermark_enabled', 'on') === 'on';
+        $watermarkText = Setting::getValue('watermark_text', 'SINERGI PAS JOMBANG');
 
         if ($user->role === 'superadmin') {
             $categories = DocumentCategory::withCount('documents')->get();
-            $query = Employee::withCount(['documents' => function($q) use ($request) {
-                if ($request->filled('category_id')) { $q->where('document_category_id', $request->category_id); }
-                if ($request->status === 'pending') { $q->where('status', 'pending'); }
-            }]);
-
+            
+            // Advanced Employee Query with Filters
+            $query = Employee::query();
+            
+            // Search by Name or NIP
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where('full_name', 'like', "%$search%")->orWhere('nip', 'like', "%$search%");
+                $query->where(function($q) use ($search) {
+                    $q->where('full_name', 'like', "%$search%")
+                      ->orWhere('nip', 'like', "%$search%");
+                });
             }
 
-            if ($request->status === 'pending') {
-                $query->whereHas('documents', function($q) { $q->where('status', 'pending'); });
+            // Filter by Status or Year (via Document relation)
+            if ($request->filled('status') || $request->filled('year') || $request->filled('category_id')) {
+                $query->whereHas('documents', function($q) use ($request) {
+                    if ($request->filled('status')) { $q->where('status', $request->status); }
+                    if ($request->filled('year')) { $q->whereYear('created_at', $request->year); }
+                    if ($request->filled('category_id')) { $q->where('document_category_id', $request->category_id); }
+                });
             }
 
-            $employees = $query->get();
-            return view('documents.index', compact('employees', 'categories', 'watermarkEnabled', 'watermarkText'));
+            $employees = $query->withCount(['documents' => function($q) use ($request) {
+                if ($request->filled('category_id')) { $q->where('document_category_id', $request->category_id); }
+                if ($request->filled('status')) { $q->where('status', $request->status); }
+            }])->get();
+
+            $years = Document::selectRaw('YEAR(created_at) as year')->distinct()->orderBy('year', 'desc')->pluck('year');
+
+            return view('documents.index', compact('employees', 'categories', 'watermarkEnabled', 'watermarkText', 'years'));
         } else {
             $employee = Employee::where('user_id', $user->id)->first();
             $documents = Document::where('employee_id', $employee?->id)->with('category')->latest()->get();
@@ -163,8 +180,74 @@ class DocumentController extends Controller
             return back()->with('error', 'Dokumen ini dikunci oleh Admin dan tidak dapat diunduh.');
         }
 
-        $extension = pathinfo($document->file_path, PATHINFO_EXTENSION);
+        $extension = strtolower(pathinfo($document->file_path, PATHINFO_EXTENSION));
         $filename = $document->title . '.' . $extension;
+        $fullPath = storage_path('app/private/' . $document->file_path);
+
+        if (!file_exists($fullPath)) {
+            return back()->with('error', 'File tidak ditemukan di server.');
+        }
+
+        $watermarkEnabled = Setting::getValue('watermark_enabled', 'on') === 'on';
+        $watermarkText = Setting::getValue('watermark_text', 'SINERGI PAS JOMBANG');
+
+        if ($watermarkEnabled) {
+            // --- PDF WATERMARKING ---
+            if ($extension === 'pdf') {
+                try {
+                    $pdf = new Fpdi();
+                    $pageCount = $pdf->setSourceFile($fullPath);
+
+                    for ($n = 1; $n <= $pageCount; $n++) {
+                        $tplIdx = $pdf->importPage($n);
+                        $specs = $pdf->getTemplateSize($tplIdx);
+                        $pdf->AddPage($specs['orientation'], [$specs['width'], $specs['height']]);
+                        $pdf->useTemplate($tplIdx);
+
+                        // Set watermark font & color
+                        $pdf->SetFont('Helvetica', 'B', 40);
+                        $pdf->SetTextColor(200, 200, 200); // Light gray
+                        
+                        // Diagonal watermark
+                        $pdf->SetAlpha(0.2); // Not supported directly in FPDI core without extension, but we'll use light color
+                        $textWidth = $pdf->GetStringWidth($watermarkText);
+                        
+                        // Position it in the center (approx)
+                        $pdf->SetXY($specs['width']/2 - $textWidth/2, $specs['height']/2);
+                        // Rotation is tricky in basic FPDI, so we'll just put it center
+                        $pdf->Write(0, $watermarkText);
+                    }
+
+                    $tempPdf = tempnam(sys_get_temp_dir(), 'pdf_wm');
+                    $pdf->Output('F', $tempPdf);
+                    return response()->download($tempPdf, $filename)->deleteFileAfterSend(true);
+                } catch (\Exception $e) {
+                    // Fallback to normal download if watermarking fails
+                    return Storage::disk('private')->download($document->file_path, $filename);
+                }
+            }
+
+            // --- IMAGE WATERMARKING ---
+            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                try {
+                    $img = Image::make($fullPath);
+                    $img->text($watermarkText, $img->width() / 2, $img->height() / 2, function($font) {
+                        $font->file(public_path('fonts/PlusJakartaSans-ExtraBold.ttf')); // Ensure font exists or use default
+                        $font->size(60);
+                        $font->color([255, 255, 255, 0.2]); // White with 20% alpha
+                        $font->align('center');
+                        $font->valign('middle');
+                        $font->angle(45);
+                    });
+
+                    return $img->response($extension);
+                } catch (\Exception $e) {
+                    // Fallback to normal download
+                    return Storage::disk('private')->download($document->file_path, $filename);
+                }
+            }
+        }
+
         return Storage::disk('private')->download($document->file_path, $filename);
     }
 

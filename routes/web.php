@@ -50,6 +50,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('announcements.store');
     Route::delete('/announcements/{announcement}', [\App\Http\Controllers\AnnouncementController::class, 'destroy'])->name('announcements.destroy');
     Route::post('/announcements/{announcement}/toggle', [\App\Http\Controllers\AnnouncementController::class, 'toggle'])->name('announcements.toggle');
+    Route::patch('/announcements/{announcement}/toggle', [\App\Http\Controllers\AnnouncementController::class, 'toggle'])->name('announcements.toggle');
+
+    // System Health Monitoring
+    Route::get('/settings/health', [\App\Http\Controllers\Admin\SystemHealthController::class, 'index'])->name('settings.health');
 
     // Employee Management (Superadmin)
     // Employee Management (Superadmin)

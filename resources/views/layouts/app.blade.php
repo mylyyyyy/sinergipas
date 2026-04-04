@@ -130,8 +130,8 @@
 
         <main class="flex-1 ml-64 min-h-screen relative">
             @php 
-                $activeBanner = \App\Models\Announcement::where('is_active', true)->where('type', 'banner')->latest()->first();
-                $activePopup = \App\Models\Announcement::where('is_active', true)->where('type', 'popup')->latest()->first();
+                $activeBanner = \App\Models\Announcement::active()->where('type', 'banner')->latest()->first();
+                $activePopup = \App\Models\Announcement::active()->where('type', 'popup')->latest()->first();
                 $bannerBg = \App\Models\Setting::getValue('running_text_bg', '#1E2432');
                 $bannerColor = \App\Models\Setting::getValue('running_text_color', '#FFFFFF');
                 $bannerSpeed = \App\Models\Setting::getValue('running_text_speed', '20');

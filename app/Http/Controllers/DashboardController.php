@@ -43,8 +43,6 @@ class DashboardController extends Controller
                 }
             }
             $storageUsed = round($totalSizeBytes / (1024 * 1024), 2); // MB
-            $storageLimit = 1024; // 1GB Limit
-            $storagePercent = min(($storageUsed / $storageLimit) * 100, 100);
 
             // Compliance Tracking: Find employees missing mandatory documents
             $mandatoryCategories = DocumentCategory::where('is_mandatory', true)->get();
@@ -87,7 +85,7 @@ class DashboardController extends Controller
 
             return view('dashboard', compact(
                 'totalEmployees', 'totalDocuments', 'docsToday', 'pendingDocs', 
-                'openIssues', 'storagePercent', 'storageUsed', 'unitPerformance', 
+                'openIssues', 'storageUsed', 'unitPerformance', 
                 'latestEmployees', 'chartData', 'workUnits', 'nonCompliantEmployees',
                 'widgets'
             ));

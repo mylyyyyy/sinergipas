@@ -12,6 +12,8 @@ class AnnouncementController extends Controller
         $request->validate([
             'message' => 'required|string',
             'type' => 'required|in:banner,popup',
+            'starts_at' => 'nullable|date',
+            'expires_at' => 'nullable|date|after_or_equal:starts_at',
         ]);
 
         $ann = Announcement::create([
@@ -19,44 +21,30 @@ class AnnouncementController extends Controller
             'message' => $request->message,
             'type' => $request->type,
             'is_active' => true,
+            'starts_at' => $request->starts_at,
+            'expires_at' => $request->expires_at,
         ]);
 
         \App\Models\AuditLog::create([
             'user_id' => auth()->id(),
             'activity' => 'create_announcement',
             'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . ' menyiarkan pengumuman baru: ' . $ann->message
+            'details' => auth()->user()->name . ' menyiarkan pengumuman (' . $request->type . '): ' . substr($ann->message, 0, 50) . '...'
         ]);
 
-        return back()->with('success', 'Pengumuman berhasil disiarkan.');
+        return back()->with('success', 'Pengumuman berhasil dijadwalkan.');
     }
 
     public function toggle(Announcement $announcement)
     {
         $announcement->update(['is_active' => !$announcement->is_active]);
         
-        \App\Models\AuditLog::create([
-            'user_id' => auth()->id(),
-            'activity' => 'toggle_announcement',
-            'ip_address' => request()->ip(),
-            'details' => auth()->user()->name . ' mengubah status pengumuman: ' . $announcement->message
-        ]);
-
         return back()->with('success', 'Status pengumuman diperbarui.');
     }
 
     public function destroy(Announcement $announcement)
     {
-        $msg = $announcement->message;
         $announcement->delete();
-
-        \App\Models\AuditLog::create([
-            'user_id' => auth()->id(),
-            'activity' => 'delete_announcement',
-            'ip_address' => request()->ip(),
-            'details' => auth()->user()->name . ' menghapus pengumuman: ' . $msg
-        ]);
-
         return back()->with('success', 'Pengumuman dihapus.');
     }
 }
