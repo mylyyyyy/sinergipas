@@ -21,6 +21,14 @@
     
     <link rel="icon" type="image/png" href="{{ asset('logo1.png') }}">
     
+    <!-- PWA Support -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SinergiPAS">
+    <link rel="apple-touch-icon" href="/logo1.png">
+
     <!-- SweetAlert & Progress Bar -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css">
@@ -292,6 +300,31 @@
     </div>
 
     <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SW Registered'))
+                    .catch(err => console.log('SW Error', err));
+            });
+        }
+
+        // Global Toast Notification Helper
+        window.showToast = function(message, icon = 'info') {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+            Toast.fire({ icon: icon, title: message });
+        };
+
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             NProgress.done();

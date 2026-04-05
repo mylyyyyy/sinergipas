@@ -2,134 +2,123 @@
 
 <p align="center">
     <strong>Sistem Informasi Kepegawaian Lapas Jombang</strong><br>
-    <em>"Solusi Modern untuk Manajemen Kepegawaian yang Aman, Efisien, dan Transparan."</em>
+    <em>"Solusi Enterprise Manajemen Kepegawaian yang Aman, Elegan, dan Real-Time."</em>
 </p>
 
 <p align="center">
-    <img src="https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel" alt="Laravel 12">
-    <img src="https://github.com/Arya-Dian/sinergi-pas/actions/workflows/laravel-ci.yml/badge.svg" alt="Laravel CI Status">
+    <img src="https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel" alt="Laravel 11">
     <img src="https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php" alt="PHP 8.2">
     <img src="https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS 4">
-    <img src="https://img.shields.io/badge/Vite-7.0-646CFF?style=for-the-badge&logo=vite" alt="Vite 7">
+    <img src="https://img.shields.io/badge/PWA-Ready-orange?style=for-the-badge&logo=pwa" alt="PWA Ready">
     <img src="https://img.shields.io/badge/MySQL-00758F?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
-    <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
 </p>
 
 ---
 
 ## 🌟 Tentang Sinergi PAS
 
-**Sinergi PAS** adalah platform manajemen kepegawaian internal yang dirancang khusus untuk Lembaga Pemasyarakatan (Lapas) Jombang. Berfokus pada efisiensi operasional dan keamanan data, sistem ini mendigitalisasi seluruh aspek administrasi kepegawaian—mulai dari data profil, manajemen dokumen (Slip Gaji, SKP, SK), hingga pelaporan masalah secara mandiri (Self-Service).
+**Sinergi PAS** adalah platform manajemen kepegawaian internal mutakhir yang dirancang khusus untuk **Lembaga Pemasyarakatan (Lapas) Kelas IIB Jombang**. Aplikasi ini tidak hanya sekadar database, melainkan sebuah ekosistem digital yang menghubungkan administrasi kepegawaian dengan setiap petugas melalui portal mandiri yang premium.
 
-Dengan antarmuka yang modern, responsif, dan premium, Sinergi PAS memberikan pengalaman pengguna yang intuitif baik bagi administrator maupun pegawai.
+Dibangun dengan standar UI/UX modern yang terinspirasi dari identitas resmi instansi, Sinergi PAS mengedepankan kemudahan akses, keamanan data sensitif, dan performa tinggi melalui teknologi Progressive Web App (PWA).
 
 ---
 
-## 🚀 Fitur Utama
+## ✨ Fitur Unggulan Utama
 
-### 🛠️ Untuk Superadmin (Control Center)
-- **Dashboard Analitik**: Visualisasi data pegawai, dokumen masuk hari ini, status penyimpanan (Storage Analytics), dan pelacakan kepatuhan dokumen (Compliance Tracking).
-- **Manajemen Pegawai**: Pengelolaan data lengkap (CRUD), integrasi foto profil, serta fitur Impor/Ekspor massal via Excel & PDF.
-- **Verifikasi Dokumen**: Alur verifikasi dokumen yang ketat—terima, tolak dengan alasan, atau minta revisi dengan riwayat versi yang terdokumentasi.
-- **Audit Logs**: Rekam jejak aktivitas sistem yang mendetail untuk menjamin akuntabilitas dan keamanan data.
-- **Pengaturan Sistem**: Konfigurasi Unit Kerja, Jabatan, dan kustomisasi widget dashboard.
-- **Pengumuman**: Broadcast informasi penting secara real-time ke seluruh pegawai.
+### 📱 Progressive Web App (PWA) Support
+Aplikasi dapat diinstal langsung di perangkat **Android, iOS, maupun Desktop** tanpa melalui PlayStore/AppStore.
+- **Akses Cepat**: Membuka aplikasi langsung dari Home Screen.
+- **Native Experience**: UI yang responsif dan animasi yang halus layaknya aplikasi mobile sungguhan.
+- **Offline Caching**: Memuat aset utama secara instan berkat teknologi Service Worker.
+
+### 🏛️ Identitas & Branding Kustom
+- **Kop Surat Dinamis**: Konfigurasi nama instansi dan satuan kerja yang otomatis tersinkronisasi ke seluruh dokumen PDF dan Excel.
+- **Executive Report**: Export laporan dashboard dan daftar nominatif dengan Header resmi lengkap dengan Logo Instansi.
+- **Live Preview**: Lihat perubahan identitas instansi secara real-time di halaman pengaturan sebelum disimpan.
+
+### 🛠️ Untuk Superadmin (Command Center)
+- **Advanced Dashboard**: Visualisasi real-time dokumen masuk, kepatuhan pegawai (Compliance Tracking), dan analitik penyimpanan server.
+- **Bulk Employee Management**: Fitur Registrasi, Edit, dan Hapus Massal (Bulk Delete) yang intuitif.
+- **Arsip Digital Terpusat**: Grid basis data pegawai dengan indikator dokumen pending yang rapi.
+- **Sistem Pengumuman**: Kendali penuh atas Running Text (Marquee) dan Popup Modal dengan kustomisasi warna serta kecepatan.
+- **Helpdesk Support**: Manajemen laporan masalah dari pegawai dengan status penanganan terorganisir (Open, Resolved, Closed).
+- **Security Audit Log**: Rekam jejak aktivitas sensitif setiap user lengkap dengan detail IP Address dan timestamp.
 
 ### 👤 Untuk Pegawai (Self-Service Portal)
-- **Personal Dashboard**: Ringkasan dokumen pribadi, progres karir berdasarkan dokumen wajib, dan akses cepat ke slip gaji terbaru.
-- **Manajemen Dokumen Mandiri**: Unggah dan kelola dokumen pribadi dengan status verifikasi yang transparan.
-- **Profil Modern**: Update informasi profil dan foto secara mandiri.
-- **Laporan Masalah**: Fitur pelaporan kendala teknis atau administratif langsung kepada admin.
-- **Notifikasi**: Pemberitahuan real-time untuk status dokumen dan pengumuman baru.
+- **Portal Mandiri**: Pantau progres kelengkapan dokumen wajib melalui persentase keterisian yang interaktif.
+- **Quick Download**: Akses instan untuk mengunduh slip gaji terbaru dalam format PDF resmi.
+- **Manajemen Profil**: Update foto profil dan informasi pribadi secara mandiri dengan keamanan ganda.
+- **Real-Time Notification Foundation**: Siap menerima notifikasi pop-up instan (toast) saat dokumen diverifikasi atau laporan dibalas.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Backend
-- **Framework**: Laravel 12.x
-- **Language**: PHP 8.2+
-- **Database**: MySQL 8.0 / MariaDB
-- **Libraries**:
-  - `barryvdh/laravel-dompdf`: Export laporan ke format PDF premium.
-  - `maatwebsite/excel`: Manajemen data masif via Excel/CSV.
-  - `simplesoftwareio/simple-qrcode`: Integrasi QR Code untuk validasi dokumen.
-  - `intervention/image`: Optimasi dan pemrosesan gambar/foto profil.
+### Core Engine
+- **Backend**: Laravel 11 (Latest Stable)
+- **Frontend**: Blade Engine + **Plus Jakarta Sans** Typography
+- **Styling**: Tailwind CSS 4.0 (Custom Premium Theme)
+- **Database**: MySQL 8.0
 
-### Frontend
-- **Framework**: Blade Templating Engine
-- **Styling**: Tailwind CSS 4.0 (Modern utility-first approach)
-- **Build Tool**: Vite 7.0 (Ultra-fast development server)
-- **Components**:
-  - `Lucide Icons`: Ikonografi yang bersih dan modern.
-  - `SweetAlert2`: Notifikasi interaktif dan elegan.
-  - `AOS (Animate On Scroll)`: Animasi transisi yang halus.
+### Advanced Modules
+- **Service Worker**: Untuk fungsionalitas PWA dan Offline Readiness.
+- **Excel Power**: `maatwebsite/excel` dengan dukungan Drawing Logo & Advanced Styling.
+- **PDF Engine**: `barryvdh/laravel-dompdf` dengan optimasi Base64 Images.
+- **UX Components**: Lucide Icons, SweetAlert2, NProgress, & 3D Animation Effects.
 
 ---
 
-## 📦 Instalasi & Penggunaan
+## 📦 Panduan Instalasi Lokal
 
-Ikuti langkah-langkah di bawah ini untuk menjalankan project di lingkungan lokal Anda:
-
-### 1. Clone Repositori
+### 1. Persiapan Awal
+Pastikan Anda memiliki PHP 8.2+, Composer, dan Node.js terinstal.
 ```bash
-git clone https://github.com/username/sinergi-pas.git
+git clone https://github.com/aryadians/sinergi-pas.git
 cd sinergi-pas
 ```
 
-### 2. Setup Otomatis (Recommended)
-Project ini telah dilengkapi dengan script setup otomatis untuk mempercepat proses instalasi:
+### 2. Instalasi Dependensi
 ```bash
-composer setup
-```
-*Script ini akan menjalankan: `composer install`, copy `.env`, `key:generate`, `migrate`, `npm install`, dan `npm build`.*
-
-### 3. Konfigurasi Database
-Buka file `.env` dan sesuaikan kredensial database Anda:
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=sinergi_pas
-DB_USERNAME=root
-DB_PASSWORD=
+composer install
+npm install
 ```
 
-### 4. Jalankan Server Pengembangan
-Gunakan perintah berikut untuk menjalankan server PHP, Queue, dan Vite secara bersamaan:
+### 3. Konfigurasi Lingkungan
+Copy file `.env.example` ke `.env` dan sesuaikan kredensial database Anda:
 ```bash
-composer dev
+cp .env.example .env
+php artisan key:generate
 ```
-Akses aplikasi melalui: `http://localhost:8000`
 
----
+### 4. Migrasi & Seeding
+```bash
+php artisan migrate --seed
+php artisan storage:link
+```
 
-## 📂 Struktur Proyek Utama
-```text
-sinergi-pas/
-├── app/
-│   ├── Http/Controllers/    # Logika bisnis & navigasi
-│   ├── Models/              # Definisi skema & relasi Eloquent
-│   └── Notifications/       # Sistem notifikasi aplikasi
-├── database/
-│   ├── migrations/          # Struktur database version-controlled
-│   └── seeders/             # Data awal & testing
-├── public/                  # Aset publik (Logo, Build files)
-├── resources/
-│   ├── views/               # Antarmuka Blade (Admin & Pegawai)
-│   ├── css/                 # Styling Tailwind
-│   └── js/                  # Interaktivitas JavaScript
-└── routes/
-    └── web.php              # Definisi endpoint & middleware
+### 5. Jalankan Aplikasi
+```bash
+npm run dev
+# Di terminal baru
+php artisan serve
 ```
 
 ---
 
-## 📄 Lisensi
-Proyek ini dilisensikan di bawah [MIT License](LICENSE).
+## 📂 Struktur Penting (Internal Workflow)
+- `app/Exports/`: Logika ekspor Excel dengan branding logo.
+- `public/sw.js`: Service Worker untuk kapabilitas PWA.
+- `resources/views/layouts/app.blade.php`: Global layout dengan sistem animasi 3D.
+- `resources/views/settings/`: Konfigurasi identitas sistem & live preview.
+
+---
+
+## 📄 Lisensi & Kontribusi
+Proyek ini bersifat internal untuk Lapas Jombang. Namun, secara teknis menggunakan lisensi [MIT](LICENSE). Kontribusi untuk perbaikan bug sangat disambut melalui sistem Pull Request.
 
 ---
 
 <p align="center">
-    Dikembangkan dengan ❤️ untuk <strong>Lapas Jombang</strong>
+    Dikembangkan dengan dedikasi tinggi oleh <strong>Arya Dian</strong> untuk <strong>Lapas Jombang</strong><br>
+    © 2026 Sinergi PAS Platform
 </p>
