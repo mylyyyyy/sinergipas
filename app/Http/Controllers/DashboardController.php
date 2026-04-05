@@ -193,20 +193,45 @@ class DashboardController extends Controller
             'details' => auth()->user()->name . ' mengekspor ringkasan dashboard ke Excel',
         ]);
 
-        return Excel::download(new class($data) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+        return Excel::download(new class($data) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithStyles, \Maatwebsite\Excel\Concerns\WithDrawings, \Maatwebsite\Excel\Concerns\WithCustomStartCell {
             protected $data;
             public function __construct($data) { $this->data = $data; }
             public function collection() {
                 return collect([
-                    ['Total Pegawai', $this->data['totalEmployees']],
-                    ['Total Dokumen', $this->data['totalDocuments']],
-                    ['Dokumen Baru Hari Ini', $this->data['docsToday']],
-                    ['Menunggu Verifikasi', $this->data['pendingDocs']],
-                    ['Laporan Masalah Terbuka', $this->data['openIssues']],
-                    ['Penyimpanan Digunakan (MB)', $this->data['storageUsed']],
+                    ['Total Pegawai Terdaftar', $this->data['totalEmployees'] . ' Orang'],
+                    ['Volume Arsip Digital', $this->data['totalDocuments'] . ' Berkas'],
+                    ['Aktivitas Dokumen Hari Ini', $this->data['docsToday'] . ' Berkas Baru'],
+                    ['Antrean Verifikasi Admin', $this->data['pendingDocs'] . ' Berkas'],
+                    ['Laporan Masalah Aktif', $this->data['openIssues'] . ' Laporan'],
+                    ['Penyimpanan Digunakan', $this->data['storageUsed'] . ' MB'],
                 ]);
             }
-            public function headings(): array { return ['Metrik', 'Nilai']; }
+            public function headings(): array { return ['METRIK OPERASIONAL', 'NILAI STATISTIK']; }
+            public function startCell(): string { return 'A7'; }
+            public function drawings() {
+                $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+                $drawing->setName('Logo');
+                $drawing->setPath(public_path('logo1.png'));
+                $drawing->setHeight(80);
+                $drawing->setCoordinates('A1');
+                return $drawing;
+            }
+            public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet) {
+                $kop1 = \App\Models\Setting::getValue('kop_line_1', 'KEMENTERIAN HUKUM DAN HAK ASASI MANUSIA RI');
+                $kop2 = \App\Models\Setting::getValue('kop_line_2', 'LEMBAGA PEMASYARAKATAN KELAS IIB JOMBANG');
+                $sheet->mergeCells('B1:C1'); $sheet->setCellValue('B1', $kop1);
+                $sheet->mergeCells('B2:C2'); $sheet->setCellValue('B2', $kop2);
+                $sheet->getStyle('B1:B2')->getFont()->setBold(true)->setSize(12);
+                $sheet->mergeCells('A5:C5'); $sheet->setCellValue('A5', 'LAPORAN RINGKASAN EKSEKUTIF');
+                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14)->setUnderline(true);
+                $sheet->getStyle('A5')->getAlignment()->setHorizontal('center');
+                $sheet->getStyle('A7:B7')->getFont()->setBold(true);
+                $sheet->getStyle('A7:B7')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F1F5F9');
+                $sheet->getStyle('A7:B13')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                $sheet->getColumnDimension('A')->setAutoSize(true);
+                $sheet->getColumnDimension('B')->setAutoSize(true);
+                return [];
+            }
         }, 'laporan-sinergi-pas.xlsx');
     }
 

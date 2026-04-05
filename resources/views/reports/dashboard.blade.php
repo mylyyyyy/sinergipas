@@ -3,66 +3,158 @@
 <head>
     <title>Laporan Dashboard Sinergi PAS</title>
     <style>
-        body { font-family: sans-serif; font-size: 12px; color: #333; }
-        .kop { text-align: center; margin-bottom: 30px; border-bottom: 3px double #0F172A; padding-bottom: 15px; }
-        .kop h1 { margin: 0; font-size: 18px; font-weight: bold; color: #0F172A; }
-        .kop h2 { margin: 2px 0; font-size: 14px; font-weight: normal; }
-        .kop p { margin: 2px 0; font-size: 10px; font-style: italic; color: #666; }
+        @page { margin: 2cm; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 11px; color: #1e293b; line-height: 1.5; }
         
-        .section-title { background: #0F172A; color: white; padding: 10px; font-weight: bold; margin-top: 20px; text-transform: uppercase; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
-        th { background-color: #fcfcfc; font-weight: bold; width: 40%; }
+        /* Kop Surat Styles */
+        .kop { 
+            position: relative;
+            text-align: center; 
+            margin-bottom: 20px; 
+            border-bottom: 2px solid #0f172a; 
+            padding-bottom: 15px; 
+        }
+        .kop-logo {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 70px;
+            height: auto;
+        }
+        .kop-text {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+        .kop h1 { 
+            margin: 0; 
+            font-size: 14px; 
+            font-weight: bold; 
+            text-transform: uppercase;
+            color: #0f172a; 
+            letter-spacing: 0.5px;
+        }
+        .kop h2 { 
+            margin: 2px 0; 
+            font-size: 16px; 
+            font-weight: 800; 
+            text-transform: uppercase;
+            color: #0f172a;
+        }
+        .kop p { 
+            margin: 2px 0; 
+            font-size: 9px; 
+            color: #64748b; 
+        }
         
-        .summary-grid { margin-top: 20px; }
-        .metric-box { border: 1px solid #eee; padding: 15px; margin-bottom: 10px; }
-        .metric-label { font-size: 10px; color: #888; text-transform: uppercase; font-weight: bold; }
-        .metric-value { font-size: 20px; font-weight: bold; color: #0F172A; }
+        .report-title {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .report-title h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: #0f172a;
+            text-decoration: underline;
+        }
+        .report-meta {
+            text-align: center;
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .section-header { 
+            background: #f1f5f9; 
+            color: #0f172a; 
+            padding: 8px 12px; 
+            font-weight: bold; 
+            font-size: 12px;
+            margin-top: 20px; 
+            text-transform: uppercase; 
+            border-left: 4px solid #0f172a;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px 12px; text-align: left; }
+        th { background-color: #f8fafc; font-weight: bold; color: #475569; width: 45%; }
+        td { color: #1e293b; font-weight: 600; }
+        
+        .footer { 
+            margin-top: 60px; 
+            width: 100%;
+        }
+        .footer-table { width: 100%; border: none; }
+        .footer-table td { border: none; padding: 0; text-align: right; font-weight: normal; }
+        .signature-space { height: 80px; }
     </style>
 </head>
 <body>
     <div class="kop">
-        <h1>{{ \App\Models\Setting::getValue('kop_line_1', 'LEMBAGA PEMASYARAKATAN JOMBANG') }}</h1>
-        <h2>{{ \App\Models\Setting::getValue('kop_line_2', 'KANTOR WILAYAH KEMENTERIAN HUKUM DAN HAM JAWA TIMUR') }}</h2>
-        <p>{{ \App\Models\Setting::getValue('kop_address', 'Jl. KH. Wahid Hasyim No. 123, Jombang') }}</p>
+        @php
+            $logoPath = public_path('logo1.png');
+            $logoData = '';
+            if (file_exists($logoPath)) {
+                $logoData = base64_encode(file_get_contents($logoPath));
+            }
+        @endphp
+        @if($logoData)
+            <img src="data:image/png;base64,{{ $logoData }}" class="kop-logo">
+        @endif
+        <div class="kop-text">
+            <h1>{{ \App\Models\Setting::getValue('kop_line_1', 'KEMENTERIAN HUKUM DAN HAK ASASI MANUSIA RI') }}</h1>
+            <h2>{{ \App\Models\Setting::getValue('kop_line_2', 'LEMBAGA PEMASYARAKATAN KELAS IIB JOMBANG') }}</h2>
+            <p>{{ \App\Models\Setting::getValue('kop_address', 'Jl. KH. Wahid Hasyim No. 123, Jombang, Jawa Timur 61411') }}</p>
+        </div>
     </div>
 
-    <h2 style="text-align: center;">LAPORAN RINGKASAN SISTEM</h2>
-    <p style="text-align: center; font-size: 10px; color: #888;">Periode Laporan: {{ date('F Y') }} | Dicetak pada: {{ date('d M Y, H:i') }}</p>
+    <div class="report-title">
+        <h3>LAPORAN RINGKASAN EKSEKUTIF</h3>
+        <div class="report-meta">
+            ID Laporan: #{{ time() }} | Periode: {{ date('F Y') }}
+        </div>
+    </div>
 
-    <div class="section-title">Statistik Utama</div>
+    <div class="section-header">Indikator Kinerja Utama</div>
     <table>
         <tr>
-            <th>Total Pegawai Terdaftar</th>
+            <th>Total Sumber Daya Manusia (Pegawai)</th>
             <td>{{ $totalEmployees }} Orang</td>
         </tr>
         <tr>
-            <th>Total Dokumen Digital</th>
-            <td>{{ $totalDocuments }} File</td>
+            <th>Volume Arsip Digital Tersimpan</th>
+            <td>{{ $totalDocuments }} Berkas</td>
         </tr>
         <tr>
-            <th>Dokumen Baru Hari Ini</th>
-            <td>{{ $docsToday }} File</td>
+            <th>Aktivitas Dokumen Hari Ini</th>
+            <td>{{ $docsToday }} Berkas Baru</td>
         </tr>
         <tr>
-            <th>Antrean Verifikasi</th>
-            <td>{{ $pendingDocs }} File</td>
+            <th>Berkas Menunggu Verifikasi Admin</th>
+            <td>{{ $pendingDocs }} Berkas</td>
         </tr>
         <tr>
-            <th>Laporan Masalah Aktif</th>
-            <td>{{ $openIssues }} Laporan</td>
+            <th>Total Laporan Masalah / Helpdesk</th>
+            <td>{{ $openIssues }} Laporan Aktif</td>
         </tr>
         <tr>
-            <th>Penggunaan Penyimpanan Server</th>
-            <td>{{ $storageUsed }} MB</td>
+            <th>Utilisasi Penyimpanan Server</th>
+            <td>{{ number_format($storageUsed, 2) }} MB Terpakai</td>
         </tr>
     </table>
 
-    <div class="footer" style="margin-top: 50px; text-align: right;">
-        <p>Jombang, {{ date('d F Y') }}</p>
-        <br><br><br>
-        <p><strong>ADMINISTRATOR SISTEM</strong></p>
-        <p style="font-size: 9px; color: #aaa;">Sinergi PAS - Internal Registry Report</p>
+    <div class="footer">
+        <table class="footer-table">
+            <tr>
+                <td>
+                    <p>Jombang, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
+                    <p><strong>Administrator Sistem Sinergi PAS</strong></p>
+                    <div class="signature-space"></div>
+                    <p>__________________________</p>
+                    <p style="font-size: 8px; color: #94a3b8; margin-top: 5px;">Generated automatically by Sinergi PAS Platform</p>
+                </td>
+            </tr>
+        </table>
     </div>
 </body>
 </html>
