@@ -24,6 +24,14 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
+        $request->validate([
+            'watermark_enabled' => ['nullable', 'in:on,off'],
+            'running_text_speed' => ['nullable', 'integer', 'min:5', 'max:120'],
+            'running_text_bg' => ['nullable', 'string', 'max:20'],
+            'running_text_color' => ['nullable', 'string', 'max:20'],
+            'compliance_whatsapp_number' => ['nullable', 'string', 'max:30'],
+        ]);
+
         foreach ($request->except('_token') as $key => $value) {
             Setting::updateOrCreate(['key' => $key], ['value' => $value]);
         }

@@ -31,6 +31,7 @@
     $selectedUnitName = $workUnits->firstWhere('id', request('work_unit_id'))?->name;
     $unitLabel = $selectedUnitName ?: 'Seluruh Unit Kerja';
     $displayedNonCompliantEmployees = $nonCompliantEmployees->count();
+    $hasMandatory = $totalMandatoryCategories > 0;
 @endphp
 
 <div class="relative overflow-hidden rounded-[56px] bg-[#1E2432] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10 mb-12">
@@ -217,8 +218,6 @@
             </div>
 
             <div class="overflow-y-auto pr-2 custom-scrollbar flex-1 min-h-0">
-                @php $hasMandatory = \App\Models\DocumentCategory::where('is_mandatory', true)->exists(); @endphp
-                
                 @if(!$hasMandatory)
                     <div class="py-20 text-center">
                         <div class="w-20 h-20 bg-orange-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-orange-500 rotate-3 border border-orange-100 shadow-inner">
@@ -246,23 +245,13 @@
                             </div>
                             
                             <div class="flex flex-col items-center sm:items-end gap-3 w-full sm:w-auto">
-                                @php 
-                                    $mandatoryCats = \App\Models\DocumentCategory::where('is_mandatory', true)->get();
-                                    $uploadedCount = \App\Models\Document::where('employee_id', $emp->id)
-                                        ->whereIn('document_category_id', $mandatoryCats->pluck('id'))
-                                        ->where('status', 'verified')
-                                        ->distinct('document_category_id')
-                                        ->count();
-                                    $totalMandatory = $mandatoryCats->count();
-                                    $percent = $totalMandatory > 0 ? ($uploadedCount / $totalMandatory) * 100 : 0;
-                                @endphp
                                 <div class="flex items-center gap-4">
                                     <div class="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                        <div class="h-full bg-[#E85A4F] rounded-full transition-all duration-1000" style="width: {{ $percent }}%"></div>
+                                        <div class="h-full bg-[#E85A4F] rounded-full transition-all duration-1000" style="width: {{ $emp->compliance_percent }}%"></div>
                                     </div>
-                                    <span class="text-[10px] font-black text-red-600 uppercase">{{ $uploadedCount }}/{{ $totalMandatory }}</span>
+                                    <span class="text-[10px] font-black text-red-600 uppercase">{{ $emp->uploaded_mandatory_count }}/{{ $emp->total_mandatory_count }}</span>
                                 </div>
-                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', '628123456789') }}?text={{ urlencode('Halo ' . $emp->full_name . ', mohon segera lengkapi dokumen wajib Anda di portal Sinergi PAS. Terima kasih.') }}" target="_blank" class="flex items-center gap-2 bg-white px-6 py-2.5 rounded-xl border border-[#EFEFEF] text-[9px] font-black uppercase tracking-[0.2em] hover:bg-green-600 hover:text-white hover:border-green-600 transition-all shadow-sm">
+                                <a href="{{ $emp->whatsapp_link }}" target="_blank" class="flex items-center gap-2 bg-white px-6 py-2.5 rounded-xl border border-[#EFEFEF] text-[9px] font-black uppercase tracking-[0.2em] hover:bg-green-600 hover:text-white hover:border-green-600 transition-all shadow-sm">
                                     <i data-lucide="message-circle" class="w-3 h-3"></i> WhatsApp Blast
                                 </a>
                             </div>
@@ -341,14 +330,13 @@
                 <span class="w-2 h-2 bg-[#E85A4F] rounded-full animate-ping"></span>
             </div>
             <div class="space-y-8 flex-1 overflow-y-auto custom-scrollbar pr-4 relative z-10">
-                @php $recentLogs = \App\Models\AuditLog::with(['user'])->latest()->take(5)->get(); @endphp
                 @foreach($recentLogs as $log)
                 <div class="flex gap-5 group">
                     <div class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-[#E85A4F] transition-all flex-shrink-0">
                         <i data-lucide="{{ str_contains($log->activity, 'upload') ? 'upload-cloud' : 'activity' }}" class="w-4 h-4 text-white"></i>
                     </div>
                     <div class="overflow-hidden">
-                        <p class="text-[11px] font-black tracking-tight leading-tight">{{ $log->user->name }}</p>
+                        <p class="text-[11px] font-black tracking-tight leading-tight">{{ $log->user->name ?? 'Sistem' }}</p>
                         <p class="text-[10px] opacity-50 mt-1 truncate">{{ $log->details }}</p>
                         <p class="text-[8px] font-bold opacity-30 uppercase mt-2 italic">{{ $log->created_at->diffForHumans() }}</p>
                     </div>
@@ -388,8 +376,8 @@
                     backgroundColor: '#1E2432',
                     padding: 16,
                     cornerRadius: 16,
-                    titleFont: { family: 'Plus Jakarta Sans', weight: 'bold' },
-                    bodyFont: { family: 'Plus Jakarta Sans' }
+                    titleFont: { family: 'Roboto', weight: 'bold' },
+                    bodyFont: { family: 'Roboto' }
                 }
             },
             animation: { animateRotate: true, duration: 2000 }

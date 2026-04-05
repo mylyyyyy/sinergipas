@@ -5,16 +5,58 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ReportIssue;
 use App\Models\AuditLog;
+use App\Models\WorkUnit;
 use Illuminate\Http\Request;
 
 use App\Notifications\IssueRepliedNotification;
 
 class ReportIssueController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $issues = ReportIssue::with('user')->latest()->paginate(10);
-        return view('admin.report-issues.index', compact('issues'));
+        $query = ReportIssue::with(['user.employee.work_unit']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($builder) use ($search) {
+                $builder->where('subject', 'like', "%{$search}%")
+                    ->orWhere('message', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('user.employee', function ($employeeQuery) use ($search) {
+                        $employeeQuery->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('nip', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        if ($request->filled('work_unit_id')) {
+            $query->whereHas('user.employee', function ($employeeQuery) use ($request) {
+                $employeeQuery->where('work_unit_id', $request->work_unit_id);
+            });
+        }
+
+        $issues = (clone $query)->latest()->paginate(10)->withQueryString();
+        $issueStats = [
+            'total' => (clone $query)->count(),
+            'open' => (clone $query)->where('status', 'open')->count(),
+            'resolved' => (clone $query)->where('status', 'resolved')->count(),
+            'closed' => (clone $query)->where('status', 'closed')->count(),
+        ];
+        $workUnits = WorkUnit::orderBy('name')->get(['id', 'name']);
+
+        return view('admin.report-issues.index', compact('issues', 'issueStats', 'workUnits'));
     }
 
     public function update(Request $request, ReportIssue $issue)

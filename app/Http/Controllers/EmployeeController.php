@@ -160,10 +160,28 @@ class EmployeeController extends Controller
         return back()->with('success', 'Data pegawai berhasil diimpor.');
     }
 
-    public function exportExcel() { return Excel::download(new EmployeesExport, 'daftar-pegawai.xlsx'); }
+    public function exportExcel(Request $request)
+    {
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'export_employees_excel',
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . ' mengekspor data pegawai ke Excel',
+        ]);
+
+        return Excel::download(new EmployeesExport, 'daftar-pegawai.xlsx');
+    }
     
-    public function exportPdf() {
+    public function exportPdf(Request $request) {
         $employees = Employee::with(['position_relation', 'work_unit'])->get();
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'export_employees_pdf',
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . ' mengekspor data pegawai ke PDF',
+        ]);
+
         $pdf = Pdf::loadView('employees.pdf', compact('employees'));
         return $pdf->download('daftar-pegawai.pdf');
     }
@@ -206,7 +224,11 @@ class EmployeeController extends Controller
 
     public function bulkDestroy(Request $request)
     {
-        $ids = $request->ids;
+        $ids = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:employees,id'],
+        ])['ids'];
+
         if (empty($ids)) return back()->with('error', 'Tidak ada data terpilih.');
 
         $employees = Employee::whereIn('id', $ids)->get();

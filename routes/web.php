@@ -43,26 +43,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard/export/pdf', [DashboardController::class, 'exportPdf'])->name('dashboard.export.pdf');
-    Route::get('/dashboard/export/excel', [DashboardController::class, 'exportExcel'])->name('dashboard.export.excel');
 
     // Announcements
     Route::post('/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('announcements.store');
     Route::delete('/announcements/{announcement}', [\App\Http\Controllers\AnnouncementController::class, 'destroy'])->name('announcements.destroy');
     Route::post('/announcements/{announcement}/toggle', [\App\Http\Controllers\AnnouncementController::class, 'toggle'])->name('announcements.toggle');
     Route::patch('/announcements/{announcement}/toggle', [\App\Http\Controllers\AnnouncementController::class, 'toggle'])->name('announcements.toggle');
-
-    // System Health Monitoring
-    Route::get('/settings/health', [\App\Http\Controllers\Admin\SystemHealthController::class, 'index'])->name('settings.health');
-
-    // Employee Management (Superadmin)
-    // Employee Management (Superadmin)
-    Route::post('/employees/import/excel', [EmployeeController::class, 'importExcel'])->name('employees.import.excel');
-    Route::get('/employees/export/excel', [EmployeeController::class, 'exportExcel'])->name('employees.export.excel');
-    Route::get('/employees/export/pdf', [EmployeeController::class, 'exportPdf'])->name('employees.export.pdf');
-    Route::delete('/employees/bulk-destroy', [EmployeeController::class, 'bulkDestroy'])->name('employees.bulk-destroy');
-    Route::delete('/employees/{employee}/photo', [EmployeeController::class, 'deletePhoto'])->name('employees.photo.destroy');
-    Route::resource('employees', EmployeeController::class);
 
     // Document Management
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
@@ -81,12 +67,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/documents/{document}/toggle-lock', [DocumentController::class, 'toggleLock'])->name('documents.toggle-lock');
 
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
-
-    Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
-    
-    // Audit Logs (Admin)
-    Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
-    Route::delete('/audit/clear', [AuditController::class, 'destroyAll'])->name('audit.clear');
     
     // Profile Settings
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
@@ -102,6 +82,20 @@ Route::middleware('auth')->group(function () {
 
     // System Settings (Superadmin)
     Route::middleware('can:superadmin')->group(function () {
+        Route::get('/dashboard/export/pdf', [DashboardController::class, 'exportPdf'])->name('dashboard.export.pdf');
+        Route::get('/dashboard/export/excel', [DashboardController::class, 'exportExcel'])->name('dashboard.export.excel');
+        Route::get('/settings/health', [\App\Http\Controllers\Admin\SystemHealthController::class, 'index'])->name('settings.health');
+
+        Route::post('/employees/import/excel', [EmployeeController::class, 'importExcel'])->name('employees.import.excel');
+        Route::get('/employees/export/excel', [EmployeeController::class, 'exportExcel'])->name('employees.export.excel');
+        Route::get('/employees/export/pdf', [EmployeeController::class, 'exportPdf'])->name('employees.export.pdf');
+        Route::delete('/employees/bulk-destroy', [EmployeeController::class, 'bulkDestroy'])->name('employees.bulk-destroy');
+        Route::delete('/employees/{employee}/photo', [EmployeeController::class, 'deletePhoto'])->name('employees.photo.destroy');
+        Route::resource('employees', EmployeeController::class);
+
+        Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
+        Route::delete('/audit/clear', [AuditController::class, 'destroyAll'])->name('audit.clear');
+
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
 

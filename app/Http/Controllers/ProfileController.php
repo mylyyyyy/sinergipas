@@ -112,10 +112,17 @@ class ProfileController extends Controller
             'message' => 'required|string',
         ]);
 
-        ReportIssue::create([
+        $issue = ReportIssue::create([
             'user_id' => auth()->id(),
             'subject' => $request->subject,
             'message' => $request->message,
+        ]);
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'create_report_issue',
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . ' mengirim laporan masalah: ' . $issue->subject,
         ]);
 
         return back()->with('success', 'Laporan Anda telah terkirim ke Admin.');

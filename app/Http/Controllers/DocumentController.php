@@ -64,6 +64,11 @@ class DocumentController extends Controller
 
     public function showEmployeeFolders(Employee $employee, Request $request)
     {
+        $user = auth()->user();
+        if ($user->role !== 'superadmin' && $employee->user_id !== $user->id) {
+            abort(403);
+        }
+
         $query = Document::where('employee_id', $employee->id)->with('category');
         $watermarkEnabled = \App\Models\Setting::getValue('watermark_enabled', 'on') === 'on';
         $watermarkText = \App\Models\Setting::getValue('watermark_text', 'SINERGI PAS JOMBANG');
@@ -79,6 +84,8 @@ class DocumentController extends Controller
 
     public function verify(Document $document)
     {
+        $this->ensureSuperadmin();
+
         $document->status = 'verified';
         $document->verified_at = now();
         $document->is_locked = true;
@@ -97,11 +104,7 @@ class DocumentController extends Controller
 
     public function preview(Document $document)
     {
-        $user = auth()->user();
-        if ($user->role !== 'superadmin') {
-            $employee = Employee::where('user_id', $user->id)->first();
-            if ($document->employee_id !== $employee?->id) abort(403);
-        }
+        $this->ensureDocumentOwnerOrSuperadmin($document);
         $path = storage_path('app/private/' . $document->file_path);
         if (!file_exists($path)) abort(404);
         return response()->file($path, ['Content-Disposition' => 'inline']);
@@ -109,12 +112,8 @@ class DocumentController extends Controller
 
     public function previewVersion(DocumentVersion $version)
     {
-        $user = auth()->user();
         $document = $version->document;
-        if ($user->role !== 'superadmin') {
-            $employee = Employee::where('user_id', $user->id)->first();
-            if ($document->employee_id !== $employee?->id) abort(403);
-        }
+        $this->ensureDocumentOwnerOrSuperadmin($document);
         $path = storage_path('app/private/' . $version->file_path);
         if (!file_exists($path)) abort(404);
         return response()->file($path, ['Content-Disposition' => 'inline']);
@@ -122,6 +121,8 @@ class DocumentController extends Controller
 
     public function reject(Request $request, Document $document)
     {
+        $this->ensureSuperadmin();
+
         $request->validate(['rejection_reason' => 'required|string|max:500']);
         
         $document->status = 'rejected';
@@ -143,11 +144,17 @@ class DocumentController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        $request->validate([
+        $rules = [
             'document_category_id' => 'required|exists:document_categories,id',
             'title' => 'required|string|max:255',
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png,xls,xlsx,csv,doc,docx|max:10240' // Expanded validation
-        ]);
+        ];
+
+        if ($user->role === 'superadmin') {
+            $rules['employee_id'] = 'required|exists:employees,id';
+        }
+
+        $request->validate($rules);
         
         $employeeId = $user->role === 'superadmin' ? $request->employee_id : Employee::where('user_id', $user->id)->first()->id;
         $path = $request->file('file')->store('documents', 'private');
@@ -166,13 +173,25 @@ class DocumentController extends Controller
 
     public function toggleLock(Document $document)
     {
+        $this->ensureSuperadmin();
+
         $document->is_locked = !$document->is_locked;
         $document->save();
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'document_id' => $document->id,
+            'activity' => $document->is_locked ? 'lock_document' : 'unlock_document',
+            'ip_address' => request()->ip(),
+            'details' => auth()->user()->name . ' ' . ($document->is_locked ? 'mengunci' : 'membuka kunci') . ' dokumen: ' . $document->title,
+        ]);
+
         return back()->with('success', 'Status kunci diperbarui.');
     }
 
     public function download(Document $document)
     {
+        $this->ensureDocumentOwnerOrSuperadmin($document);
         $user = auth()->user();
         
         // Prevent download if locked and not superadmin
@@ -187,6 +206,14 @@ class DocumentController extends Controller
         if (!file_exists($fullPath)) {
             return back()->with('error', 'File tidak ditemukan di server.');
         }
+
+        AuditLog::create([
+            'user_id' => $user->id,
+            'document_id' => $document->id,
+            'activity' => 'download_document',
+            'ip_address' => request()->ip(),
+            'details' => $user->name . ' mengunduh dokumen: ' . $document->title,
+        ]);
 
         $watermarkEnabled = Setting::getValue('watermark_enabled', 'on') === 'on';
         $watermarkText = Setting::getValue('watermark_text', 'SINERGI PAS JOMBANG');
@@ -253,6 +280,12 @@ class DocumentController extends Controller
 
     public function destroy(Document $document)
     {
+        $this->ensureDocumentOwnerOrSuperadmin($document);
+
+        if ($document->is_locked && auth()->user()?->role !== 'superadmin') {
+            return back()->with('error', 'Dokumen yang telah dikunci admin tidak dapat dihapus.');
+        }
+
         $title = $document->title;
         Storage::disk('private')->delete($document->file_path);
         $document->delete();
@@ -269,6 +302,11 @@ class DocumentController extends Controller
 
     public function storeCategory(Request $request)
     {
+        $this->ensureSuperadmin();
+        $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:document_categories,name'],
+        ]);
+
         $cat = DocumentCategory::create([
             'name' => $request->name, 
             'slug' => \Illuminate\Support\Str::slug($request->name),
@@ -287,10 +325,22 @@ class DocumentController extends Controller
 
     public function bulkAction(Request $request)
     {
-        $ids = $request->ids;
+        $this->ensureSuperadmin();
+
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:documents,id'],
+            'action' => ['required', 'in:delete,lock,unlock'],
+        ]);
+
+        $ids = $validated['ids'];
         if (empty($ids)) return back()->with('error', 'Tidak ada data terpilih.');
 
         if ($request->action === 'delete') {
+            $documents = Document::whereIn('id', $ids)->get();
+            foreach ($documents as $document) {
+                Storage::disk('private')->delete($document->file_path);
+            }
             Document::whereIn('id', $ids)->delete();
             $activity = 'bulk_delete';
             $msg = 'menghapus ' . count($ids) . ' dokumen';
@@ -316,6 +366,8 @@ class DocumentController extends Controller
 
     public function destroyCategory(DocumentCategory $category)
     {
+        $this->ensureSuperadmin();
+
         if ($category->documents()->count() > 0) {
             return back()->with('error', 'Kategori ini tidak bisa dihapus karena masih memiliki dokumen terkait.');
         }
@@ -334,6 +386,12 @@ class DocumentController extends Controller
 
     public function storeRevision(Request $request, Document $document)
     {
+        $this->ensureDocumentOwnerOrSuperadmin($document);
+
+        if ($document->is_locked && auth()->user()?->role !== 'superadmin') {
+            return back()->with('error', 'Dokumen yang sudah dikunci admin tidak bisa direvisi langsung.');
+        }
+
         $request->validate([
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png,xls,xlsx,csv,doc,docx|max:10240'
         ]);
@@ -376,13 +434,17 @@ class DocumentController extends Controller
 
     public function bulkStore(Request $request)
     {
-        $request->validate([
+        $rules = [
             'files.*' => 'required|file|mimes:pdf,jpg,jpeg,png,xls,xlsx,csv,doc,docx|max:10240',
             'categories.*' => 'required|exists:document_categories,id',
             'titles.*' => 'required|string|max:255',
-        ]);
+        ];
 
         $user = auth()->user();
+        if ($user->role === 'superadmin') {
+            $rules['employee_id'] = 'required|exists:employees,id';
+        }
+        $request->validate($rules);
         $employeeId = $user->role === 'superadmin' ? $request->employee_id : Employee::where('user_id', $user->id)->first()->id;
 
         DB::beginTransaction();
@@ -411,5 +473,22 @@ class DocumentController extends Controller
             DB::rollBack();
             return back()->with('error', 'Gagal melakukan bulk upload: ' . $e->getMessage());
         }
+    }
+
+    private function ensureSuperadmin(): void
+    {
+        abort_unless(auth()->user()?->role === 'superadmin', 403);
+    }
+
+    private function ensureDocumentOwnerOrSuperadmin(Document $document): void
+    {
+        $user = auth()->user();
+
+        if ($user?->role === 'superadmin') {
+            return;
+        }
+
+        $employee = Employee::where('user_id', $user?->id)->first();
+        abort_unless($employee && $document->employee_id === $employee->id, 403);
     }
 }

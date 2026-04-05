@@ -5,12 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sinergi PAS - Login Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;500;600;700;800&family=Montserrat:wght@500;600;700;800&family=Poppins:wght@500;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --font-display: 'Montserrat', sans-serif;
+            --font-body: 'Open Sans', sans-serif;
+            --font-ui: 'Poppins', sans-serif;
+            --font-data: 'Roboto', sans-serif;
+            --font-caption: 'Lato', sans-serif;
+        }
         body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
+            font-family: var(--font-body);
             background: radial-gradient(circle at top right, #fff5f4, #ffffff);
         }
+        h1, h2, h3, h4, h5, h6, .font-extrabold, .font-black {
+            font-family: var(--font-display);
+        }
+        button { font-family: var(--font-ui); }
+        input, textarea { font-family: var(--font-data); }
+        label, .text-xs { font-family: var(--font-caption); }
         .glass-card {
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(20px);

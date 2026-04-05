@@ -7,7 +7,7 @@
     
     <!-- Scripts & Styles -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;500;600;700;800&family=Montserrat:wght@500;600;700;800&family=Poppins:wght@500;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
     
     <!-- Optimized Icon Loading -->
     <script src="https://unpkg.com/lucide@latest" defer></script>
@@ -20,12 +20,31 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
 
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FCFBF9; color: #1E2432; }
+        :root {
+            --font-display: 'Montserrat', sans-serif;
+            --font-body: 'Open Sans', sans-serif;
+            --font-ui: 'Poppins', sans-serif;
+            --font-data: 'Roboto', sans-serif;
+            --font-caption: 'Lato', sans-serif;
+        }
+        body { font-family: var(--font-body); background-color: #FCFBF9; color: #1E2432; font-size: 15px; line-height: 1.6; }
+        h1, h2, h3, h4, h5, h6, .font-black { font-family: var(--font-display); letter-spacing: -0.02em; }
+        button, .sidebar-item, .swal2-confirm, .swal2-cancel, select { font-family: var(--font-ui); }
+        input, textarea, table, th, td { font-family: var(--font-data); }
+        label, .text-xs, .text-\[10px\], .text-\[9px\], .text-\[8px\], .text-\[11px\] { font-family: var(--font-caption); }
         .sidebar-item:hover { background-color: #F5F4F2; }
         .sidebar-item.active { background-color: #E85A4F; color: white !important; }
         .sidebar-item.active i { color: white !important; }
         .rounded-[40px] { border-radius: 40px; }
-        
+        .mobile-sidebar-backdrop {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .app-sidebar {
+            transition: transform 0.3s ease;
+        }
+
         /* Glassmorphism SweetAlert Custom */
         .swal2-popup { border-radius: 32px !important; padding: 2rem !important; }
         .swal2-title { font-weight: 800 !important; color: #1E2432 !important; }
@@ -59,6 +78,27 @@
         /* Smooth page transition */
         .page-fade { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            body {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 1023px) {
+            body.sidebar-open {
+                overflow: hidden;
+            }
+
+            body.sidebar-open .mobile-sidebar-backdrop {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            body.sidebar-open .app-sidebar {
+                transform: translateX(0);
+            }
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -67,8 +107,10 @@
         <p class="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-[#1E2432]">Sinkronisasi Sistem...</p>
     </div>
 
+    <div id="mobileSidebarBackdrop" class="mobile-sidebar-backdrop fixed inset-0 z-30 bg-[#1E2432]/35 lg:hidden" onclick="closeSidebar()"></div>
+
     <div class="flex min-h-screen">
-        <aside class="w-64 bg-white border-r border-[#EFEFEF] flex flex-col px-6 py-8 fixed h-full z-20">
+        <aside id="appSidebar" class="app-sidebar fixed inset-y-0 left-0 z-40 flex h-full w-72 -translate-x-full flex-col border-r border-[#EFEFEF] bg-white px-6 py-8 lg:w-64 lg:translate-x-0">
             <div class="flex items-center gap-3 mb-12">
                 <img src="{{ asset('logo1.png') }}" class="w-10 h-10 object-contain">
                 <h1 class="text-lg font-black text-[#1E2432] tracking-tighter uppercase">SINERGI PAS</h1>
@@ -128,7 +170,7 @@
             </div>
         </aside>
 
-        <main class="flex-1 ml-64 min-h-screen relative">
+        <main class="relative min-h-screen flex-1 lg:ml-64">
             @php 
                 $activeBanner = \App\Models\Announcement::active()->where('type', 'banner')->latest()->first();
                 $activePopup = \App\Models\Announcement::active()->where('type', 'popup')->latest()->first();
@@ -150,9 +192,14 @@
             </style>
             @endif
 
-            <header class="h-20 bg-white border-b border-[#EFEFEF] flex items-center justify-between px-10 sticky top-0 z-10">
-                <h2 class="text-xl font-black text-[#1E2432] tracking-tight italic">@yield('header-title')</h2>
-                <div class="flex items-center gap-4">
+            <header class="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-[#EFEFEF] bg-white px-5 sm:px-6 lg:px-10">
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="toggleSidebar()" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-[#1E2432] shadow-sm transition-all hover:border-[#E85A4F] hover:text-[#E85A4F] lg:hidden">
+                        <i data-lucide="menu" class="h-5 w-5"></i>
+                    </button>
+                    <h2 class="text-lg font-black tracking-tight text-[#1E2432] sm:text-xl">@yield('header-title')</h2>
+                </div>
+                <div class="flex items-center gap-3 sm:gap-4">
                     <!-- Notification Bell -->
                     <div class="relative">
                         @php $unreadCount = auth()->user()->unreadNotifications->count(); @endphp
@@ -189,7 +236,7 @@
                         </div>
                     </div>
 
-                    <a href="{{ route('profile.index') }}" class="flex items-center gap-3 p-2 bg-[#FCFBF9] rounded-2xl border border-[#EFEFEF] hover:shadow-md transition-all">
+                    <a href="{{ route('profile.index') }}" class="flex items-center gap-3 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] p-2 transition-all hover:shadow-md">
                         @php $sidebarEmployee = \App\Models\Employee::where('user_id', auth()->id())->first(); @endphp
                         <div class="w-10 h-10 bg-[#E85A4F] rounded-xl flex items-center justify-center text-white font-black overflow-hidden text-xs shadow-lg shadow-red-100">
                             @if($sidebarEmployee && $sidebarEmployee->photo)
@@ -199,11 +246,11 @@
                             @endif
                         </div>
 
-                        <span class="text-xs font-black text-[#1E2432] pr-2">{{ auth()->user()->name }}</span>
+                        <span class="hidden pr-2 text-xs font-black text-[#1E2432] sm:inline">{{ auth()->user()->name }}</span>
                     </a>
                 </div>
             </header>
-            <div class="p-10 page-fade">@yield('content')</div>
+            <div class="page-fade p-5 sm:p-6 lg:p-10">@yield('content')</div>
         </main>
     </div>
 
@@ -222,10 +269,24 @@
             dropdown.classList.toggle('hidden');
         }
 
+        function toggleSidebar() {
+            document.body.classList.toggle('sidebar-open');
+        }
+
+        function closeSidebar() {
+            document.body.classList.remove('sidebar-open');
+        }
+
         window.addEventListener('click', function(e) {
             const dropdown = document.getElementById('notificationDropdown');
             if (!e.target.closest('.relative')) {
                 dropdown.classList.add('hidden');
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 1024) {
+                closeSidebar();
             }
         });
 

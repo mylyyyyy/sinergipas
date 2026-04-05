@@ -109,10 +109,7 @@
                     <span class="h-2 w-2 rounded-full bg-[#E85A4F]"></span>
                     Panel Pengaturan Sistem
                 </div>
-                <h2 class="max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">Rapikan konfigurasi inti, siaran, dan master data dalam satu workspace yang lebih tertata.</h2>
-                <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-white/70">
-                    Halaman ini sekarang disusun ulang supaya tiap kelompok pengaturan punya hirarki yang jelas, preview yang lebih membantu, dan aksi yang mudah dijangkau saat bekerja cepat.
-                </p>
+                <h2 class="max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">Konfigurasi inti platform.</h2>
             </div>
 
             <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
@@ -195,10 +192,7 @@
             <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#E85A4F]">Konfigurasi Inti</p>
-                    <h3 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Susun ulang tampilan dasar sistem dan identitas instansi.</h3>
-                    <p class="mt-3 max-w-3xl text-sm font-medium leading-relaxed text-[#8A8A8A]">
-                        Semua pengaturan utama dikelompokkan berdasarkan fungsi agar admin lebih cepat memindai modul aktif, keamanan dokumen, tampilan banner, dan detail kop surat.
-                    </p>
+                    <h3 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Konfigurasi inti.</h3>
                 </div>
                 <div class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A] shadow-sm">
                     <i data-lucide="save" class="h-4 w-4 text-[#1E2432]"></i>
@@ -215,7 +209,6 @@
                             </div>
                             <div>
                                 <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Modul Dashboard</h4>
-                                <p class="mt-2 max-w-2xl text-sm font-medium leading-relaxed text-[#8A8A8A]">Pilih komponen yang ingin tetap tampil di dashboard utama agar informasi terasa padat tapi tidak penuh.</p>
                             </div>
                         </div>
                         <div class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#1E2432] shadow-sm">
@@ -224,24 +217,32 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-4 p-8 md:grid-cols-2">
+                    <div class="grid gap-4 p-6 sm:p-8 xl:grid-cols-2">
                         @foreach ($widgetsList as $widget)
                             @php $isChecked = ($settings[$widget['key']] ?? 'on') === 'on'; @endphp
-                            <label class="group flex cursor-pointer items-start justify-between gap-4 rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5 transition-all hover:-translate-y-0.5 hover:border-[#E85A4F]/30 hover:bg-white hover:shadow-lg hover:shadow-red-100/30">
-                                <div class="flex gap-4">
+                            <label class="group flex cursor-pointer items-center justify-between gap-4 rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5 transition-all hover:border-[#E85A4F]/25 hover:bg-white hover:shadow-lg hover:shadow-red-100/20">
+                                <div class="flex min-w-0 items-center gap-4">
                                     <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#8A8A8A] transition-colors group-hover:text-[#E85A4F]">
                                         <i data-lucide="{{ $widget['icon'] }}" class="h-5 w-5"></i>
                                     </div>
-                                    <div>
-                                        <p class="text-xs font-black uppercase tracking-[0.18em] text-[#1E2432]">{{ $widget['label'] }}</p>
-                                        <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">{{ $widget['description'] }}</p>
+                                    <div class="min-w-0">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <p class="text-xs font-black uppercase tracking-[0.18em] text-[#1E2432]">{{ $widget['label'] }}</p>
+                                            <span class="inline-flex rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] {{ $isChecked ? 'border-emerald-100 bg-emerald-50 text-emerald-600' : 'border-slate-200 bg-white text-slate-400' }}">
+                                                {{ $isChecked ? 'Aktif' : 'Nonaktif' }}
+                                            </span>
+                                        </div>
+                                        <p class="mt-2 text-xs font-bold leading-relaxed text-[#8A8A8A]">{{ $widget['description'] }}</p>
                                     </div>
                                 </div>
 
-                                <div class="relative mt-1 inline-flex shrink-0 items-center">
-                                    <input type="hidden" name="{{ $widget['key'] }}" value="off">
-                                    <input type="checkbox" name="{{ $widget['key'] }}" value="on" class="peer sr-only" {{ $isChecked ? 'checked' : '' }}>
-                                    <div class="h-7 w-12 rounded-full bg-slate-200 transition-all peer-checked:bg-[#E85A4F] after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-all peer-checked:after:translate-x-5"></div>
+                                <div class="flex shrink-0 items-center gap-4">
+                                    <span class="hidden text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A] sm:inline">Tampilkan</span>
+                                    <div class="relative inline-flex shrink-0 items-center">
+                                        <input type="hidden" name="{{ $widget['key'] }}" value="off">
+                                        <input type="checkbox" name="{{ $widget['key'] }}" value="on" class="peer sr-only" {{ $isChecked ? 'checked' : '' }}>
+                                        <div class="h-7 w-12 rounded-full bg-slate-200 transition-all peer-checked:bg-[#E85A4F] after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-all peer-checked:after:translate-x-5"></div>
+                                    </div>
                                 </div>
                             </label>
                         @endforeach
@@ -256,7 +257,6 @@
                             </div>
                             <div>
                                 <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Keamanan Dokumen</h4>
-                                <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Atur watermark default agar dokumen yang diunduh tetap memiliki penanda institusi.</p>
                             </div>
                         </div>
                     </div>
@@ -273,6 +273,11 @@
                         <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
                             <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Teks Pengaman</label>
                             <input type="text" name="watermark_text" value="{{ $settings['watermark_text'] ?? 'SINERGI PAS JOMBANG' }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                        </div>
+
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                            <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Nomor WhatsApp Blast</label>
+                            <input type="text" name="compliance_whatsapp_number" value="{{ $settings['compliance_whatsapp_number'] ?? '628123456789' }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5" placeholder="628xxxxxxxxxx">
                         </div>
 
                         <div class="rounded-[28px] border border-amber-100 bg-amber-50 px-5 py-4 text-sm font-medium leading-relaxed text-amber-800">
@@ -294,7 +299,6 @@
                             </div>
                             <div>
                                 <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Running Banner</h4>
-                                <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Atur warna dan tempo banner pengumuman supaya tetap terbaca di area header aplikasi.</p>
                             </div>
                         </div>
                     </div>
@@ -315,7 +319,6 @@
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Kecepatan Banner</label>
-                                    <p class="mt-2 text-sm font-medium text-[#8A8A8A]">Semakin kecil angkanya, semakin cepat teks berjalan.</p>
                                 </div>
                                 <span id="banner-speed-display" class="inline-flex items-center rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
                                     {{ $settings['running_text_speed'] ?? '20' }} detik
@@ -347,7 +350,6 @@
                             </div>
                             <div>
                                 <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Identitas Instansi</h4>
-                                <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Pastikan kop surat tampil konsisten di setiap dokumen resmi yang dihasilkan sistem.</p>
                             </div>
                         </div>
                     </div>
@@ -382,7 +384,6 @@
                     </div>
                     <div>
                         <p class="text-sm font-black text-[#1E2432]">Konfigurasi utama siap diperbarui.</p>
-                        <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Simpan perubahan setelah Anda selesai menyesuaikan modul, keamanan, banner, dan identitas instansi.</p>
                     </div>
                 </div>
                 <button type="submit" class="inline-flex items-center justify-center gap-3 rounded-[22px] bg-[#1E2432] px-8 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-slate-900/10 transition-all hover:-translate-y-0.5 hover:bg-[#E85A4F]">
@@ -397,10 +398,7 @@
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
                 <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#E85A4F]">Siaran Pengumuman</p>
-                <h3 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Kelola banner dan popup pengumuman secara lebih jelas.</h3>
-                <p class="mt-3 max-w-3xl text-sm font-medium leading-relaxed text-[#8A8A8A]">
-                    Form pembuatan siaran dipisahkan dari riwayat agar fokus admin tidak bercampur antara membuat pengumuman baru dan meninjau yang sudah terbit.
-                </p>
+                <h3 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Siaran pengumuman.</h3>
             </div>
             <div class="flex flex-wrap gap-3">
                 <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
@@ -423,7 +421,6 @@
                         </div>
                         <div>
                             <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Buat Siaran Baru</h4>
-                            <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Gunakan banner untuk pengumuman berjalan dan popup untuk pesan yang perlu perhatian langsung.</p>
                         </div>
                     </div>
                 </div>
@@ -438,7 +435,7 @@
                                 <i data-lucide="sparkles" class="h-4 w-4 text-[#E85A4F]"></i>
                                 <span id="announcement-type-badge">Running Text</span>
                             </div>
-                            <p id="announcement-type-hint" class="text-sm font-medium leading-relaxed text-[#8A8A8A]">Siaran akan tampil melintas pada bagian atas aplikasi dan cocok untuk informasi operasional singkat.</p>
+                            <p id="announcement-type-hint" class="text-sm font-medium text-[#8A8A8A]">Tampil di bagian atas aplikasi.</p>
                         </div>
                     </div>
 
@@ -480,7 +477,6 @@
                 <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Riwayat Siaran</h4>
-                        <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Pantau status, jadwal, dan aksi cepat untuk setiap pengumuman yang pernah dibuat.</p>
                     </div>
                     <div class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A] shadow-sm">
                         <i data-lucide="history" class="h-4 w-4 text-[#1E2432]"></i>
@@ -559,7 +555,6 @@
                                 <i data-lucide="radio-tower" class="h-7 w-7"></i>
                             </div>
                             <p class="mt-5 text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Belum ada siaran</p>
-                            <p class="mx-auto mt-3 max-w-md text-sm font-medium leading-relaxed text-[#8A8A8A]">Saat pengumuman pertama dibuat, riwayat siaran akan tampil di sini lengkap dengan status dan jadwal tayangnya.</p>
                         </div>
                     @endforelse
                 </div>
@@ -571,10 +566,7 @@
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
                 <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#E85A4F]">Master Data</p>
-                <h3 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Rapikan daftar jabatan dan unit kerja agar mudah dipelihara.</h3>
-                <p class="mt-3 max-w-3xl text-sm font-medium leading-relaxed text-[#8A8A8A]">
-                    Kedua daftar utama disusun berdampingan dengan ritme visual yang sama, sehingga penambahan maupun penghapusan data terasa lebih ringan dan jelas.
-                </p>
+                <h3 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Master data.</h3>
             </div>
             <div class="flex flex-wrap gap-3">
                 <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
@@ -597,7 +589,6 @@
                         </div>
                         <div>
                             <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Master Jabatan</h4>
-                            <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Kelola struktur jabatan yang akan dipakai dalam data pegawai.</p>
                         </div>
                     </div>
                     <span class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
@@ -633,7 +624,6 @@
                         @empty
                             <div class="rounded-[28px] border border-dashed border-[#E2E0DC] bg-[#FCFBF9] px-6 py-12 text-center">
                                 <p class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Belum ada data jabatan</p>
-                                <p class="mt-3 text-sm font-medium leading-relaxed text-[#8A8A8A]">Tambahkan jabatan pertama untuk mulai membangun struktur organisasi pegawai.</p>
                             </div>
                         @endforelse
                     </div>
@@ -648,7 +638,6 @@
                         </div>
                         <div>
                             <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Master Unit Kerja</h4>
-                            <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Simpan unit kerja agar filter, dashboard, dan data pegawai tetap konsisten.</p>
                         </div>
                     </div>
                     <span class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
@@ -684,7 +673,6 @@
                         @empty
                             <div class="rounded-[28px] border border-dashed border-[#E2E0DC] bg-[#FCFBF9] px-6 py-12 text-center">
                                 <p class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Belum ada unit kerja</p>
-                                <p class="mt-3 text-sm font-medium leading-relaxed text-[#8A8A8A]">Tambahkan unit kerja aktif agar pemetaan pegawai dan dashboard dapat berjalan lengkap.</p>
                             </div>
                         @endforelse
                     </div>

@@ -6,9 +6,10 @@
 @section('content')
 @php
     $currentIssues = $issues->getCollection();
-    $openCount = $currentIssues->where('status', 'open')->count();
-    $resolvedCount = $currentIssues->where('status', 'resolved')->count();
-    $closedCount = $currentIssues->where('status', 'closed')->count();
+    $openCount = $issueStats['open'];
+    $resolvedCount = $issueStats['resolved'];
+    $closedCount = $issueStats['closed'];
+    $searchActive = request()->anyFilled(['search', 'status', 'date', 'work_unit_id']);
 @endphp
 
 <style>
@@ -23,40 +24,44 @@
 </style>
 
 <div class="space-y-8">
-    <section class="relative overflow-hidden rounded-[44px] bg-[#1E2432] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10">
-        <div class="absolute -left-8 top-8 h-40 w-40 rounded-full bg-white/5 blur-3xl"></div>
-        <div class="absolute right-0 top-0 h-56 w-56 rounded-full bg-[#E85A4F]/25 blur-3xl"></div>
-
-        <div class="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-            <div class="max-w-3xl">
-                <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/80">
-                    <span class="h-2 w-2 rounded-full bg-[#E85A4F]"></span>
-                    Laporan Masalah
+    <section class="overflow-hidden rounded-[40px] border border-[#EFEFEF] bg-white shadow-sm">
+        <div class="border-b border-[#F2F1EE] bg-[#FCFBF9] px-6 py-6 sm:px-8">
+            <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#E85A4F]">Laporan Masalah</p>
+                    <h2 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Antrean laporan.</h2>
                 </div>
-                <h2 class="mt-5 text-3xl font-black tracking-tight sm:text-4xl">Pusat kendali untuk meninjau, menanggapi, dan membersihkan antrean laporan pengguna.</h2>
-                <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-white/65">
-                    Semua laporan ditata ulang agar admin bisa melihat prioritas antrean lebih cepat, membuka detail tanpa kebingungan, dan menghapus data satuan maupun massal dengan kontrol yang jelas.
-                </p>
-            </div>
-
-            <div class="rounded-[28px] border border-white/10 bg-white/5 px-6 py-5 backdrop-blur">
-                <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/50">Total antrean saat ini</p>
-                <p class="mt-3 text-4xl font-black tracking-tight">{{ $issues->total() }}</p>
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                        <i data-lucide="message-square" class="h-4 w-4 text-[#E85A4F]"></i>
+                        {{ $issueStats['total'] }} total
+                    </span>
+                    @if($searchActive)
+                        <span class="inline-flex items-center gap-2 rounded-full border border-amber-100 bg-amber-50 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-amber-700 shadow-sm">
+                            <i data-lucide="filter" class="h-4 w-4"></i>
+                            Filter aktif
+                        </span>
+                    @endif
+                    <button type="button" id="deleteAllIssuesBtn" class="inline-flex items-center gap-3 rounded-[20px] border border-red-100 bg-red-50 px-5 py-3 text-[10px] font-black uppercase tracking-[0.24em] text-red-600 transition-all hover:bg-red-600 hover:text-white">
+                        <i data-lucide="flame" class="h-4 w-4"></i>
+                        Delete All
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div class="relative z-10 mt-8 grid gap-4 md:grid-cols-3">
-            <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
-                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Open</p>
-                <p class="mt-3 text-3xl font-black">{{ $openCount }}</p>
+        <div class="grid gap-4 px-6 py-6 sm:px-8 md:grid-cols-3">
+            <div class="rounded-[24px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Open</p>
+                <p class="mt-3 text-3xl font-black text-[#1E2432]">{{ $openCount }}</p>
             </div>
-            <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
-                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Resolved</p>
-                <p class="mt-3 text-3xl font-black">{{ $resolvedCount }}</p>
+            <div class="rounded-[24px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Resolved</p>
+                <p class="mt-3 text-3xl font-black text-[#1E2432]">{{ $resolvedCount }}</p>
             </div>
-            <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
-                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Closed</p>
-                <p class="mt-3 text-3xl font-black">{{ $closedCount }}</p>
+            <div class="rounded-[24px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Closed</p>
+                <p class="mt-3 text-3xl font-black text-[#1E2432]">{{ $closedCount }}</p>
             </div>
         </div>
     </section>
@@ -65,18 +70,46 @@
             <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#E85A4F]">Daftar Laporan</p>
-                    <h3 class="mt-2 text-2xl font-black tracking-tight text-[#1E2432]">Antrean dukungan yang sedang dipantau.</h3>
+                    <h3 class="mt-2 text-2xl font-black tracking-tight text-[#1E2432]">Daftar laporan.</h3>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
                         <i data-lucide="message-square" class="h-4 w-4 text-[#E85A4F]"></i>
                         {{ $currentIssues->count() }} laporan di halaman ini
                     </span>
-                    <button type="button" id="deleteAllIssuesBtn" class="inline-flex items-center gap-3 rounded-[20px] border border-red-100 bg-red-50 px-5 py-3 text-[10px] font-black uppercase tracking-[0.24em] text-red-600 transition-all hover:bg-red-600 hover:text-white">
-                        <i data-lucide="flame" class="h-4 w-4"></i>
-                        Delete All
-                    </button>
                 </div>
+            </div>
+
+            <div class="border-b border-[#F2F1EE] bg-white px-8 py-7">
+                <form action="{{ route('admin.report-issues.index') }}" method="GET" class="grid gap-4 xl:grid-cols-[minmax(0,1fr),180px,200px,220px,auto,auto]">
+                    <div class="relative">
+                        <i data-lucide="search" class="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A8A8A]"></i>
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari subjek, isi laporan, nama, email, atau NIP..." class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#FCFBF9] py-4 pl-12 pr-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                    </div>
+                    <select name="status" class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                        <option value="">Semua status</option>
+                        <option value="open" {{ request('status') === 'open' ? 'selected' : '' }}>Open</option>
+                        <option value="resolved" {{ request('status') === 'resolved' ? 'selected' : '' }}>Resolved</option>
+                        <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>Closed</option>
+                    </select>
+                    <input type="date" name="date" value="{{ request('date') }}" class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                    <select name="work_unit_id" class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                        <option value="">Semua unit kerja</option>
+                        @foreach($workUnits as $workUnit)
+                            <option value="{{ $workUnit->id }}" {{ (string) request('work_unit_id') === (string) $workUnit->id ? 'selected' : '' }}>
+                                {{ $workUnit->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="inline-flex items-center justify-center gap-3 rounded-[22px] bg-[#1E2432] px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white transition-all hover:bg-[#E85A4F]">
+                        Terapkan
+                    </button>
+                    @if($searchActive)
+                        <a href="{{ route('admin.report-issues.index') }}" class="inline-flex items-center justify-center gap-3 rounded-[22px] border border-[#EFEFEF] bg-white px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A] transition-all hover:bg-[#FCFBF9]">
+                            Reset
+                        </a>
+                    @endif
+                </form>
             </div>
 
             <div id="bulkActionBar" class="hidden border-b border-[#F2F1EE] bg-[#FFF5F4] px-8 py-5">
@@ -100,7 +133,7 @@
             <div class="divide-y divide-[#F2F1EE]">
                 @forelse($issues as $issue)
                     @php
-                        $employee = \App\Models\Employee::where('user_id', $issue->user_id)->first();
+                        $employee = $issue->user?->employee;
                         $issueData = array_merge($issue->toArray(), [
                             'user' => $issue->user,
                             'employee' => $employee,
@@ -118,11 +151,11 @@
                                     <div class="flex flex-wrap items-center gap-3">
                                         <div class="flex items-center gap-4">
                                             <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-sm font-black text-[#1E2432] shadow-sm">
-                                                {{ substr($issue->user->name, 0, 1) }}
+                                                {{ substr($issue->user->name ?? 'S', 0, 1) }}
                                             </div>
                                             <div>
-                                                <p class="text-sm font-black text-[#1E2432]">{{ $issue->user->name }}</p>
-                                                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">{{ $issue->user->email }}</p>
+                                                <p class="text-sm font-black text-[#1E2432]">{{ $issue->user->name ?? 'User tidak tersedia' }}</p>
+                                                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">{{ $issue->user->email ?? '-' }}</p>
                                             </div>
                                         </div>
 
@@ -139,7 +172,7 @@
                                     <div class="mt-5 grid gap-3 text-sm font-medium text-[#8A8A8A] sm:grid-cols-3">
                                         <div class="rounded-[22px] border border-[#EFEFEF] bg-white px-4 py-3">
                                             <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Pengirim</p>
-                                            <p class="mt-2 font-bold text-[#1E2432]">{{ $issue->user->name }}</p>
+                                            <p class="mt-2 font-bold text-[#1E2432]">{{ $issue->user->name ?? 'User tidak tersedia' }}</p>
                                         </div>
                                         <div class="rounded-[22px] border border-[#EFEFEF] bg-white px-4 py-3">
                                             <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Waktu Kirim</p>
@@ -173,7 +206,6 @@
                             <i data-lucide="inbox" class="h-9 w-9"></i>
                         </div>
                         <p class="mt-5 text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Belum ada laporan masuk</p>
-                        <p class="mx-auto mt-3 max-w-md text-sm font-medium leading-relaxed text-[#8A8A8A]">Saat pengguna mulai mengirim laporan atau aspirasi, seluruh detail akan ditampilkan di sini.</p>
                     </div>
                 @endforelse
             </div>
