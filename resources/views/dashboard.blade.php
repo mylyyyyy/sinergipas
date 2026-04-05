@@ -178,9 +178,9 @@
 </div>
 
 <!-- Main Analytics Row -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-10 items-stretch">
     <!-- Compliance Tracking (Improved UI) -->
-    <div class="lg:col-span-2 bg-white rounded-[56px] border border-[#EFEFEF] shadow-sm overflow-hidden flex flex-col bento-card">
+    <div class="lg:col-span-2 bg-white rounded-[56px] border border-[#EFEFEF] shadow-sm overflow-hidden flex flex-col bento-card h-full min-h-0">
         <div class="p-12 border-b border-[#F5F4F2] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-[#FCFBF9]/50">
             <div>
                 <h3 class="text-2xl font-black text-[#1E2432] tracking-tight italic flex items-center gap-3">
@@ -193,8 +193,8 @@
             </button>
         </div>
         
-        <div class="p-8">
-            <div class="overflow-y-auto pr-2 custom-scrollbar" style="max-height: 600px;">
+        <div class="p-8 flex-1 min-h-0">
+            <div class="overflow-y-auto pr-2 custom-scrollbar h-full min-h-0">
                 @php $hasMandatory = \App\Models\DocumentCategory::where('is_mandatory', true)->exists(); @endphp
                 
                 @if(!$hasMandatory)
