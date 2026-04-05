@@ -73,6 +73,12 @@ class DashboardController extends Controller
                     return false;
                 })->values();
 
+            $nonCompliantEmployeesTotal = $nonCompliantEmployees->count();
+            $nonCompliantPreviewLimit = 15;
+            $nonCompliantEmployees = $nonCompliantEmployees
+                ->take($nonCompliantPreviewLimit)
+                ->values();
+
             // Unit Performance
             $unitPerformance = WorkUnit::withCount('employees')->get();
 
@@ -87,6 +93,7 @@ class DashboardController extends Controller
                 'totalEmployees', 'totalDocuments', 'docsToday', 'pendingDocs', 
                 'openIssues', 'storageUsed', 'unitPerformance', 
                 'latestEmployees', 'chartData', 'workUnits', 'nonCompliantEmployees',
+                'nonCompliantEmployeesTotal', 'nonCompliantPreviewLimit',
                 'widgets'
             ));
         } 

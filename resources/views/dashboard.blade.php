@@ -30,6 +30,7 @@
 @php
     $selectedUnitName = $workUnits->firstWhere('id', request('work_unit_id'))?->name;
     $unitLabel = $selectedUnitName ?: 'Seluruh Unit Kerja';
+    $displayedNonCompliantEmployees = $nonCompliantEmployees->count();
 @endphp
 
 <div class="relative overflow-hidden rounded-[56px] bg-[#1E2432] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10 mb-12">
@@ -186,15 +187,32 @@
                 <h3 class="text-2xl font-black text-[#1E2432] tracking-tight italic flex items-center gap-3">
                     Pelacakan Kepatuhan <span class="bg-red-500 text-white text-[8px] font-black px-2.5 py-1 rounded-lg not-italic uppercase tracking-widest">LIVE</span>
                 </h3>
-                <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-[0.2em] mt-2">Daftar pegawai dengan dokumen tidak lengkap</p>
+                <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-[0.2em] mt-2">Preview pegawai dengan dokumen tidak lengkap</p>
             </div>
-            <button onclick="window.location.reload()" class="bg-white border border-[#EFEFEF] p-4 rounded-2xl hover:bg-[#1E2432] hover:text-white transition-all shadow-sm active:scale-95 group">
-                <i data-lucide="refresh-cw" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-700"></i>
-            </button>
+            <div class="flex items-center gap-3">
+                <div class="rounded-2xl border border-[#EFEFEF] bg-white px-4 py-3 text-right shadow-sm">
+                    <p class="text-[9px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Ditampilkan</p>
+                    <p class="mt-1 text-sm font-black text-[#1E2432]">{{ $displayedNonCompliantEmployees }}/{{ $nonCompliantEmployeesTotal }}</p>
+                </div>
+                <button onclick="window.location.reload()" class="bg-white border border-[#EFEFEF] p-4 rounded-2xl hover:bg-[#1E2432] hover:text-white transition-all shadow-sm active:scale-95 group">
+                    <i data-lucide="refresh-cw" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-700"></i>
+                </button>
+            </div>
         </div>
         
-        <div class="p-8 flex-1 min-h-0">
-            <div class="overflow-y-auto pr-2 custom-scrollbar h-full min-h-0">
+        <div class="p-8 flex-1 min-h-0 flex flex-col">
+            <div class="mb-4 flex items-center justify-between gap-3 rounded-[24px] border border-[#F1EFEB] bg-[#FCFBF9] px-5 py-4">
+                <div>
+                    <p class="text-[9px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Ringkasan Widget</p>
+                    <p class="mt-1 text-sm font-bold text-[#1E2432]">Widget ini hanya menampilkan maksimal {{ $nonCompliantPreviewLimit }} pegawai agar dashboard tetap ringan dan fokus.</p>
+                </div>
+                <div class="shrink-0 rounded-2xl bg-white px-4 py-3 text-center shadow-sm">
+                    <p class="text-[9px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Total Isu</p>
+                    <p class="mt-1 text-base font-black text-[#E85A4F]">{{ $nonCompliantEmployeesTotal }}</p>
+                </div>
+            </div>
+
+            <div class="overflow-y-auto pr-2 custom-scrollbar flex-1 min-h-0">
                 @php $hasMandatory = \App\Models\DocumentCategory::where('is_mandatory', true)->exists(); @endphp
                 
                 @if(!$hasMandatory)
@@ -254,6 +272,14 @@
                                 </div>
                                 <p class="text-base font-black text-[#1E2432] italic">Zero Compliance Issues</p>
                                 <p class="text-[10px] text-[#8A8A8A] font-black uppercase tracking-[0.3em] mt-1">Seluruh pegawai telah mematuhi aturan administrasi.</p>
+                            </div>
+                        @endif
+
+                        @if($nonCompliantEmployeesTotal > $displayedNonCompliantEmployees)
+                            <div class="rounded-[28px] border border-dashed border-[#E2E0DC] bg-white px-6 py-5 text-center">
+                                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">
+                                    Menampilkan {{ $displayedNonCompliantEmployees }} dari {{ $nonCompliantEmployeesTotal }} pegawai yang perlu ditindaklanjuti.
+                                </p>
                             </div>
                         @endif
                     </div>
