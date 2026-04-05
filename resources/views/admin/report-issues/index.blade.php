@@ -25,15 +25,15 @@
 
 <div class="space-y-8">
     <section class="overflow-hidden rounded-[40px] border border-[#EFEFEF] bg-white shadow-sm">
-        <div class="border-b border-[#F2F1EE] bg-[#FCFBF9] px-6 py-6 sm:px-8">
+        <div class="border-b border-[#F2F1EE] bg-[#F1F5F9] px-6 py-6 sm:px-8">
             <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
                 <div>
-                    <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#E85A4F]">Laporan Masalah</p>
-                    <h2 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Antrean laporan.</h2>
+                    <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#EAB308]">Laporan Masalah</p>
+                    <h2 class="mt-2 text-3xl font-black tracking-tight text-[#0F172A]">Antrean laporan.</h2>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
-                        <i data-lucide="message-square" class="h-4 w-4 text-[#E85A4F]"></i>
+                    <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A] shadow-sm">
+                        <i data-lucide="message-square" class="h-4 w-4 text-[#EAB308]"></i>
                         {{ $issueStats['total'] }} total
                     </span>
                     @if($searchActive)
@@ -51,30 +51,30 @@
         </div>
 
         <div class="grid gap-4 px-6 py-6 sm:px-8 md:grid-cols-3">
-            <div class="rounded-[24px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+            <div class="rounded-[24px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                 <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Open</p>
-                <p class="mt-3 text-3xl font-black text-[#1E2432]">{{ $openCount }}</p>
+                <p class="mt-3 text-3xl font-black text-[#0F172A]">{{ $openCount }}</p>
             </div>
-            <div class="rounded-[24px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+            <div class="rounded-[24px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                 <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Resolved</p>
-                <p class="mt-3 text-3xl font-black text-[#1E2432]">{{ $resolvedCount }}</p>
+                <p class="mt-3 text-3xl font-black text-[#0F172A]">{{ $resolvedCount }}</p>
             </div>
-            <div class="rounded-[24px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+            <div class="rounded-[24px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                 <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Closed</p>
-                <p class="mt-3 text-3xl font-black text-[#1E2432]">{{ $closedCount }}</p>
+                <p class="mt-3 text-3xl font-black text-[#0F172A]">{{ $closedCount }}</p>
             </div>
         </div>
     </section>
 
         <section class="overflow-hidden rounded-[40px] border border-[#EFEFEF] bg-white shadow-sm">
-            <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#F1F5F9] px-8 py-7 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                    <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#E85A4F]">Daftar Laporan</p>
-                    <h3 class="mt-2 text-2xl font-black tracking-tight text-[#1E2432]">Daftar laporan.</h3>
+                    <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#EAB308]">Daftar Laporan</p>
+                    <h3 class="mt-2 text-2xl font-black tracking-tight text-[#0F172A]">Daftar laporan.</h3>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
-                        <i data-lucide="message-square" class="h-4 w-4 text-[#E85A4F]"></i>
+                    <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A] shadow-sm">
+                        <i data-lucide="message-square" class="h-4 w-4 text-[#EAB308]"></i>
                         {{ $currentIssues->count() }} laporan di halaman ini
                     </span>
                 </div>
@@ -84,16 +84,16 @@
                 <form action="{{ route('admin.report-issues.index') }}" method="GET" class="grid gap-4 xl:grid-cols-[minmax(0,1fr),180px,200px,220px,auto,auto]">
                     <div class="relative">
                         <i data-lucide="search" class="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A8A8A]"></i>
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari subjek, isi laporan, nama, email, atau NIP..." class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#FCFBF9] py-4 pl-12 pr-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari subjek, isi laporan, nama, email, atau NIP..." class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#F1F5F9] py-4 pl-12 pr-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
                     </div>
-                    <select name="status" class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                    <select name="status" class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#F1F5F9] px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
                         <option value="">Semua status</option>
                         <option value="open" {{ request('status') === 'open' ? 'selected' : '' }}>Open</option>
                         <option value="resolved" {{ request('status') === 'resolved' ? 'selected' : '' }}>Resolved</option>
                         <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>Closed</option>
                     </select>
-                    <input type="date" name="date" value="{{ request('date') }}" class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
-                    <select name="work_unit_id" class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                    <input type="date" name="date" value="{{ request('date') }}" class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#F1F5F9] px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
+                    <select name="work_unit_id" class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#F1F5F9] px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
                         <option value="">Semua unit kerja</option>
                         @foreach($workUnits as $workUnit)
                             <option value="{{ $workUnit->id }}" {{ (string) request('work_unit_id') === (string) $workUnit->id ? 'selected' : '' }}>
@@ -101,11 +101,11 @@
                             </option>
                         @endforeach
                     </select>
-                    <button type="submit" class="inline-flex items-center justify-center gap-3 rounded-[22px] bg-[#1E2432] px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white transition-all hover:bg-[#E85A4F]">
+                    <button type="submit" class="inline-flex items-center justify-center gap-3 rounded-[22px] bg-[#0F172A] px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white transition-all hover:bg-[#EAB308]">
                         Terapkan
                     </button>
                     @if($searchActive)
-                        <a href="{{ route('admin.report-issues.index') }}" class="inline-flex items-center justify-center gap-3 rounded-[22px] border border-[#EFEFEF] bg-white px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A] transition-all hover:bg-[#FCFBF9]">
+                        <a href="{{ route('admin.report-issues.index') }}" class="inline-flex items-center justify-center gap-3 rounded-[22px] border border-[#EFEFEF] bg-white px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A] transition-all hover:bg-[#F1F5F9]">
                             Reset
                         </a>
                     @endif
@@ -115,15 +115,15 @@
             <div id="bulkActionBar" class="hidden border-b border-[#F2F1EE] bg-[#FFF5F4] px-8 py-5">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[#E85A4F] shadow-sm">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[#EAB308] shadow-sm">
                             <i data-lucide="check-check" class="h-4 w-4"></i>
                         </div>
                         <div>
-                            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#E85A4F]">Bulk Action Aktif</p>
-                            <p class="mt-1 text-sm font-bold text-[#1E2432]"><span id="selectedIssuesCount">0</span> laporan dipilih pada halaman ini.</p>
+                            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#EAB308]">Bulk Action Aktif</p>
+                            <p class="mt-1 text-sm font-bold text-[#0F172A]"><span id="selectedIssuesCount">0</span> laporan dipilih pada halaman ini.</p>
                         </div>
                     </div>
-                    <button type="button" id="bulkDeleteBtn" class="inline-flex items-center justify-center gap-3 rounded-[22px] bg-red-500 px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-red-100 transition-all hover:bg-[#1E2432]">
+                    <button type="button" id="bulkDeleteBtn" class="inline-flex items-center justify-center gap-3 rounded-[22px] bg-red-500 px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-red-100 transition-all hover:bg-[#0F172A]">
                         <i data-lucide="trash-2" class="h-4 w-4"></i>
                         Bulk Delete
                     </button>
@@ -140,21 +140,21 @@
                         ]);
                     @endphp
 
-                    <div class="issue-card px-8 py-7 hover:bg-[#FCFBF9]">
+                    <div class="issue-card px-8 py-7 hover:bg-[#F1F5F9]">
                         <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
                             <div class="flex min-w-0 flex-1 gap-4">
                                 <div class="pt-1">
-                                    <input type="checkbox" name="ids[]" value="{{ $issue->id }}" class="issue-checkbox h-5 w-5 rounded-lg border-[#D7D3CF] text-[#E85A4F] focus:ring-0">
+                                    <input type="checkbox" name="ids[]" value="{{ $issue->id }}" class="issue-checkbox h-5 w-5 rounded-lg border-[#D7D3CF] text-[#EAB308] focus:ring-0">
                                 </div>
 
                                 <div class="min-w-0 flex-1">
                                     <div class="flex flex-wrap items-center gap-3">
                                         <div class="flex items-center gap-4">
-                                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-sm font-black text-[#1E2432] shadow-sm">
+                                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-sm font-black text-[#0F172A] shadow-sm">
                                                 {{ substr($issue->user->name ?? 'S', 0, 1) }}
                                             </div>
                                             <div>
-                                                <p class="text-sm font-black text-[#1E2432]">{{ $issue->user->name ?? 'User tidak tersedia' }}</p>
+                                                <p class="text-sm font-black text-[#0F172A]">{{ $issue->user->name ?? 'User tidak tersedia' }}</p>
                                                 <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">{{ $issue->user->email ?? '-' }}</p>
                                             </div>
                                         </div>
@@ -165,22 +165,22 @@
                                     </div>
 
                                     <div class="mt-5">
-                                        <h4 class="text-lg font-black tracking-tight text-[#1E2432]">{{ $issue->subject }}</h4>
+                                        <h4 class="text-lg font-black tracking-tight text-[#0F172A]">{{ $issue->subject }}</h4>
                                         <p class="mt-3 max-w-3xl text-sm font-medium leading-relaxed text-[#8A8A8A]">{{ $issue->message }}</p>
                                     </div>
 
                                     <div class="mt-5 grid gap-3 text-sm font-medium text-[#8A8A8A] sm:grid-cols-3">
                                         <div class="rounded-[22px] border border-[#EFEFEF] bg-white px-4 py-3">
                                             <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Pengirim</p>
-                                            <p class="mt-2 font-bold text-[#1E2432]">{{ $issue->user->name ?? 'User tidak tersedia' }}</p>
+                                            <p class="mt-2 font-bold text-[#0F172A]">{{ $issue->user->name ?? 'User tidak tersedia' }}</p>
                                         </div>
                                         <div class="rounded-[22px] border border-[#EFEFEF] bg-white px-4 py-3">
                                             <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Waktu Kirim</p>
-                                            <p class="mt-2 font-bold text-[#1E2432]">{{ $issue->created_at->format('d M Y, H:i') }}</p>
+                                            <p class="mt-2 font-bold text-[#0F172A]">{{ $issue->created_at->format('d M Y, H:i') }}</p>
                                         </div>
                                         <div class="rounded-[22px] border border-[#EFEFEF] bg-white px-4 py-3">
                                             <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Catatan Admin</p>
-                                            <p class="mt-2 font-bold text-[#1E2432]">{{ $issue->admin_note ? 'Sudah diisi' : 'Belum ada tanggapan' }}</p>
+                                            <p class="mt-2 font-bold text-[#0F172A]">{{ $issue->admin_note ? 'Sudah diisi' : 'Belum ada tanggapan' }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -202,24 +202,24 @@
                     </div>
                 @empty
                     <div class="px-8 py-20 text-center">
-                        <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#FCFBF9] text-[#ABABAB]">
+                        <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#F1F5F9] text-[#ABABAB]">
                             <i data-lucide="inbox" class="h-9 w-9"></i>
                         </div>
-                        <p class="mt-5 text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Belum ada laporan masuk</p>
+                        <p class="mt-5 text-sm font-black uppercase tracking-[0.22em] text-[#0F172A]">Belum ada laporan masuk</p>
                     </div>
                 @endforelse
             </div>
 
             @if($currentIssues->isNotEmpty())
-                <div class="border-t border-[#F2F1EE] bg-[#FCFBF9] px-8 py-5">
-                    <label class="inline-flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432]">
-                        <input type="checkbox" id="selectAllIssues" class="h-5 w-5 rounded-lg border-[#D7D3CF] text-[#E85A4F] focus:ring-0">
+                <div class="border-t border-[#F2F1EE] bg-[#F1F5F9] px-8 py-5">
+                    <label class="inline-flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A]">
+                        <input type="checkbox" id="selectAllIssues" class="h-5 w-5 rounded-lg border-[#D7D3CF] text-[#EAB308] focus:ring-0">
                         Pilih semua laporan di halaman ini
                     </label>
                 </div>
             @endif
 
-            <div class="border-t border-[#F2F1EE] bg-[#FCFBF9] px-8 py-6">
+            <div class="border-t border-[#F2F1EE] bg-[#F1F5F9] px-8 py-6">
                 {{ $issues->links() }}
             </div>
         </section>
@@ -237,7 +237,7 @@
 
 <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/55 p-6 backdrop-blur-md">
     <div class="w-full max-w-4xl overflow-hidden rounded-[44px] border border-[#EFEFEF] bg-white shadow-2xl">
-        <div class="bg-[#1E2432] px-8 py-7 text-white">
+        <div class="bg-[#0F172A] px-8 py-7 text-white">
             <div class="flex items-center justify-between gap-6">
                 <div>
                     <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/55">Detail Penanganan</p>
@@ -254,41 +254,41 @@
             @method('PUT')
 
             <div class="space-y-6">
-                <div class="rounded-[32px] border border-[#EFEFEF] bg-[#FCFBF9] p-6 text-center">
+                <div class="rounded-[32px] border border-[#EFEFEF] bg-[#F1F5F9] p-6 text-center">
                     <div id="detail_photo_container" class="mx-auto mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-[24px] border-2 border-white bg-white shadow-lg">
                         <i data-lucide="user" class="h-10 w-10 text-gray-300"></i>
                     </div>
-                    <h4 id="detail_name" class="text-sm font-black text-[#1E2432]"></h4>
+                    <h4 id="detail_name" class="text-sm font-black text-[#0F172A]"></h4>
                     <p id="detail_nip" class="mt-1 text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]"></p>
                 </div>
 
                 <div class="space-y-4 rounded-[32px] border border-[#EFEFEF] bg-white p-6">
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Email</p>
-                        <p id="detail_email" class="mt-2 text-sm font-bold text-[#1E2432]"></p>
+                        <p id="detail_email" class="mt-2 text-sm font-bold text-[#0F172A]"></p>
                     </div>
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Jabatan</p>
-                        <p id="detail_position" class="mt-2 text-sm font-bold text-[#1E2432]"></p>
+                        <p id="detail_position" class="mt-2 text-sm font-bold text-[#0F172A]"></p>
                     </div>
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Dikirim</p>
-                        <p id="detail_date" class="mt-2 text-sm font-bold text-[#1E2432]"></p>
+                        <p id="detail_date" class="mt-2 text-sm font-bold text-[#0F172A]"></p>
                     </div>
                 </div>
             </div>
 
             <div class="space-y-6">
-                <div class="rounded-[32px] border border-[#EFEFEF] bg-[#FCFBF9] p-6">
-                    <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#E85A4F]">Subjek Laporan</p>
-                    <h4 id="detail_subject" class="mt-3 text-xl font-black tracking-tight text-[#1E2432]"></h4>
-                    <div id="detail_message" class="mt-5 rounded-[24px] border border-[#EFEFEF] bg-white px-5 py-5 text-sm font-medium leading-relaxed text-[#1E2432]"></div>
+                <div class="rounded-[32px] border border-[#EFEFEF] bg-[#F1F5F9] p-6">
+                    <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#EAB308]">Subjek Laporan</p>
+                    <h4 id="detail_subject" class="mt-3 text-xl font-black tracking-tight text-[#0F172A]"></h4>
+                    <div id="detail_message" class="mt-5 rounded-[24px] border border-[#EFEFEF] bg-white px-5 py-5 text-sm font-medium leading-relaxed text-[#0F172A]"></div>
                 </div>
 
                 <div class="grid gap-6 md:grid-cols-2">
                     <div>
                         <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Status Penanganan</label>
-                        <select name="status" id="detail_status" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                        <select name="status" id="detail_status" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
                             <option value="open">Open</option>
                             <option value="resolved">Resolved</option>
                             <option value="closed">Closed</option>
@@ -298,10 +298,10 @@
 
                 <div>
                     <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Catatan Admin</label>
-                    <textarea name="admin_note" id="detail_note" rows="5" class="mt-3 w-full rounded-[24px] border border-[#EFEFEF] bg-white px-6 py-5 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5" placeholder="Berikan tanggapan atau langkah tindak lanjut untuk laporan ini..."></textarea>
+                    <textarea name="admin_note" id="detail_note" rows="5" class="mt-3 w-full rounded-[24px] border border-[#EFEFEF] bg-white px-6 py-5 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5" placeholder="Berikan tanggapan atau langkah tindak lanjut untuk laporan ini..."></textarea>
                 </div>
 
-                <button type="submit" class="inline-flex w-full items-center justify-center gap-3 rounded-[24px] bg-[#E85A4F] px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-red-100 transition-all hover:bg-[#1E2432]">
+                <button type="submit" class="inline-flex w-full items-center justify-center gap-3 rounded-[24px] bg-[#EAB308] px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-red-100 transition-all hover:bg-[#0F172A]">
                     Simpan Penanganan
                     <i data-lucide="save" class="h-4 w-4"></i>
                 </button>
@@ -316,7 +316,7 @@
             icon: 'success',
             title: 'Perubahan Tersimpan',
             text: "{{ session('success') }}",
-            confirmButtonColor: '#1E2432',
+            confirmButtonColor: '#0F172A',
             customClass: { popup: 'rounded-[32px]' }
         });
     </script>
@@ -328,7 +328,7 @@
             icon: 'error',
             title: 'Aksi Gagal',
             text: "{{ session('error') }}",
-            confirmButtonColor: '#E85A4F',
+            confirmButtonColor: '#EAB308',
             customClass: { popup: 'rounded-[32px]' }
         });
     </script>
@@ -383,8 +383,8 @@
                 text: `${checkedCount} laporan yang dipilih di halaman ini akan dihapus permanen.`,
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#E85A4F',
-                cancelButtonColor: '#1E2432',
+                confirmButtonColor: '#EAB308',
+                cancelButtonColor: '#0F172A',
                 confirmButtonText: 'Ya, hapus terpilih',
                 cancelButtonText: 'Batal',
                 customClass: { popup: 'rounded-[32px]' }
@@ -411,8 +411,8 @@
                 text: 'Semua laporan masalah di database akan dihapus permanen. Aksi ini tidak bisa dibatalkan.',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#E85A4F',
-                cancelButtonColor: '#1E2432',
+                confirmButtonColor: '#EAB308',
+                cancelButtonColor: '#0F172A',
                 confirmButtonText: 'Ya, hapus semua',
                 cancelButtonText: 'Batal',
                 customClass: { popup: 'rounded-[32px]' }
@@ -430,8 +430,8 @@
             text: 'Laporan yang dihapus tidak dapat dipulihkan kembali.',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#E85A4F',
-            cancelButtonColor: '#1E2432',
+            confirmButtonColor: '#EAB308',
+            cancelButtonColor: '#0F172A',
             confirmButtonText: 'Ya, hapus',
             cancelButtonText: 'Batal',
             customClass: { popup: 'rounded-[32px]' }

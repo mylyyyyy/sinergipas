@@ -4,9 +4,9 @@
     <title>Daftar Pegawai Lapas Jombang</title>
     <style>
         body { font-family: sans-serif; font-size: 11px; color: #333; }
-        .kop { text-align: center; margin-bottom: 30px; border-bottom: 3px double #1E2432; padding-bottom: 15px; position: relative; }
+        .kop { text-align: center; margin-bottom: 30px; border-bottom: 3px double #0F172A; padding-bottom: 15px; position: relative; }
         .kop img { width: 80px; margin-bottom: 10px; }
-        .kop h1 { margin: 0; font-size: 18px; font-weight: bold; color: #1E2432; }
+        .kop h1 { margin: 0; font-size: 18px; font-weight: bold; color: #0F172A; }
         .kop h2 { margin: 2px 0; font-size: 14px; font-weight: normal; }
         .kop p { margin: 2px 0; font-size: 10px; font-style: italic; color: #666; }
         

@@ -6,7 +6,7 @@
 @section('content')
 <style>
     .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(239, 239, 239, 0.5); }
-    .table-row-hover:hover { background-color: #FCFBF9; transform: scale(1.002); }
+    .table-row-hover:hover { background-color: #F1F5F9; transform: scale(1.002); }
     .action-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .action-btn:hover { transform: translateY(-3px); }
 </style>
@@ -16,20 +16,17 @@
     $unitLabel = $workUnits->firstWhere('id', request('work_unit_id'))?->name ?? 'Semua Unit Kerja';
 @endphp
 
-<div class="relative overflow-hidden rounded-[56px] bg-[#1E2432] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10 mb-12">
+<div class="relative overflow-hidden rounded-[56px] bg-[#0F172A] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10 mb-12">
     <div class="absolute -left-10 top-8 h-44 w-44 rounded-full bg-white/5 blur-3xl"></div>
-    <div class="absolute right-0 top-0 h-60 w-60 rounded-full bg-[#E85A4F]/20 blur-3xl"></div>
+    <div class="absolute right-0 top-0 h-60 w-60 rounded-full bg-[#EAB308]/20 blur-3xl"></div>
 
     <div class="relative z-10 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
         <div class="max-w-3xl">
             <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/80">
-                <span class="h-2 w-2 rounded-full bg-[#E85A4F]"></span>
+                <span class="h-2 w-2 rounded-full bg-[#EAB308]"></span>
                 Data Pegawai
             </div>
-            <h2 class="mt-5 text-3xl font-black tracking-tight sm:text-4xl">Pusat pengelolaan pegawai yang lebih rapi untuk pencarian, ekspor, dan aksi massal.</h2>
-            <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-white/65">
-                Halaman ini dipoles agar pencarian lebih cepat dipahami, status filter lebih jelas, dan kontrol tindakan pada setiap baris tetap nyaman dipakai di desktop maupun mobile.
-            </p>
+            <h2 class="mt-5 text-3xl font-black tracking-tight sm:text-4xl">Pusat pengelolaan pegawai.</h2>
         </div>
 
         <div class="rounded-[28px] border border-white/10 bg-white/5 px-6 py-5 backdrop-blur">
@@ -58,9 +55,9 @@
     <!-- Search Bar & Filter -->
     <div class="flex flex-col md:flex-row gap-4 w-full lg:w-auto">
         <form action="{{ route('employees.index') }}" method="GET" class="relative w-full lg:w-[420px] group no-loader">
-            <i data-lucide="search" class="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8A8A8A] group-focus-within:text-[#E85A4F] transition-all"></i>
+            <i data-lucide="search" class="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8A8A8A] group-focus-within:text-[#EAB308] transition-all"></i>
             <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Nama, NIP, atau Jabatan..." 
-                class="w-full pl-16 pr-12 py-5 rounded-[32px] border border-[#EFEFEF] bg-white text-sm font-bold text-[#1E2432] outline-none focus:ring-8 focus:ring-red-500/5 focus:border-[#E85A4F] transition-all shadow-sm group-hover:shadow-xl">
+                class="w-full pl-16 pr-12 py-5 rounded-[32px] border border-[#EFEFEF] bg-white text-sm font-bold text-[#0F172A] outline-none focus:ring-8 focus:ring-red-500/5 focus:border-[#EAB308] transition-all shadow-sm group-hover:shadow-xl">
             @if(request('search'))
                 <a href="{{ route('employees.index', request()->except('search')) }}" class="absolute right-6 top-1/2 -translate-y-1/2 text-[#8A8A8A] hover:text-red-500 transition-all">
                     <i data-lucide="x-circle" class="w-5 h-5"></i>
@@ -71,7 +68,7 @@
         <form action="{{ route('employees.index') }}" method="GET" class="no-loader group">
             @if(request('search')) <input type="hidden" name="search" value="{{ request('search') }}"> @endif
             <div class="relative">
-                <select name="work_unit_id" onchange="this.form.submit()" class="w-full md:w-[240px] px-8 py-5 rounded-[32px] border border-[#EFEFEF] bg-white text-[10px] font-black uppercase tracking-widest text-[#1E2432] outline-none focus:ring-8 focus:ring-red-500/5 focus:border-[#E85A4F] transition-all shadow-sm cursor-pointer appearance-none">
+                <select name="work_unit_id" onchange="this.form.submit()" class="w-full md:w-[240px] px-8 py-5 rounded-[32px] border border-[#EFEFEF] bg-white text-[10px] font-black uppercase tracking-widest text-[#0F172A] outline-none focus:ring-8 focus:ring-red-500/5 focus:border-[#EAB308] transition-all shadow-sm cursor-pointer appearance-none">
                     <option value="">Seluruh Unit Kerja</option>
                     @foreach($workUnits as $unit)
                         <option value="{{ $unit->id }}" {{ request('work_unit_id') == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
@@ -86,10 +83,10 @@
         <button type="button" id="bulkDeleteBtn" class="hidden bg-red-50 text-red-600 px-8 py-5 rounded-[24px] font-black text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all items-center justify-center gap-3 shadow-lg shadow-red-100 border border-red-100">
             <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus Terpilih (<span id="selectedCount">0</span>)
         </button>
-        <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="flex-1 lg:flex-none bg-white border border-[#EFEFEF] text-[#1E2432] px-8 py-5 rounded-[24px] font-black text-[10px] uppercase tracking-widest hover:bg-[#1E2432] hover:text-white transition-all flex items-center justify-center gap-3 shadow-sm">
+        <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="flex-1 lg:flex-none bg-white border border-[#EFEFEF] text-[#0F172A] px-8 py-5 rounded-[24px] font-black text-[10px] uppercase tracking-widest hover:bg-[#0F172A] hover:text-white transition-all flex items-center justify-center gap-3 shadow-sm">
             <i data-lucide="file-up" class="w-4 h-4 text-blue-600"></i> Impor Excel
         </button>
-        <button type="button" onclick="document.getElementById('addModal').classList.remove('hidden')" class="flex-1 lg:flex-none bg-[#E85A4F] text-white px-10 py-5 rounded-[24px] font-black text-[10px] uppercase tracking-widest hover:bg-[#d44d42] transition-all flex items-center justify-center gap-3 shadow-xl shadow-red-200">
+        <button type="button" onclick="document.getElementById('addModal').classList.remove('hidden')" class="flex-1 lg:flex-none bg-[#EAB308] text-white px-10 py-5 rounded-[24px] font-black text-[10px] uppercase tracking-widest hover:bg-[#CA8A04] transition-all flex items-center justify-center gap-3 shadow-xl shadow-red-200">
             <i data-lucide="user-plus" class="w-4 h-4"></i> Registrasi Pegawai
         </button>
     </div>
@@ -100,9 +97,9 @@
     @method('DELETE')
     
     <div class="bg-white rounded-[64px] border border-[#EFEFEF] shadow-sm overflow-hidden transition-all hover:shadow-2xl hover:shadow-gray-100/50">
-        <div class="p-12 border-b border-[#EFEFEF] flex flex-col md:flex-row justify-between items-center gap-8 bg-[#FCFBF9]/30">
+        <div class="p-12 border-b border-[#EFEFEF] flex flex-col md:flex-row justify-between items-center gap-8 bg-[#F1F5F9]/30">
             <div>
-                <h3 class="text-2xl font-black text-[#1E2432] tracking-tight italic">Daftar Inventaris Pegawai</h3>
+                <h3 class="text-2xl font-black text-[#0F172A] tracking-tight italic">Daftar Inventaris Pegawai</h3>
                 <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-[0.3em] mt-2">Sinkronisasi Database: {{ now()->format('d M Y') }}</p>
             </div>
             <div class="flex gap-3">
@@ -117,9 +114,9 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-[#FCFBF9]/50">
+                    <tr class="bg-[#F1F5F9]/50">
                         <th class="px-12 py-6 w-10">
-                            <input type="checkbox" id="selectAll" class="w-6 h-6 rounded-xl border-[#EFEFEF] text-[#E85A4F] focus:ring-0 cursor-pointer">
+                            <input type="checkbox" id="selectAll" class="w-6 h-6 rounded-xl border-[#EFEFEF] text-[#EAB308] focus:ring-0 cursor-pointer">
                         </th>
                         <th class="px-6 py-6 text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.3em]">Informasi Profil</th>
                         <th class="px-12 py-6 text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.3em]">Identitas NIP</th>
@@ -131,11 +128,11 @@
                     @foreach($employees as $employee)
                     <tr class="transition-all group table-row-hover">
                         <td class="px-12 py-8">
-                            <input type="checkbox" name="ids[]" value="{{ $employee->id }}" class="row-checkbox w-6 h-6 rounded-xl border-[#EFEFEF] text-[#E85A4F] focus:ring-0 cursor-pointer">
+                            <input type="checkbox" name="ids[]" value="{{ $employee->id }}" class="row-checkbox w-6 h-6 rounded-xl border-[#EFEFEF] text-[#EAB308] focus:ring-0 cursor-pointer">
                         </td>
                         <td class="px-6 py-8">
                             <a href="{{ route('employees.show', $employee->id) }}" class="flex items-center gap-6 group/item transition-all">
-                                <div class="w-16 h-16 bg-gray-100 rounded-[24px] flex items-center justify-center text-[#8A8A8A] group-hover/item:bg-[#E85A4F] group-hover/item:text-white transition-all overflow-hidden text-xs shadow-inner relative">
+                                <div class="w-16 h-16 bg-gray-100 rounded-[24px] flex items-center justify-center text-[#8A8A8A] group-hover/item:bg-[#EAB308] group-hover/item:text-white transition-all overflow-hidden text-xs shadow-inner relative">
                                     @if($employee->photo)
                                         <img src="{{ $employee->photo }}" class="w-full h-full object-cover">
                                     @else
@@ -146,7 +143,7 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <p class="text-base font-black text-[#1E2432] group-hover/item:text-[#E85A4F] transition-all">{{ $employee->full_name }}</p>
+                                    <p class="text-base font-black text-[#0F172A] group-hover/item:text-[#EAB308] transition-all">{{ $employee->full_name }}</p>
                                     <p class="text-[9px] text-[#ABABAB] font-bold uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
                                         <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Pegawai Aktif
                                     </p>
@@ -154,12 +151,12 @@
                             </a>
                         </td>
                         <td class="px-12 py-8">
-                            <span class="text-xs font-mono font-bold text-[#1E2432] bg-[#FCFBF9] px-4 py-2 rounded-xl border border-[#EFEFEF] shadow-sm italic">{{ $employee->nip }}</span>
+                            <span class="text-xs font-mono font-bold text-[#0F172A] bg-[#F1F5F9] px-4 py-2 rounded-xl border border-[#EFEFEF] shadow-sm italic">{{ $employee->nip }}</span>
                         </td>
                         <td class="px-12 py-8">
-                            <p class="text-sm font-black text-[#1E2432]">{{ $employee->position }}</p>
+                            <p class="text-sm font-black text-[#0F172A]">{{ $employee->position }}</p>
                             <div class="flex items-center gap-2 mt-1.5">
-                                <i data-lucide="building-2" class="w-3 h-3 text-[#E85A4F]"></i>
+                                <i data-lucide="building-2" class="w-3 h-3 text-[#EAB308]"></i>
                                 <p class="text-[10px] text-[#8A8A8A] font-bold uppercase tracking-tight">{{ $employee->work_unit->name ?? 'Tanpa Unit Kerja' }}</p>
                             </div>
                         </td>
@@ -195,7 +192,7 @@
                     @if($employees->isEmpty())
                     <tr>
                         <td colspan="5" class="px-12 py-40 text-center">
-                            <div class="w-32 h-32 bg-[#FCFBF9] rounded-full flex items-center justify-center mx-auto mb-8 text-gray-200 shadow-inner">
+                            <div class="w-32 h-32 bg-[#F1F5F9] rounded-full flex items-center justify-center mx-auto mb-8 text-gray-200 shadow-inner">
                                 <i data-lucide="users" class="w-16 h-16 opacity-30"></i>
                             </div>
                             <p class="text-sm font-black text-[#ABABAB] uppercase tracking-[0.4em] italic">Database Kosong / Data Tidak Ditemukan</p>
@@ -205,7 +202,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="p-12 bg-[#FCFBF9]/30 border-t border-[#EFEFEF]">
+        <div class="p-12 bg-[#F1F5F9]/30 border-t border-[#EFEFEF]">
             {{ $employees->links() }}
         </div>
     </div>
@@ -216,31 +213,31 @@
     <div class="bg-white w-full max-w-2xl rounded-[64px] p-14 shadow-2xl animate-in zoom-in duration-300 overflow-hidden border border-[#EFEFEF]">
         <div class="flex justify-between items-center mb-12">
             <div>
-                <h3 class="text-3xl font-black text-[#1E2432] tracking-tight italic">Registrasi Pegawai</h3>
+                <h3 class="text-3xl font-black text-[#0F172A] tracking-tight italic">Registrasi Pegawai</h3>
                 <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-[0.3em] mt-2">Entri Data ke Infrastruktur Digital</p>
             </div>
-            <button onclick="document.getElementById('addModal').classList.add('hidden')" class="bg-[#FCFBF9] w-14 h-14 rounded-2xl text-[#8A8A8A] hover:text-red-500 transition-all border border-[#EFEFEF] flex items-center justify-center shadow-sm">
+            <button onclick="document.getElementById('addModal').classList.add('hidden')" class="bg-[#F1F5F9] w-14 h-14 rounded-2xl text-[#8A8A8A] hover:text-red-500 transition-all border border-[#EFEFEF] flex items-center justify-center shadow-sm">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
         <form action="{{ route('employees.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-10">
             @csrf
             <div class="space-y-3">
-                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-2">Nama Lengkap Sesuai SK</label>
-                <input type="text" name="full_name" required placeholder="Contoh: Budi Santoso, S.H." class="w-full px-8 py-5 rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-12 focus:ring-red-500/5 focus:border-[#E85A4F] transition-all shadow-inner">
+                <label class="text-[10px] font-black text-[#0F172A] uppercase tracking-[0.2em] ml-2">Nama Lengkap Sesuai SK</label>
+                <input type="text" name="full_name" required placeholder="Contoh: Budi Santoso, S.H." class="w-full px-8 py-5 rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold outline-none focus:ring-12 focus:ring-red-500/5 focus:border-[#EAB308] transition-all shadow-inner">
             </div>
             <div class="space-y-3">
-                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-2">Nomor Induk Pegawai</label>
-                <input type="text" name="nip" required placeholder="18 Digit Angka" class="w-full px-8 py-5 rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-12 focus:ring-red-500/5 focus:border-[#E85A4F] transition-all shadow-inner">
+                <label class="text-[10px] font-black text-[#0F172A] uppercase tracking-[0.2em] ml-2">Nomor Induk Pegawai</label>
+                <input type="text" name="nip" required placeholder="18 Digit Angka" class="w-full px-8 py-5 rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold outline-none focus:ring-12 focus:ring-red-500/5 focus:border-[#EAB308] transition-all shadow-inner">
             </div>
             <div class="space-y-3">
-                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-2">Email Kedinasan</label>
-                <input type="email" name="email" required placeholder="email@pas.id" class="w-full px-8 py-5 rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-12 focus:ring-red-500/5 focus:border-[#E85A4F] transition-all shadow-inner">
+                <label class="text-[10px] font-black text-[#0F172A] uppercase tracking-[0.2em] ml-2">Email Kedinasan</label>
+                <input type="email" name="email" required placeholder="email@pas.id" class="w-full px-8 py-5 rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold outline-none focus:ring-12 focus:ring-red-500/5 focus:border-[#EAB308] transition-all shadow-inner">
             </div>
             <div class="space-y-3">
-                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-2">Jabatan Fungsional</label>
+                <label class="text-[10px] font-black text-[#0F172A] uppercase tracking-[0.2em] ml-2">Jabatan Fungsional</label>
                 <div class="relative">
-                    <select name="position_id" required class="w-full px-8 py-5 rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-12 focus:ring-red-500/5 focus:border-[#E85A4F] transition-all appearance-none cursor-pointer">
+                    <select name="position_id" required class="w-full px-8 py-5 rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold outline-none focus:ring-12 focus:ring-red-500/5 focus:border-[#EAB308] transition-all appearance-none cursor-pointer">
                         <option value="">Pilih Jabatan</option>
                         @foreach($positions as $pos)
                             <option value="{{ $pos->id }}">{{ $pos->name }}</option>
@@ -250,9 +247,9 @@
                 </div>
             </div>
             <div class="space-y-3">
-                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-2">Unit Kerja / Divisi</label>
+                <label class="text-[10px] font-black text-[#0F172A] uppercase tracking-[0.2em] ml-2">Unit Kerja / Divisi</label>
                 <div class="relative">
-                    <select name="work_unit_id" required class="w-full px-8 py-5 rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-12 focus:ring-red-500/5 focus:border-[#E85A4F] transition-all appearance-none cursor-pointer">
+                    <select name="work_unit_id" required class="w-full px-8 py-5 rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold outline-none focus:ring-12 focus:ring-red-500/5 focus:border-[#EAB308] transition-all appearance-none cursor-pointer">
                         <option value="">Pilih Unit</option>
                         @foreach($workUnits as $unit)
                             <option value="{{ $unit->id }}">{{ $unit->name }}</option>
@@ -262,11 +259,11 @@
                 </div>
             </div>
             <div class="space-y-3">
-                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-2">Kata Sandi Default</label>
-                <input type="password" name="password" required placeholder="Keamanan Minimum 8 Karakter" class="w-full px-8 py-5 rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-12 focus:ring-red-500/5 focus:border-[#E85A4F] transition-all shadow-inner">
+                <label class="text-[10px] font-black text-[#0F172A] uppercase tracking-[0.2em] ml-2">Kata Sandi Default</label>
+                <input type="password" name="password" required placeholder="Keamanan Minimum 8 Karakter" class="w-full px-8 py-5 rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold outline-none focus:ring-12 focus:ring-red-500/5 focus:border-[#EAB308] transition-all shadow-inner">
             </div>
             <div class="md:col-span-2 pt-6">
-                <button type="submit" class="w-full bg-[#1E2432] text-white py-6 rounded-[32px] font-black text-lg hover:bg-[#E85A4F] transition-all shadow-2xl active:scale-[0.98] flex items-center justify-center gap-4 group">
+                <button type="submit" class="w-full bg-[#0F172A] text-white py-6 rounded-[32px] font-black text-lg hover:bg-[#EAB308] transition-all shadow-2xl active:scale-[0.98] flex items-center justify-center gap-4 group">
                     Sinkronisasi & Simpan Pegawai
                     <i data-lucide="zap" class="w-6 h-6 group-hover:rotate-12 transition-transform"></i>
                 </button>
@@ -280,10 +277,10 @@
     <div class="bg-white w-full max-w-md rounded-[64px] p-14 shadow-2xl animate-in zoom-in duration-300 border border-[#EFEFEF]">
         <div class="flex justify-between items-center mb-12">
             <div>
-                <h3 class="text-2xl font-black text-[#1E2432] tracking-tight italic">Batch Import</h3>
+                <h3 class="text-2xl font-black text-[#0F172A] tracking-tight italic">Batch Import</h3>
                 <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-[0.3em] mt-2">Unggah File MS Excel (.xlsx)</p>
             </div>
-            <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="bg-[#FCFBF9] w-12 h-12 rounded-2xl text-[#8A8A8A] hover:text-red-500 transition-all border border-[#EFEFEF] flex items-center justify-center">
+            <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="bg-[#F1F5F9] w-12 h-12 rounded-2xl text-[#8A8A8A] hover:text-red-500 transition-all border border-[#EFEFEF] flex items-center justify-center">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
@@ -294,7 +291,7 @@
                 <p class="opacity-80 uppercase tracking-tighter italic border-l-2 border-blue-200 pl-4">NIP, Nama Lengkap, Jabatan, Unit Kerja, Email</p>
             </div>
             <div class="relative group">
-                <input type="file" name="file" required class="w-full px-8 py-14 rounded-[40px] border-4 border-dashed border-[#EFEFEF] bg-[#FCFBF9] text-[10px] font-black uppercase text-[#8A8A8A] file:hidden cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-all text-center">
+                <input type="file" name="file" required class="w-full px-8 py-14 rounded-[40px] border-4 border-dashed border-[#EFEFEF] bg-[#F1F5F9] text-[10px] font-black uppercase text-[#8A8A8A] file:hidden cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-all text-center">
                 <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-40 group-hover:opacity-100 transition-all">
                     <i data-lucide="file-up" class="w-12 h-12 text-blue-600 mb-4"></i>
                     <span class="text-[10px] uppercase font-black tracking-widest">Klik / Drag File Excel Disini</span>
@@ -312,10 +309,10 @@
 <div id="editModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-md">
     <div class="bg-white w-full max-w-2xl rounded-[48px] shadow-2xl animate-in zoom-in duration-300 overflow-hidden border border-[#EFEFEF]">
         <!-- Compact Header -->
-        <div class="bg-[#1E2432] px-10 py-8 text-white flex justify-between items-center relative">
+        <div class="bg-[#0F172A] px-10 py-8 text-white flex justify-between items-center relative">
             <div class="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
             <div class="relative flex items-center gap-5">
-                <div class="w-12 h-12 bg-[#E85A4F] rounded-2xl flex items-center justify-center shadow-lg">
+                <div class="w-12 h-12 bg-[#EAB308] rounded-2xl flex items-center justify-center shadow-lg">
                     <i data-lucide="user-cog" class="w-6 h-6 text-white"></i>
                 </div>
                 <div>
@@ -335,22 +332,22 @@
                 <!-- Side Photo & Minimal Info -->
                 <div class="md:w-1/3 flex flex-col items-center">
                     <div class="relative group mb-6">
-                        <div class="w-32 h-32 rounded-[32px] border-4 border-[#FCFBF9] bg-[#F5F4F2] overflow-hidden shadow-xl flex items-center justify-center text-[#8A8A8A]">
+                        <div class="w-32 h-32 rounded-[32px] border-4 border-[#F1F5F9] bg-[#F1F5F9] overflow-hidden shadow-xl flex items-center justify-center text-[#8A8A8A]">
                             <img id="edit_avatar_preview" src="" class="hidden w-full h-full object-cover">
                             <i id="edit_avatar_placeholder" data-lucide="user" class="w-12 h-12 opacity-20"></i>
                         </div>
-                        <label for="edit_photo_input" class="absolute -bottom-2 -right-2 bg-[#1E2432] p-2.5 rounded-xl shadow-lg cursor-pointer hover:bg-[#E85A4F] transition-all border-4 border-white">
+                        <label for="edit_photo_input" class="absolute -bottom-2 -right-2 bg-[#0F172A] p-2.5 rounded-xl shadow-lg cursor-pointer hover:bg-[#EAB308] transition-all border-4 border-white">
                             <i data-lucide="camera" class="w-4 h-4 text-white"></i>
                             <input type="file" id="edit_photo_input" name="photo" class="hidden" onchange="previewEditImage(this)">
                         </label>
                     </div>
                     <button type="button" id="btnDeleteEmployeePhoto" onclick="confirmDeleteEmployeePhoto()" class="hidden text-[10px] font-black uppercase text-red-500 hover:underline">Hapus Foto</button>
                     
-                    <div class="mt-8 w-full p-5 bg-[#FCFBF9] rounded-3xl border border-[#EFEFEF]">
+                    <div class="mt-8 w-full p-5 bg-[#F1F5F9] rounded-3xl border border-[#EFEFEF]">
                         <p class="text-[8px] font-black text-[#ABABAB] uppercase tracking-widest mb-1">Status Verifikasi</p>
                         <div class="flex items-center gap-2">
                             <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                            <span class="text-[10px] font-bold text-[#1E2432]">Aktif & Sah</span>
+                            <span class="text-[10px] font-bold text-[#0F172A]">Aktif & Sah</span>
                         </div>
                     </div>
                 </div>
@@ -360,18 +357,18 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div class="space-y-1.5">
                             <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest ml-1">Nama Lengkap</label>
-                            <input type="text" name="full_name" id="edit_full_name" required class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold text-[#1E2432] focus:border-[#E85A4F] outline-none transition-all shadow-sm">
+                            <input type="text" name="full_name" id="edit_full_name" required class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold text-[#0F172A] focus:border-[#EAB308] outline-none transition-all shadow-sm">
                         </div>
                         <div class="space-y-1.5">
                             <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest ml-1">NIP</label>
-                            <input type="text" name="nip" id="edit_nip" required class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold text-[#1E2432] focus:border-[#E85A4F] outline-none transition-all shadow-sm">
+                            <input type="text" name="nip" id="edit_nip" required class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold text-[#0F172A] focus:border-[#EAB308] outline-none transition-all shadow-sm">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div class="space-y-1.5">
                             <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest ml-1">Jabatan</label>
-                            <select name="position_id" id="edit_position_id" required class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold text-[#1E2432] focus:border-[#E85A4F] outline-none appearance-none cursor-pointer">
+                            <select name="position_id" id="edit_position_id" required class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold text-[#0F172A] focus:border-[#EAB308] outline-none appearance-none cursor-pointer">
                                 @foreach($positions as $pos)
                                     <option value="{{ $pos->id }}">{{ $pos->name }}</option>
                                 @endforeach
@@ -379,7 +376,7 @@
                         </div>
                         <div class="space-y-1.5">
                             <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest ml-1">Unit Kerja</label>
-                            <select name="work_unit_id" id="edit_work_unit_id" required class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold text-[#1E2432] focus:border-[#E85A4F] outline-none appearance-none cursor-pointer">
+                            <select name="work_unit_id" id="edit_work_unit_id" required class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold text-[#0F172A] focus:border-[#EAB308] outline-none appearance-none cursor-pointer">
                                 @foreach($workUnits as $unit)
                                     <option value="{{ $unit->id }}">{{ $unit->name }}</option>
                                 @endforeach
@@ -389,21 +386,21 @@
 
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest ml-1">Email Aktif</label>
-                        <input type="email" name="email" id="edit_email" required class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold text-[#1E2432] focus:border-[#E85A4F] outline-none shadow-sm">
+                        <input type="email" name="email" id="edit_email" required class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold text-[#0F172A] focus:border-[#EAB308] outline-none shadow-sm">
                     </div>
 
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest ml-1">Password (Kosongkan jika tidak diganti)</label>
-                        <input type="password" name="password" placeholder="••••••••" class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold text-[#1E2432] focus:border-[#E85A4F] outline-none shadow-sm">
+                        <input type="password" name="password" placeholder="••••••••" class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold text-[#0F172A] focus:border-[#EAB308] outline-none shadow-sm">
                     </div>
                 </div>
             </div>
 
             <div class="mt-10 flex gap-4">
-                <button type="submit" class="flex-1 bg-[#1E2432] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-[#E85A4F] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-3">
+                <button type="submit" class="flex-1 bg-[#0F172A] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-[#EAB308] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-3">
                     Simpan Perubahan <i data-lucide="check-circle" class="w-4 h-4"></i>
                 </button>
-                <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')" class="px-8 py-4 rounded-2xl border border-[#EFEFEF] text-[#8A8A8A] font-black text-[10px] uppercase tracking-widest hover:bg-[#FCFBF9]">
+                <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')" class="px-8 py-4 rounded-2xl border border-[#EFEFEF] text-[#8A8A8A] font-black text-[10px] uppercase tracking-widest hover:bg-[#F1F5F9]">
                     Batal
                 </button>
             </div>
@@ -442,8 +439,8 @@
             text: "Anda akan menghapus " + document.querySelectorAll('.row-checkbox:checked').length + " entitas pegawai secara permanen.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#E85A4F',
-            cancelButtonColor: '#1E2432',
+            confirmButtonColor: '#EAB308',
+            cancelButtonColor: '#0F172A',
             confirmButtonText: 'Ya, Eksekusi!',
             cancelButtonText: 'Batal',
             customClass: { popup: 'rounded-[48px]' }
@@ -505,7 +502,7 @@
             text: "Media profil akan dihapus dari server.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#E85A4F',
+            confirmButtonColor: '#EAB308',
             cancelButtonColor: '#8A8A8A',
             confirmButtonText: 'Hapus!',
             cancelButtonText: 'Batal',
@@ -528,8 +525,8 @@
             text: "Seluruh data dan dokumen pegawai ini akan dimusnahkan secara permanen.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#E85A4F',
-            cancelButtonColor: '#1E2432',
+            confirmButtonColor: '#EAB308',
+            cancelButtonColor: '#0F172A',
             confirmButtonText: 'Ya, Hapus!',
             cancelButtonText: 'Batal',
             customClass: { popup: 'rounded-[48px]' }
@@ -543,12 +540,12 @@
 
 @if(session('success'))
 <script>
-    Swal.fire({ icon: 'success', title: 'Berhasil Terproses', text: "{{ session('success') }}", confirmButtonColor: '#1E2432', customClass: { popup: 'rounded-[48px]' } });
+    Swal.fire({ icon: 'success', title: 'Berhasil Terproses', text: "{{ session('success') }}", confirmButtonColor: '#0F172A', customClass: { popup: 'rounded-[48px]' } });
 </script>
 @endif
 @if(session('error'))
 <script>
-    Swal.fire({ icon: 'error', title: 'Operasi Gagal', text: "{{ session('error') }}", confirmButtonColor: '#E85A4F', customClass: { popup: 'rounded-[48px]' } });
+    Swal.fire({ icon: 'error', title: 'Operasi Gagal', text: "{{ session('error') }}", confirmButtonColor: '#EAB308', customClass: { popup: 'rounded-[48px]' } });
 </script>
 @endif
 @endsection

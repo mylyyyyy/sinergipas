@@ -6,12 +6,12 @@
 @section('content')
 @php
     $widgetsList = [
-        ['key' => 'widget_stats', 'label' => 'Statistik Utama', 'icon' => 'bar-chart-3', 'description' => 'Ringkasan angka inti untuk memantau performa dokumen dan pegawai.'],
-        ['key' => 'widget_employees', 'label' => 'Status Unit Kerja', 'icon' => 'users', 'description' => 'Menampilkan kondisi setiap unit kerja secara ringkas di dashboard.'],
-        ['key' => 'widget_chart', 'label' => 'Grafik Distribusi', 'icon' => 'pie-chart', 'description' => 'Visual distribusi data agar perubahan lebih cepat dipahami.'],
-        ['key' => 'widget_activity', 'label' => 'Aktivitas Terkini', 'icon' => 'activity', 'description' => 'Riwayat gerakan terbaru dari pengguna dan sistem.'],
-        ['key' => 'widget_compliance', 'label' => 'Status Kepatuhan', 'icon' => 'shield-check', 'description' => 'Sorotan pegawai yang belum melengkapi dokumen wajib.'],
-        ['key' => 'widget_feed', 'label' => 'Antrean Berkas', 'icon' => 'zap', 'description' => 'Mempermudah admin melihat dokumen yang perlu ditindaklanjuti.'],
+        ['key' => 'widget_stats', 'label' => 'Statistik Utama', 'icon' => 'bar-chart-3'],
+        ['key' => 'widget_employees', 'label' => 'Status Unit Kerja', 'icon' => 'users'],
+        ['key' => 'widget_chart', 'label' => 'Grafik Distribusi', 'icon' => 'pie-chart'],
+        ['key' => 'widget_activity', 'label' => 'Aktivitas Terkini', 'icon' => 'activity'],
+        ['key' => 'widget_compliance', 'label' => 'Status Kepatuhan', 'icon' => 'shield-check'],
+        ['key' => 'widget_feed', 'label' => 'Antrean Berkas', 'icon' => 'zap'],
     ];
 
     $enabledWidgets = collect($widgetsList)->filter(fn ($widget) => ($settings[$widget['key']] ?? 'on') === 'on')->count();
@@ -25,30 +25,30 @@
 
 <style>
     .settings-anchor {
-        background: rgba(252, 251, 249, 0.9);
+        background: rgba(241, 245, 249, 0.9);
         border: 1px solid transparent;
-        color: #8a8a8a;
+        color: #64748b;
         transition: all 0.25s ease;
     }
 
     .settings-anchor:hover {
-        color: #1e2432;
-        border-color: #efefef;
+        color: #0F172A;
+        border-color: #dbe4ee;
         background: #ffffff;
-        box-shadow: 0 12px 24px -20px rgba(30, 36, 50, 0.35);
+        box-shadow: 0 12px 24px -20px rgba(15, 23, 42, 0.22);
     }
 
     .settings-anchor.is-active {
-        background: #1e2432;
-        border-color: #1e2432;
+        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+        border-color: #0F172A;
         color: #ffffff;
-        box-shadow: 0 24px 48px -26px rgba(30, 36, 50, 0.6);
+        box-shadow: 0 24px 48px -26px rgba(59, 130, 246, 0.3);
     }
 
     .settings-pattern {
         background-image:
             radial-gradient(circle at top right, rgba(255, 255, 255, 0.14), transparent 34%),
-            radial-gradient(circle at bottom left, rgba(232, 90, 79, 0.22), transparent 28%);
+            radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.2), transparent 30%);
     }
 
     .settings-scrollbar {
@@ -88,7 +88,7 @@
                 </div>
                 <div class="space-y-2">
                     <p class="text-[10px] font-black uppercase tracking-[0.28em] text-red-500">Perlu Diperiksa</p>
-                    <p class="text-sm font-bold text-[#1E2432]">Beberapa input belum valid. Cek kembali bagian yang Anda ubah sebelum menyimpan.</p>
+                    <p class="text-sm font-bold text-[#0F172A]">Beberapa input belum valid. Cek kembali bagian yang Anda ubah sebelum menyimpan.</p>
                     <ul class="space-y-1 text-xs font-semibold text-red-700">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -99,22 +99,22 @@
         </div>
     @endif
 
-    <section class="settings-pattern relative overflow-hidden rounded-[40px] bg-[#1E2432] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10">
+    <section class="settings-pattern relative overflow-hidden rounded-[40px] bg-[#0F172A] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10">
         <div class="absolute -left-10 top-10 h-40 w-40 rounded-full bg-white/5 blur-3xl"></div>
-        <div class="absolute bottom-0 right-0 h-52 w-52 translate-x-10 translate-y-14 rounded-full bg-[#E85A4F]/30 blur-3xl"></div>
+        <div class="absolute bottom-0 right-0 h-52 w-52 translate-x-10 translate-y-14 rounded-full bg-[#EAB308]/30 blur-3xl"></div>
 
         <div class="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div class="max-w-3xl">
                 <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/80">
-                    <span class="h-2 w-2 rounded-full bg-[#E85A4F]"></span>
+                    <span class="h-2 w-2 rounded-full bg-[#EAB308]"></span>
                     Panel Pengaturan Sistem
                 </div>
                 <h2 class="max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">Konfigurasi inti platform.</h2>
             </div>
 
             <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-                <a href="{{ route('settings.health') }}" class="inline-flex items-center justify-center gap-3 rounded-[24px] border border-white/10 bg-white px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-[#1E2432] shadow-xl shadow-slate-950/10 transition-all hover:-translate-y-0.5 hover:bg-[#FCFBF9]">
-                    <i data-lucide="heart-pulse" class="h-4 w-4 text-[#E85A4F]"></i>
+                <a href="{{ route('settings.health') }}" class="inline-flex items-center justify-center gap-3 rounded-[24px] border border-white/10 bg-white px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-[#0F172A] shadow-xl shadow-slate-950/10 transition-all hover:-translate-y-0.5 hover:bg-[#F1F5F9]">
+                    <i data-lucide="heart-pulse" class="h-4 w-4 text-[#EAB308]"></i>
                     Kesehatan Sistem
                 </a>
                 <a href="#broadcast" class="inline-flex items-center justify-center gap-3 rounded-[24px] border border-white/15 bg-white/5 px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white transition-all hover:border-white/25 hover:bg-white/10">
@@ -191,27 +191,27 @@
 
             <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#E85A4F]">Konfigurasi Inti</p>
-                    <h3 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Konfigurasi inti.</h3>
+                    <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#EAB308]">Konfigurasi Inti</p>
+                    <h3 class="mt-2 text-3xl font-black tracking-tight text-[#0F172A]">Konfigurasi inti.</h3>
                 </div>
                 <div class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A] shadow-sm">
-                    <i data-lucide="save" class="h-4 w-4 text-[#1E2432]"></i>
+                    <i data-lucide="save" class="h-4 w-4 text-[#0F172A]"></i>
                     Simpan setelah selesai menyesuaikan
                 </div>
             </div>
 
             <div class="grid gap-8 xl:grid-cols-3">
                 <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm xl:col-span-2">
-                    <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#F1F5F9] px-8 py-7 sm:flex-row sm:items-center sm:justify-between">
                         <div class="flex items-start gap-4">
-                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#1E2432] shadow-sm">
+                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#0F172A] shadow-sm">
                                 <i data-lucide="layout-grid" class="h-5 w-5"></i>
                             </div>
                             <div>
-                                <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Modul Dashboard</h4>
+                                <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#0F172A]">Modul Dashboard</h4>
                             </div>
                         </div>
-                        <div class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#1E2432] shadow-sm">
+                        <div class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#0F172A] shadow-sm">
                             <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                             {{ $enabledWidgets }} aktif
                         </div>
@@ -220,19 +220,18 @@
                     <div class="grid gap-4 p-6 sm:p-8 xl:grid-cols-2">
                         @foreach ($widgetsList as $widget)
                             @php $isChecked = ($settings[$widget['key']] ?? 'on') === 'on'; @endphp
-                            <label class="group flex cursor-pointer items-center justify-between gap-4 rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5 transition-all hover:border-[#E85A4F]/25 hover:bg-white hover:shadow-lg hover:shadow-red-100/20">
+                            <label class="group flex cursor-pointer items-center justify-between gap-4 rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] p-5 transition-all hover:border-[#EAB308]/25 hover:bg-white hover:shadow-lg hover:shadow-red-100/20">
                                 <div class="flex min-w-0 items-center gap-4">
-                                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#8A8A8A] transition-colors group-hover:text-[#E85A4F]">
+                                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#8A8A8A] transition-colors group-hover:text-[#EAB308]">
                                         <i data-lucide="{{ $widget['icon'] }}" class="h-5 w-5"></i>
                                     </div>
                                     <div class="min-w-0">
                                         <div class="flex flex-wrap items-center gap-2">
-                                            <p class="text-xs font-black uppercase tracking-[0.18em] text-[#1E2432]">{{ $widget['label'] }}</p>
+                                            <p class="text-xs font-black uppercase tracking-[0.18em] text-[#0F172A]">{{ $widget['label'] }}</p>
                                             <span class="inline-flex rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] {{ $isChecked ? 'border-emerald-100 bg-emerald-50 text-emerald-600' : 'border-slate-200 bg-white text-slate-400' }}">
                                                 {{ $isChecked ? 'Aktif' : 'Nonaktif' }}
                                             </span>
                                         </div>
-                                        <p class="mt-2 text-xs font-bold leading-relaxed text-[#8A8A8A]">{{ $widget['description'] }}</p>
                                     </div>
                                 </div>
 
@@ -241,7 +240,7 @@
                                     <div class="relative inline-flex shrink-0 items-center">
                                         <input type="hidden" name="{{ $widget['key'] }}" value="off">
                                         <input type="checkbox" name="{{ $widget['key'] }}" value="on" class="peer sr-only" {{ $isChecked ? 'checked' : '' }}>
-                                        <div class="h-7 w-12 rounded-full bg-slate-200 transition-all peer-checked:bg-[#E85A4F] after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-all peer-checked:after:translate-x-5"></div>
+                                        <div class="h-7 w-12 rounded-full bg-slate-200 transition-all peer-checked:bg-[#EAB308] after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-all peer-checked:after:translate-x-5"></div>
                                     </div>
                                 </div>
                             </label>
@@ -250,34 +249,34 @@
                 </div>
 
                 <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm">
-                    <div class="border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7">
+                    <div class="border-b border-[#F2F1EE] bg-[#F1F5F9] px-8 py-7">
                         <div class="flex items-start gap-4">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#E85A4F] shadow-sm">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#EAB308] shadow-sm">
                                 <i data-lucide="shield-check" class="h-5 w-5"></i>
                             </div>
                             <div>
-                                <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Keamanan Dokumen</h4>
+                                <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#0F172A]">Keamanan Dokumen</h4>
                             </div>
                         </div>
                     </div>
 
                     <div class="space-y-6 p-8">
-                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                             <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Status Watermark</label>
-                            <select name="watermark_enabled" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                            <select name="watermark_enabled" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
                                 <option value="on" {{ ($settings['watermark_enabled'] ?? 'on') === 'on' ? 'selected' : '' }}>Aktif</option>
                                 <option value="off" {{ ($settings['watermark_enabled'] ?? 'on') === 'off' ? 'selected' : '' }}>Nonaktif</option>
                             </select>
                         </div>
 
-                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                             <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Teks Pengaman</label>
-                            <input type="text" name="watermark_text" value="{{ $settings['watermark_text'] ?? 'SINERGI PAS JOMBANG' }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                            <input type="text" name="watermark_text" value="{{ $settings['watermark_text'] ?? 'SINERGI PAS JOMBANG' }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
                         </div>
 
-                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                             <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Nomor WhatsApp Blast</label>
-                            <input type="text" name="compliance_whatsapp_number" value="{{ $settings['compliance_whatsapp_number'] ?? '628123456789' }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5" placeholder="628xxxxxxxxxx">
+                            <input type="text" name="compliance_whatsapp_number" value="{{ $settings['compliance_whatsapp_number'] ?? '628123456789' }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5" placeholder="628xxxxxxxxxx">
                         </div>
 
                         <div class="rounded-[28px] border border-amber-100 bg-amber-50 px-5 py-4 text-sm font-medium leading-relaxed text-amber-800">
@@ -292,46 +291,46 @@
 
             <div class="grid gap-8 xl:grid-cols-2">
                 <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm">
-                    <div class="border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7">
+                    <div class="border-b border-[#F2F1EE] bg-[#F1F5F9] px-8 py-7">
                         <div class="flex items-start gap-4">
                             <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-blue-600 shadow-sm">
                                 <i data-lucide="monitor" class="h-5 w-5"></i>
                             </div>
                             <div>
-                                <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Running Banner</h4>
+                                <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#0F172A]">Running Banner</h4>
                             </div>
                         </div>
                     </div>
 
                     <div class="space-y-6 p-8">
                         <div class="grid gap-4 sm:grid-cols-2">
-                            <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                            <div class="rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                                 <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Warna Latar</label>
-                                <input id="banner-bg-input" type="color" name="running_text_bg" value="{{ $settings['running_text_bg'] ?? '#1E2432' }}" class="mt-3 h-14 w-full cursor-pointer rounded-[20px] border border-[#EFEFEF] bg-white p-2">
+                                <input id="banner-bg-input" type="color" name="running_text_bg" value="{{ $settings['running_text_bg'] ?? '#0F172A' }}" class="mt-3 h-14 w-full cursor-pointer rounded-[20px] border border-[#EFEFEF] bg-white p-2">
                             </div>
-                            <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                            <div class="rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                                 <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Warna Teks</label>
                                 <input id="banner-text-input" type="color" name="running_text_color" value="{{ $settings['running_text_color'] ?? '#FFFFFF' }}" class="mt-3 h-14 w-full cursor-pointer rounded-[20px] border border-[#EFEFEF] bg-white p-2">
                             </div>
                         </div>
 
-                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Kecepatan Banner</label>
                                 </div>
-                                <span id="banner-speed-display" class="inline-flex items-center rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                                <span id="banner-speed-display" class="inline-flex items-center rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A] shadow-sm">
                                     {{ $settings['running_text_speed'] ?? '20' }} detik
                                 </span>
                             </div>
-                            <input id="banner-speed-input" type="number" min="5" name="running_text_speed" value="{{ $settings['running_text_speed'] ?? '20' }}" class="mt-4 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                            <input id="banner-speed-input" type="number" min="5" name="running_text_speed" value="{{ $settings['running_text_speed'] ?? '20' }}" class="mt-4 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
                         </div>
 
-                        <div class="overflow-hidden rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9]">
+                        <div class="overflow-hidden rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9]">
                             <div class="border-b border-[#EFEFEF] px-5 py-4">
                                 <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Preview Banner</p>
                             </div>
-                            <div id="banner-preview" class="overflow-hidden px-4 py-3 text-[10px] font-black uppercase tracking-[0.24em]" style="background-color: {{ $settings['running_text_bg'] ?? '#1E2432' }}; color: {{ $settings['running_text_color'] ?? '#FFFFFF' }};">
+                            <div id="banner-preview" class="overflow-hidden px-4 py-3 text-[10px] font-black uppercase tracking-[0.24em]" style="background-color: {{ $settings['running_text_bg'] ?? '#0F172A' }}; color: {{ $settings['running_text_color'] ?? '#FFFFFF' }};">
                                 <div id="banner-preview-track" class="banner-preview-track flex min-w-max gap-10" style="animation-duration: {{ $settings['running_text_speed'] ?? '20' }}s;">
                                     <span>Sistem informasi pegawai dan arsip berjalan sinkron untuk seluruh unit kerja.</span>
                                     <span>Sistem informasi pegawai dan arsip berjalan sinkron untuk seluruh unit kerja.</span>
@@ -343,29 +342,29 @@
                 </div>
 
                 <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm">
-                    <div class="border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7">
+                    <div class="border-b border-[#F2F1EE] bg-[#F1F5F9] px-8 py-7">
                         <div class="flex items-start gap-4">
                             <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-emerald-600 shadow-sm">
                                 <i data-lucide="building-2" class="h-5 w-5"></i>
                             </div>
                             <div>
-                                <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Identitas Instansi</h4>
+                                <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#0F172A]">Identitas Instansi</h4>
                             </div>
                         </div>
                     </div>
 
                     <div class="space-y-6 p-8">
-                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                             <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Baris Utama Kop</label>
-                            <input id="kop-line-1-input" type="text" name="kop_line_1" value="{{ $settings['kop_line_1'] ?? 'LEMBAGA PEMASYARAKATAN JOMBANG' }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                            <input id="kop-line-1-input" type="text" name="kop_line_1" value="{{ $settings['kop_line_1'] ?? 'LEMBAGA PEMASYARAKATAN JOMBANG' }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
                         </div>
 
-                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                             <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Baris Kedua Kop</label>
-                            <input id="kop-line-2-input" type="text" name="kop_line_2" value="{{ $settings['kop_line_2'] ?? 'KANTOR WILAYAH KEMENTERIAN HUKUM DAN HAM JAWA TIMUR' }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                            <input id="kop-line-2-input" type="text" name="kop_line_2" value="{{ $settings['kop_line_2'] ?? 'KANTOR WILAYAH KEMENTERIAN HUKUM DAN HAM JAWA TIMUR' }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
                         </div>
 
-                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#1E2432] p-6 text-white">
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#0F172A] p-6 text-white">
                             <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/55">Preview Identitas</p>
                             <div class="mt-5 rounded-[24px] border border-white/10 bg-white/5 px-6 py-7 text-center">
                                 <p id="kop-line-1-preview" class="text-sm font-black uppercase tracking-[0.2em]">{{ $settings['kop_line_1'] ?? 'LEMBAGA PEMASYARAKATAN JOMBANG' }}</p>
@@ -379,14 +378,14 @@
 
             <div class="flex flex-col gap-6 rounded-[32px] border border-[#EFEFEF] bg-white px-6 py-6 shadow-sm md:flex-row md:items-center md:justify-between md:px-8">
                 <div class="flex items-start gap-4">
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FCFBF9] text-[#1E2432]">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#F1F5F9] text-[#0F172A]">
                         <i data-lucide="check-check" class="h-5 w-5"></i>
                     </div>
                     <div>
-                        <p class="text-sm font-black text-[#1E2432]">Konfigurasi utama siap diperbarui.</p>
+                        <p class="text-sm font-black text-[#0F172A]">Konfigurasi utama siap diperbarui.</p>
                     </div>
                 </div>
-                <button type="submit" class="inline-flex items-center justify-center gap-3 rounded-[22px] bg-[#1E2432] px-8 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-slate-900/10 transition-all hover:-translate-y-0.5 hover:bg-[#E85A4F]">
+                <button type="submit" class="inline-flex items-center justify-center gap-3 rounded-[22px] bg-[#0F172A] px-8 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-slate-900/10 transition-all hover:-translate-y-0.5 hover:bg-[#EAB308]">
                     <i data-lucide="save" class="h-4 w-4"></i>
                     Simpan Perubahan Utama
                 </button>
@@ -397,15 +396,15 @@
     <section id="broadcast" class="scroll-mt-32 space-y-8 border-t border-[#EFEFEF] pt-10">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#E85A4F]">Siaran Pengumuman</p>
-                <h3 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Siaran pengumuman.</h3>
+                <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#EAB308]">Siaran Pengumuman</p>
+                <h3 class="mt-2 text-3xl font-black tracking-tight text-[#0F172A]">Siaran pengumuman.</h3>
             </div>
             <div class="flex flex-wrap gap-3">
-                <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A] shadow-sm">
                     <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                     {{ $activeAnnouncementsCount }} live
                 </span>
-                <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A] shadow-sm">
                     <span class="h-2 w-2 rounded-full bg-blue-500"></span>
                     {{ $scheduledAnnouncementsCount }} terjadwal
                 </span>
@@ -414,25 +413,25 @@
 
         <div class="grid gap-8 xl:grid-cols-[380px,minmax(0,1fr)]">
             <div class="h-fit overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm xl:sticky xl:top-36">
-                <div class="border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7">
+                <div class="border-b border-[#F2F1EE] bg-[#F1F5F9] px-8 py-7">
                     <div class="flex items-start gap-4">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#E85A4F] shadow-sm">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#EAB308] shadow-sm">
                             <i data-lucide="send" class="h-5 w-5"></i>
                         </div>
                         <div>
-                            <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Buat Siaran Baru</h4>
+                            <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#0F172A]">Buat Siaran Baru</h4>
                         </div>
                     </div>
                 </div>
 
                 <div class="space-y-6 p-8">
-                    <div class="overflow-hidden rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9]">
+                    <div class="overflow-hidden rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9]">
                         <div class="border-b border-[#EFEFEF] px-5 py-4">
                             <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Preview Mode</p>
                         </div>
                         <div class="space-y-4 p-5">
-                            <div class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
-                                <i data-lucide="sparkles" class="h-4 w-4 text-[#E85A4F]"></i>
+                            <div class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A] shadow-sm">
+                                <i data-lucide="sparkles" class="h-4 w-4 text-[#EAB308]"></i>
                                 <span id="announcement-type-badge">Running Text</span>
                             </div>
                             <p id="announcement-type-hint" class="text-sm font-medium text-[#8A8A8A]">Tampil di bagian atas aplikasi.</p>
@@ -441,31 +440,31 @@
 
                     <form action="{{ route('announcements.store') }}" method="POST" class="space-y-5">
                         @csrf
-                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                             <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Pesan Siaran</label>
-                            <textarea name="message" rows="5" required class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5" placeholder="Tulis pesan resmi yang akan tampil kepada seluruh pengguna...">{{ old('message') }}</textarea>
+                            <textarea name="message" rows="5" required class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5" placeholder="Tulis pesan resmi yang akan tampil kepada seluruh pengguna...">{{ old('message') }}</textarea>
                         </div>
 
-                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                             <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Tipe Siaran</label>
-                            <select id="announcement-type" name="type" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                            <select id="announcement-type" name="type" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
                                 <option value="banner" {{ old('type', 'banner') === 'banner' ? 'selected' : '' }}>Running Text</option>
                                 <option value="popup" {{ old('type') === 'popup' ? 'selected' : '' }}>Popup Modal</option>
                             </select>
                         </div>
 
                         <div class="grid gap-4 sm:grid-cols-2">
-                            <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                            <div class="rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                                 <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Mulai Tayang</label>
-                                <input type="datetime-local" name="starts_at" value="{{ old('starts_at') }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-4 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                                <input type="datetime-local" name="starts_at" value="{{ old('starts_at') }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-4 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
                             </div>
-                            <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                            <div class="rounded-[28px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
                                 <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Selesai Tayang</label>
-                                <input type="datetime-local" name="expires_at" value="{{ old('expires_at') }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-4 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                                <input type="datetime-local" name="expires_at" value="{{ old('expires_at') }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-4 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
                             </div>
                         </div>
 
-                        <button type="submit" class="inline-flex w-full items-center justify-center gap-3 rounded-[22px] bg-[#E85A4F] px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-red-100 transition-all hover:-translate-y-0.5 hover:bg-[#1E2432]">
+                        <button type="submit" class="inline-flex w-full items-center justify-center gap-3 rounded-[22px] bg-[#EAB308] px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-red-100 transition-all hover:-translate-y-0.5 hover:bg-[#0F172A]">
                             <i data-lucide="send" class="h-4 w-4"></i>
                             Publikasikan Siaran
                         </button>
@@ -474,12 +473,12 @@
             </div>
 
             <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm">
-                <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#F1F5F9] px-8 py-7 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                        <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Riwayat Siaran</h4>
+                        <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#0F172A]">Riwayat Siaran</h4>
                     </div>
                     <div class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A] shadow-sm">
-                        <i data-lucide="history" class="h-4 w-4 text-[#1E2432]"></i>
+                        <i data-lucide="history" class="h-4 w-4 text-[#0F172A]"></i>
                         {{ $announcements->count() }} total siaran
                     </div>
                 </div>
@@ -499,11 +498,11 @@
                             }
                         @endphp
 
-                        <div class="rounded-[32px] border border-[#EFEFEF] bg-[#FCFBF9] p-6 transition-all hover:-translate-y-0.5 hover:border-[#1E2432]/10 hover:bg-white hover:shadow-lg hover:shadow-slate-900/5">
+                        <div class="rounded-[32px] border border-[#EFEFEF] bg-[#F1F5F9] p-6 transition-all hover:-translate-y-0.5 hover:border-[#0F172A]/10 hover:bg-white hover:shadow-lg hover:shadow-slate-900/5">
                             <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                                 <div class="min-w-0 flex-1">
                                     <div class="flex flex-wrap items-center gap-2">
-                                        <span class="inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] {{ $announcement->type === 'banner' ? 'border-[#EFEFEF] bg-white text-[#1E2432]' : 'border-violet-100 bg-violet-50 text-violet-600' }}">
+                                        <span class="inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] {{ $announcement->type === 'banner' ? 'border-[#EFEFEF] bg-white text-[#0F172A]' : 'border-violet-100 bg-violet-50 text-violet-600' }}">
                                             {{ $announcement->type === 'banner' ? 'Running Text' : 'Popup Modal' }}
                                         </span>
                                         <span class="inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] {{ $statusClasses }}">
@@ -511,22 +510,22 @@
                                         </span>
                                     </div>
 
-                                    <p class="mt-4 text-base font-bold leading-relaxed text-[#1E2432]">
+                                    <p class="mt-4 text-base font-bold leading-relaxed text-[#0F172A]">
                                         {{ $announcement->message }}
                                     </p>
 
                                     <div class="mt-5 grid gap-3 text-sm font-medium text-[#8A8A8A] sm:grid-cols-3">
                                         <div class="rounded-[20px] border border-[#EFEFEF] bg-white px-4 py-3">
                                             <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Mulai</p>
-                                            <p class="mt-2 font-bold text-[#1E2432]">{{ $announcement->starts_at ? $announcement->starts_at->format('d M Y, H:i') : 'Langsung tayang' }}</p>
+                                            <p class="mt-2 font-bold text-[#0F172A]">{{ $announcement->starts_at ? $announcement->starts_at->format('d M Y, H:i') : 'Langsung tayang' }}</p>
                                         </div>
                                         <div class="rounded-[20px] border border-[#EFEFEF] bg-white px-4 py-3">
                                             <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Berakhir</p>
-                                            <p class="mt-2 font-bold text-[#1E2432]">{{ $announcement->expires_at ? $announcement->expires_at->format('d M Y, H:i') : 'Sampai dimatikan' }}</p>
+                                            <p class="mt-2 font-bold text-[#0F172A]">{{ $announcement->expires_at ? $announcement->expires_at->format('d M Y, H:i') : 'Sampai dimatikan' }}</p>
                                         </div>
                                         <div class="rounded-[20px] border border-[#EFEFEF] bg-white px-4 py-3">
                                             <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Dibuat</p>
-                                            <p class="mt-2 font-bold text-[#1E2432]">{{ $announcement->created_at->format('d M Y, H:i') }}</p>
+                                            <p class="mt-2 font-bold text-[#0F172A]">{{ $announcement->created_at->format('d M Y, H:i') }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -535,7 +534,7 @@
                                     <form action="{{ route('announcements.toggle', $announcement->id) }}" method="POST">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#1E2432] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#1E2432] hover:text-white" title="{{ $announcement->is_active ? 'Nonaktifkan' : 'Aktifkan' }}">
+                                        <button type="submit" class="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#0F172A] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#0F172A] hover:text-white" title="{{ $announcement->is_active ? 'Nonaktifkan' : 'Aktifkan' }}">
                                             <i data-lucide="{{ $announcement->is_active ? 'eye-off' : 'eye' }}" class="h-4 w-4"></i>
                                         </button>
                                     </form>
@@ -550,11 +549,11 @@
                             </div>
                         </div>
                     @empty
-                        <div class="rounded-[32px] border border-dashed border-[#E2E0DC] bg-[#FCFBF9] px-6 py-16 text-center">
+                        <div class="rounded-[32px] border border-dashed border-[#E2E0DC] bg-[#F1F5F9] px-6 py-16 text-center">
                             <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-white text-[#ABABAB] shadow-sm">
                                 <i data-lucide="radio-tower" class="h-7 w-7"></i>
                             </div>
-                            <p class="mt-5 text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Belum ada siaran</p>
+                            <p class="mt-5 text-sm font-black uppercase tracking-[0.22em] text-[#0F172A]">Belum ada siaran</p>
                         </div>
                     @endforelse
                 </div>
@@ -565,15 +564,15 @@
     <section id="master" class="scroll-mt-32 space-y-8 border-t border-[#EFEFEF] pt-10">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#E85A4F]">Master Data</p>
-                <h3 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Master data.</h3>
+                <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#EAB308]">Master Data</p>
+                <h3 class="mt-2 text-3xl font-black tracking-tight text-[#0F172A]">Master data.</h3>
             </div>
             <div class="flex flex-wrap gap-3">
-                <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A] shadow-sm">
                     <span class="h-2 w-2 rounded-full bg-indigo-500"></span>
                     {{ $positions->count() }} jabatan
                 </span>
-                <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A] shadow-sm">
                     <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                     {{ $workUnits->count() }} unit kerja
                 </span>
@@ -582,16 +581,16 @@
 
         <div class="grid gap-8 xl:grid-cols-2">
             <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm">
-                <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#F1F5F9] px-8 py-7 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-start gap-4">
                         <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-indigo-600 shadow-sm">
                             <i data-lucide="briefcase" class="h-5 w-5"></i>
                         </div>
                         <div>
-                            <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Master Jabatan</h4>
+                            <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#0F172A]">Master Jabatan</h4>
                         </div>
                     </div>
-                    <span class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                    <span class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A] shadow-sm">
                         {{ $positions->count() }} total
                     </span>
                 </div>
@@ -599,7 +598,7 @@
                 <div class="space-y-6 p-8">
                     <form action="{{ route('settings.positions.store') }}" method="POST" class="flex flex-col gap-3 sm:flex-row">
                         @csrf
-                        <input type="text" name="name" required placeholder="Tambah jabatan baru..." class="flex-1 rounded-[22px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5">
+                        <input type="text" name="name" required placeholder="Tambah jabatan baru..." class="flex-1 rounded-[22px] border border-[#EFEFEF] bg-[#F1F5F9] px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5">
                         <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-[22px] bg-indigo-600 px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-lg shadow-indigo-100 transition-all hover:-translate-y-0.5 hover:bg-indigo-700">
                             <i data-lucide="plus" class="h-4 w-4"></i>
                             Tambah
@@ -608,9 +607,9 @@
 
                     <div class="settings-scrollbar max-h-[420px] space-y-3 overflow-y-auto pr-1">
                         @forelse ($positions as $position)
-                            <div class="flex items-center justify-between gap-4 rounded-[24px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 transition-all hover:bg-white hover:shadow-md">
+                            <div class="flex items-center justify-between gap-4 rounded-[24px] border border-[#EFEFEF] bg-[#F1F5F9] px-5 py-4 transition-all hover:bg-white hover:shadow-md">
                                 <div>
-                                    <p class="text-[11px] font-black uppercase tracking-[0.18em] text-[#1E2432]">{{ $position->name }}</p>
+                                    <p class="text-[11px] font-black uppercase tracking-[0.18em] text-[#0F172A]">{{ $position->name }}</p>
                                     <p class="mt-1 text-[11px] font-medium text-[#8A8A8A]">Slug: {{ $position->slug }}</p>
                                 </div>
                                 <form action="{{ route('settings.positions.destroy', $position->id) }}" method="POST" class="no-loader">
@@ -622,8 +621,8 @@
                                 </form>
                             </div>
                         @empty
-                            <div class="rounded-[28px] border border-dashed border-[#E2E0DC] bg-[#FCFBF9] px-6 py-12 text-center">
-                                <p class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Belum ada data jabatan</p>
+                            <div class="rounded-[28px] border border-dashed border-[#E2E0DC] bg-[#F1F5F9] px-6 py-12 text-center">
+                                <p class="text-sm font-black uppercase tracking-[0.22em] text-[#0F172A]">Belum ada data jabatan</p>
                             </div>
                         @endforelse
                     </div>
@@ -631,16 +630,16 @@
             </div>
 
             <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm">
-                <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#F1F5F9] px-8 py-7 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-start gap-4">
                         <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-emerald-600 shadow-sm">
                             <i data-lucide="blocks" class="h-5 w-5"></i>
                         </div>
                         <div>
-                            <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Master Unit Kerja</h4>
+                            <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#0F172A]">Master Unit Kerja</h4>
                         </div>
                     </div>
-                    <span class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                    <span class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A] shadow-sm">
                         {{ $workUnits->count() }} total
                     </span>
                 </div>
@@ -648,7 +647,7 @@
                 <div class="space-y-6 p-8">
                     <form action="{{ route('settings.work-units.store') }}" method="POST" class="flex flex-col gap-3 sm:flex-row">
                         @csrf
-                        <input type="text" name="name" required placeholder="Tambah unit kerja baru..." class="flex-1 rounded-[22px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5">
+                        <input type="text" name="name" required placeholder="Tambah unit kerja baru..." class="flex-1 rounded-[22px] border border-[#EFEFEF] bg-[#F1F5F9] px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5">
                         <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-[22px] bg-emerald-600 px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-lg shadow-emerald-100 transition-all hover:-translate-y-0.5 hover:bg-emerald-700">
                             <i data-lucide="plus" class="h-4 w-4"></i>
                             Tambah
@@ -657,9 +656,9 @@
 
                     <div class="settings-scrollbar max-h-[420px] space-y-3 overflow-y-auto pr-1">
                         @forelse ($workUnits as $workUnit)
-                            <div class="flex items-center justify-between gap-4 rounded-[24px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 transition-all hover:bg-white hover:shadow-md">
+                            <div class="flex items-center justify-between gap-4 rounded-[24px] border border-[#EFEFEF] bg-[#F1F5F9] px-5 py-4 transition-all hover:bg-white hover:shadow-md">
                                 <div>
-                                    <p class="text-[11px] font-black uppercase tracking-[0.18em] text-[#1E2432]">{{ $workUnit->name }}</p>
+                                    <p class="text-[11px] font-black uppercase tracking-[0.18em] text-[#0F172A]">{{ $workUnit->name }}</p>
                                     <p class="mt-1 text-[11px] font-medium text-[#8A8A8A]">Slug: {{ $workUnit->slug }}</p>
                                 </div>
                                 <form action="{{ route('settings.work-units.destroy', $workUnit->id) }}" method="POST" class="no-loader">
@@ -671,8 +670,8 @@
                                 </form>
                             </div>
                         @empty
-                            <div class="rounded-[28px] border border-dashed border-[#E2E0DC] bg-[#FCFBF9] px-6 py-12 text-center">
-                                <p class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Belum ada unit kerja</p>
+                            <div class="rounded-[28px] border border-dashed border-[#E2E0DC] bg-[#F1F5F9] px-6 py-12 text-center">
+                                <p class="text-sm font-black uppercase tracking-[0.22em] text-[#0F172A]">Belum ada unit kerja</p>
                             </div>
                         @endforelse
                     </div>
@@ -688,7 +687,7 @@
             icon: 'success',
             title: 'Berhasil!',
             text: "{{ session('success') }}",
-            confirmButtonColor: '#1E2432',
+            confirmButtonColor: '#0F172A',
             customClass: { popup: 'rounded-[32px]' }
         });
     </script>

@@ -15,10 +15,10 @@
         box-shadow: 0 30px 60px -12px rgba(30, 36, 50, 0.15);
     }
     .stat-card-gradient {
-        background: linear-gradient(135deg, #1E2432 0%, #323d54 100%);
+        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
     }
     .accent-gradient {
-        background: linear-gradient(135deg, #E85A4F 0%, #ff7b71 100%);
+        background: linear-gradient(135deg, #EAB308 0%, #3B82F6 100%);
     }
     .glass-stat {
         background: rgba(255, 255, 255, 0.05);
@@ -34,20 +34,17 @@
     $hasMandatory = $totalMandatoryCategories > 0;
 @endphp
 
-<div class="relative overflow-hidden rounded-[56px] bg-[#1E2432] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10 mb-12">
+<div class="relative overflow-hidden rounded-[56px] bg-[#1E293B] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10 mb-12">
     <div class="absolute -left-12 top-8 h-44 w-44 rounded-full bg-white/5 blur-3xl"></div>
-    <div class="absolute right-0 top-0 h-64 w-64 rounded-full bg-[#E85A4F]/20 blur-3xl"></div>
+    <div class="absolute right-0 top-0 h-64 w-64 rounded-full bg-[#FACC15]/20 blur-3xl"></div>
 
     <div class="relative z-10 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
         <div class="max-w-3xl">
             <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/80">
-                <span class="h-2 w-2 rounded-full bg-[#E85A4F]"></span>
+                <span class="h-2 w-2 rounded-full bg-[#FACC15]"></span>
                 Admin Overview
             </div>
-            <h2 class="mt-5 text-3xl font-black tracking-tight sm:text-4xl">Ringkasan operasional harian untuk memantau arsip, kepatuhan, dan antrean tindak lanjut.</h2>
-            <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-white/65">
-                Dashboard ini dipoles agar lebih cepat dipindai saat admin perlu melihat konteks unit, beban kerja hari ini, dan aktivitas yang perlu ditangani segera.
-            </p>
+            <h2 class="mt-5 text-3xl font-black tracking-tight sm:text-4xl">Ringkasan operasional harian.</h2>
         </div>
 
         <div class="rounded-[28px] border border-white/10 bg-white/5 px-6 py-5 backdrop-blur">
@@ -76,10 +73,10 @@
 <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-12">
     <div class="flex-1">
         <div class="flex items-center gap-4 mb-3">
-            <div class="w-2 h-10 bg-[#E85A4F] rounded-full shadow-lg shadow-red-200"></div>
+            <div class="w-2 h-10 bg-[#FACC15] rounded-full shadow-lg shadow-red-200"></div>
             <div>
-                <h2 class="text-3xl font-black text-[#1E2432] tracking-tight italic">Dashboard Utama</h2>
-                <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.3em]">Ringkasan Operasional & Monitoring Sistem</p>
+                <h2 class="text-3xl font-black text-[#1E293B] tracking-tight italic">Dashboard Utama</h2>
+                <p class="text-[10px] font-black text-[#64748B] uppercase tracking-[0.3em]">Ringkasan Operasional & Monitoring Sistem</p>
             </div>
         </div>
     </div>
@@ -87,22 +84,22 @@
     <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
         <form action="{{ route('dashboard') }}" method="GET" class="w-full sm:w-auto no-loader group">
             <div class="relative">
-                <i data-lucide="filter" class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8A8A] group-hover:text-[#E85A4F] transition-all"></i>
-                <select name="work_unit_id" onchange="this.form.submit()" class="w-full sm:w-[260px] pl-14 pr-10 py-4 rounded-[24px] border border-[#EFEFEF] bg-white text-[10px] font-black uppercase tracking-widest text-[#1E2432] outline-none focus:ring-8 focus:ring-red-500/5 focus:border-[#E85A4F] transition-all shadow-sm cursor-pointer appearance-none hover:shadow-md">
+                <i data-lucide="filter" class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] group-hover:text-[#FACC15] transition-all"></i>
+                <select name="work_unit_id" onchange="this.form.submit()" class="w-full sm:w-[260px] pl-14 pr-10 py-4 rounded-[24px] border border-[#E2E8F0] bg-white text-[10px] font-black uppercase tracking-widest text-[#1E293B] outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-[#1D4ED8] transition-all shadow-sm cursor-pointer appearance-none hover:shadow-md">
                     <option value="">Seluruh Unit Kerja</option>
                     @foreach($workUnits as $unit)
                         <option value="{{ $unit->id }}" {{ request('work_unit_id') == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
                     @endforeach
                 </select>
-                <i data-lucide="chevron-down" class="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8A8A] pointer-events-none"></i>
+                <i data-lucide="chevron-down" class="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none"></i>
             </div>
         </form>
 
         <div class="flex gap-3 w-full sm:w-auto">
-            <a href="{{ route('dashboard.export.excel') }}" class="flex-1 sm:flex-none bg-white border border-[#EFEFEF] text-[#1E2432] px-8 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-widest hover:bg-[#1E2432] hover:text-white transition-all shadow-sm flex items-center justify-center gap-2 no-loader group">
+            <a href="{{ route('dashboard.export.excel') }}" class="flex-1 sm:flex-none bg-white border border-[#E2E8F0] text-[#1E293B] px-8 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-widest hover:bg-[#1D4ED8] hover:text-white hover:border-[#1D4ED8] transition-all shadow-sm flex items-center justify-center gap-2 no-loader group">
                 <i data-lucide="file-spreadsheet" class="w-4 h-4 text-green-600 group-hover:text-white transition-transform group-hover:scale-110"></i> Excel
             </a>
-            <a href="{{ route('dashboard.export.pdf') }}" class="flex-1 sm:flex-none bg-[#1E2432] text-white px-8 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-widest hover:bg-[#E85A4F] transition-all shadow-xl shadow-gray-200 flex items-center justify-center gap-2 no-loader group">
+            <a href="{{ route('dashboard.export.pdf') }}" class="flex-1 sm:flex-none bg-[#1E293B] text-white px-8 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-widest hover:bg-[#FACC15] hover:text-[#1E293B] transition-all shadow-xl shadow-gray-200 flex items-center justify-center gap-2 no-loader group">
                 <i data-lucide="file-text" class="w-4 h-4 group-hover:rotate-6 transition-transform"></i> PDF
             </a>
         </div>
@@ -112,8 +109,8 @@
 <!-- Statistics Bento Grid -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
     <!-- Archive Size Widget -->
-    <div class="md:col-span-2 bg-[#1E2432] rounded-[56px] p-12 text-white relative overflow-hidden bento-card shadow-2xl shadow-gray-900/20">
-        <div class="absolute top-0 right-0 p-12 opacity-10 rotate-12">
+    <div class="md:col-span-2 bg-[#1E293B] rounded-[56px] p-12 text-white relative overflow-hidden bento-card shadow-2xl shadow-gray-900/20">
+        <div class="absolute top-0 right-0 p-12 opacity-10 rotate-12 text-[#1D4ED8]">
             <i data-lucide="database" class="w-64 h-64"></i>
         </div>
         <div class="relative z-10 h-full flex flex-col justify-between">
@@ -126,7 +123,7 @@
                 <div class="glass-stat px-6 py-4 rounded-[24px]">
                     <p class="text-[8px] font-black opacity-40 uppercase mb-1">Status Server</p>
                     <p class="text-sm font-black italic flex items-center gap-2">
-                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Sinkron & Optimal
+                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.5)]"></span> Sinkron & Optimal
                     </p>
                 </div>
             </div>
@@ -135,43 +132,43 @@
 
     <!-- Quick Stats Column -->
     <div class="space-y-8">
-        <div class="bg-white p-10 rounded-[48px] border border-[#EFEFEF] shadow-sm bento-card relative overflow-hidden">
-            <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6">
+        <div class="bg-white p-10 rounded-[48px] border border-[#E2E8F0] shadow-sm bento-card relative overflow-hidden">
+            <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-[#1D4ED8] mb-6">
                 <i data-lucide="users" class="w-7 h-7"></i>
             </div>
-            <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">Total Pegawai</p>
-            <h4 class="text-4xl font-black text-[#1E2432] mt-2 tracking-tighter">{{ $totalEmployees }}</h4>
+            <p class="text-[10px] font-black text-[#64748B] uppercase tracking-widest">Total Pegawai</p>
+            <h4 class="text-4xl font-black text-[#1E293B] mt-2 tracking-tighter">{{ $totalEmployees }}</h4>
         </div>
-        <div class="bg-white p-10 rounded-[48px] border border-[#EFEFEF] shadow-sm bento-card relative overflow-hidden">
+        <div class="bg-white p-10 rounded-[48px] border border-[#E2E8F0] shadow-sm bento-card relative overflow-hidden">
             <div class="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 mb-6">
                 <i data-lucide="file-check" class="w-7 h-7"></i>
             </div>
-            <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">Total Arsip</p>
-            <h4 class="text-4xl font-black text-[#1E2432] mt-2 tracking-tighter">{{ $totalDocuments }}</h4>
+            <p class="text-[10px] font-black text-[#64748B] uppercase tracking-widest">Total Arsip</p>
+            <h4 class="text-4xl font-black text-[#1E293B] mt-2 tracking-tighter">{{ $totalDocuments }}</h4>
         </div>
     </div>
 
     <!-- Urgent Alerts Column -->
-    <div class="bg-[#E85A4F] p-10 rounded-[56px] text-white shadow-2xl shadow-red-200 bento-card flex flex-col justify-between group">
+    <div class="bg-[#FACC15] p-10 rounded-[56px] text-[#1E293B] shadow-2xl shadow-yellow-200 bento-card flex flex-col justify-between group">
         <div>
-            <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-8 border border-white/20">
+            <div class="w-14 h-14 bg-white/40 rounded-2xl flex items-center justify-center mb-8 border border-white/40">
                 <i data-lucide="bell-ring" class="w-7 h-7 animate-bounce"></i>
             </div>
             <h4 class="text-xl font-black leading-tight italic">Tindakan<br>Segera</h4>
-            <p class="text-[10px] font-bold opacity-60 uppercase tracking-widest mt-4">Memerlukan Respon Admin</p>
+            <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest mt-4">Memerlukan Respon Admin</p>
         </div>
         <div class="space-y-4">
-            <a href="{{ route('documents.index', ['status' => 'pending']) }}" class="flex items-center justify-between bg-white/10 hover:bg-white/20 border border-white/10 p-5 rounded-[24px] transition-all group/link">
+            <a href="{{ route('documents.index', ['status' => 'pending']) }}" class="flex items-center justify-between bg-white/20 hover:bg-white/40 border border-white/20 p-5 rounded-[24px] transition-all group/link">
                 <div class="flex flex-col">
                     <span class="text-2xl font-black leading-none">{{ $pendingDocs }}</span>
-                    <span class="text-[8px] font-black uppercase opacity-60 mt-1">Pending Verif</span>
+                    <span class="text-[8px] font-black uppercase opacity-70 mt-1">Pending Verif</span>
                 </div>
                 <i data-lucide="arrow-right" class="w-4 h-4 group-hover/link:translate-x-1 transition-transform"></i>
             </a>
-            <a href="{{ route('admin.report-issues.index') }}" class="flex items-center justify-between bg-white/10 hover:bg-white/20 border border-white/10 p-5 rounded-[24px] transition-all group/link">
+            <a href="{{ route('admin.report-issues.index') }}" class="flex items-center justify-between bg-white/20 hover:bg-white/40 border border-white/20 p-5 rounded-[24px] transition-all group/link">
                 <div class="flex flex-col">
                     <span class="text-2xl font-black leading-none">{{ $openIssues }}</span>
-                    <span class="text-[8px] font-black uppercase opacity-60 mt-1">Laporan Baru</span>
+                    <span class="text-[8px] font-black uppercase opacity-70 mt-1">Laporan Baru</span>
                 </div>
                 <i data-lucide="arrow-right" class="w-4 h-4 group-hover/link:translate-x-1 transition-transform"></i>
             </a>
@@ -182,38 +179,38 @@
 <!-- Main Analytics Row -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 items-stretch">
     <!-- Compliance Tracking (Improved UI) -->
-    <div class="lg:col-span-2 bg-white rounded-[56px] border border-[#EFEFEF] shadow-sm overflow-hidden flex flex-col bento-card h-full min-h-0">
-        <div class="p-12 border-b border-[#F5F4F2] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-[#FCFBF9]/50">
+    <div class="lg:col-span-2 bg-white rounded-[56px] border border-[#E2E8F0] shadow-sm overflow-hidden flex flex-col bento-card h-full min-h-0">
+        <div class="p-12 border-b border-[#F8FAFC] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-[#F8FAFC]/50">
             <div>
-                <h3 class="text-2xl font-black text-[#1E2432] tracking-tight italic flex items-center gap-3">
+                <h3 class="text-2xl font-black text-[#1E293B] tracking-tight italic flex items-center gap-3">
                     Pelacakan Kepatuhan <span class="bg-red-500 text-white text-[8px] font-black px-2.5 py-1 rounded-lg not-italic uppercase tracking-widest">LIVE</span>
                 </h3>
-                <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-[0.2em] mt-2">Preview pegawai dengan dokumen tidak lengkap</p>
+                <p class="text-[10px] font-bold text-[#64748B] uppercase tracking-[0.2em] mt-2">Preview pegawai dengan dokumen tidak lengkap</p>
             </div>
             <div class="flex items-center gap-3">
-                <div class="rounded-2xl border border-[#EFEFEF] bg-white px-4 py-3 text-right shadow-sm">
-                    <p class="text-[9px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Ditampilkan</p>
-                    <p class="mt-1 text-sm font-black text-[#1E2432]">{{ $displayedNonCompliantEmployees }}/{{ $nonCompliantEmployeesTotal }}</p>
+                <div class="rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-right shadow-sm">
+                    <p class="text-[9px] font-black uppercase tracking-[0.24em] text-[#64748B]">Ditampilkan</p>
+                    <p class="mt-1 text-sm font-black text-[#1E293B]">{{ $displayedNonCompliantEmployees }}/{{ $nonCompliantEmployeesTotal }}</p>
                 </div>
-                <a href="{{ route('employees.index') }}" class="inline-flex items-center gap-2 rounded-2xl border border-[#EFEFEF] bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#1E2432] shadow-sm transition-all hover:border-[#E85A4F] hover:text-[#E85A4F]">
+                <a href="{{ route('employees.index') }}" class="inline-flex items-center gap-2 rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#1E293B] shadow-sm transition-all hover:border-[#1D4ED8] hover:text-[#1D4ED8]">
                     <i data-lucide="arrow-up-right" class="h-4 w-4"></i>
                     Lihat Semua
                 </a>
-                <button onclick="window.location.reload()" class="bg-white border border-[#EFEFEF] p-4 rounded-2xl hover:bg-[#1E2432] hover:text-white transition-all shadow-sm active:scale-95 group">
+                <button onclick="window.location.reload()" class="bg-white border border-[#E2E8F0] p-4 rounded-2xl hover:bg-[#1E293B] hover:text-white transition-all shadow-sm active:scale-95 group">
                     <i data-lucide="refresh-cw" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-700"></i>
                 </button>
             </div>
         </div>
         
         <div class="p-8 flex-1 min-h-0 flex flex-col">
-            <div class="mb-4 flex items-center justify-between gap-3 rounded-[24px] border border-[#F1EFEB] bg-[#FCFBF9] px-5 py-4">
+            <div class="mb-4 flex items-center justify-between gap-3 rounded-[24px] border border-[#E2E8F0] bg-[#F8FAFC] px-5 py-4">
                 <div>
-                    <p class="text-[9px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Ringkasan Widget</p>
-                    <p class="mt-1 text-sm font-bold text-[#1E2432]">Widget ini hanya menampilkan maksimal {{ $nonCompliantPreviewLimit }} pegawai agar dashboard tetap ringan dan fokus.</p>
+                    <p class="text-[9px] font-black uppercase tracking-[0.24em] text-[#64748B]">Ringkasan Widget</p>
+                    <p class="mt-1 text-sm font-bold text-[#1E293B]">Maksimal {{ $nonCompliantPreviewLimit }} pegawai.</p>
                 </div>
                 <div class="shrink-0 rounded-2xl bg-white px-4 py-3 text-center shadow-sm">
-                    <p class="text-[9px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Total Isu</p>
-                    <p class="mt-1 text-base font-black text-[#E85A4F]">{{ $nonCompliantEmployeesTotal }}</p>
+                    <p class="text-[9px] font-black uppercase tracking-[0.22em] text-[#64748B]">Total Isu</p>
+                    <p class="mt-1 text-base font-black text-[#1D4ED8]">{{ $nonCompliantEmployeesTotal }}</p>
                 </div>
             </div>
 
@@ -223,15 +220,15 @@
                         <div class="w-20 h-20 bg-orange-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-orange-500 rotate-3 border border-orange-100 shadow-inner">
                             <i data-lucide="alert-circle" class="w-10 h-10"></i>
                         </div>
-                        <h4 class="text-lg font-black text-[#1E2432] uppercase tracking-widest">Aturan Belum Diatur</h4>
-                        <p class="text-xs text-[#8A8A8A] mt-2 max-w-xs mx-auto leading-relaxed">Tandai minimal satu kategori sebagai <span class="font-black text-[#1E2432]">Wajib</span> untuk mengaktifkan sistem deteksi kepatuhan.</p>
+                        <h4 class="text-lg font-black text-[#1E293B] uppercase tracking-widest">Aturan Belum Diatur</h4>
+                        <p class="text-xs text-[#64748B] mt-2 max-w-xs mx-auto leading-relaxed">Tandai minimal satu kategori sebagai <span class="font-black text-[#1E293B]">Wajib</span> untuk mengaktifkan sistem deteksi kepatuhan.</p>
                     </div>
                 @else
                     <div class="grid grid-cols-1 gap-4">
                         @foreach($nonCompliantEmployees as $emp)
-                        <div class="group bg-[#FCFBF9] border border-[#EFEFEF] p-6 rounded-[32px] hover:bg-white hover:border-[#E85A4F] hover:shadow-xl transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div class="group bg-[#F8FAFC] border border-[#E2E8F0] p-6 rounded-[32px] hover:bg-white hover:border-[#1D4ED8] hover:shadow-xl transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6">
                             <div class="flex items-center gap-6 flex-1 w-full">
-                                <div class="w-16 h-16 rounded-[24px] overflow-hidden border-4 border-white shadow-lg bg-[#E85A4F] flex items-center justify-center text-white text-xl font-black">
+                                <div class="w-16 h-16 rounded-[24px] overflow-hidden border-4 border-white shadow-lg bg-[#1E293B] flex items-center justify-center text-white text-xl font-black">
                                     @if($emp->photo)
                                         <img src="{{ $emp->photo }}" class="w-full h-full object-cover">
                                     @else
@@ -239,19 +236,19 @@
                                     @endif
                                 </div>
                                 <div>
-                                    <h5 class="text-base font-black text-[#1E2432] group-hover:text-[#E85A4F] transition-colors">{{ $emp->full_name }}</h5>
-                                    <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest mt-1">NIP. {{ $emp->nip }}</p>
+                                    <h5 class="text-base font-black text-[#1E293B] group-hover:text-[#1D4ED8] transition-colors">{{ $emp->full_name }}</h5>
+                                    <p class="text-[10px] font-black text-[#64748B] uppercase tracking-widest mt-1">NIP. {{ $emp->nip }}</p>
                                 </div>
                             </div>
                             
                             <div class="flex flex-col items-center sm:items-end gap-3 w-full sm:w-auto">
                                 <div class="flex items-center gap-4">
                                     <div class="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                        <div class="h-full bg-[#E85A4F] rounded-full transition-all duration-1000" style="width: {{ $emp->compliance_percent }}%"></div>
+                                        <div class="h-full bg-[#1D4ED8] rounded-full transition-all duration-1000" style="width: {{ $emp->compliance_percent }}%"></div>
                                     </div>
                                     <span class="text-[10px] font-black text-red-600 uppercase">{{ $emp->uploaded_mandatory_count }}/{{ $emp->total_mandatory_count }}</span>
                                 </div>
-                                <a href="{{ $emp->whatsapp_link }}" target="_blank" class="flex items-center gap-2 bg-white px-6 py-2.5 rounded-xl border border-[#EFEFEF] text-[9px] font-black uppercase tracking-[0.2em] hover:bg-green-600 hover:text-white hover:border-green-600 transition-all shadow-sm">
+                                <a href="{{ $emp->whatsapp_link }}" target="_blank" class="flex items-center gap-2 bg-white px-6 py-2.5 rounded-xl border border-[#E2E8F0] text-[9px] font-black uppercase tracking-[0.2em] hover:bg-green-600 hover:text-white hover:border-green-600 transition-all shadow-sm">
                                     <i data-lucide="message-circle" class="w-3 h-3"></i> WhatsApp Blast
                                 </a>
                             </div>
@@ -263,17 +260,17 @@
                                 <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600 shadow-inner rotate-6">
                                     <i data-lucide="shield-check" class="w-10 h-10"></i>
                                 </div>
-                                <p class="text-base font-black text-[#1E2432] italic">Zero Compliance Issues</p>
-                                <p class="text-[10px] text-[#8A8A8A] font-black uppercase tracking-[0.3em] mt-1">Seluruh pegawai telah mematuhi aturan administrasi.</p>
+                                <p class="text-base font-black text-[#1E293B] italic">Zero Compliance Issues</p>
+                                <p class="text-[10px] text-[#64748B] font-black uppercase tracking-[0.3em] mt-1">Seluruh pegawai telah mematuhi aturan administrasi.</p>
                             </div>
                         @endif
 
                         @if($nonCompliantEmployeesTotal > $displayedNonCompliantEmployees)
-                            <div class="rounded-[28px] border border-dashed border-[#E2E0DC] bg-white px-6 py-5 text-center">
-                                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">
+                            <div class="rounded-[28px] border border-dashed border-[#CBD5E1] bg-white px-6 py-5 text-center">
+                                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#64748B]">
                                     Menampilkan {{ $displayedNonCompliantEmployees }} dari {{ $nonCompliantEmployeesTotal }} pegawai yang perlu ditindaklanjuti.
                                 </p>
-                                <a href="{{ route('employees.index') }}" class="mt-4 inline-flex items-center gap-2 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#1E2432] transition-all hover:border-[#E85A4F] hover:text-[#E85A4F]">
+                                <a href="{{ route('employees.index') }}" class="mt-4 inline-flex items-center gap-2 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#1E293B] transition-all hover:border-[#1D4ED8] hover:text-[#1D4ED8]">
                                     <i data-lucide="list" class="h-4 w-4"></i>
                                     Lihat Semua Data Pegawai
                                 </a>
@@ -287,27 +284,27 @@
 
     <!-- Right Sidebar: Chart & Feed -->
     <div class="space-y-10">
-        <div class="bg-white p-8 rounded-[40px] border border-[#EFEFEF] shadow-sm bento-card">
+        <div class="bg-white p-8 rounded-[40px] border border-[#E2E8F0] shadow-sm bento-card">
             <div class="flex items-center justify-between gap-4 mb-6">
                 <div>
-                    <h3 class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.3em]">Pegawai Baru Dipantau</h3>
-                    <p class="text-sm font-bold text-[#1E2432] mt-2">Akses cepat ke entitas terbaru dalam sistem.</p>
+                    <h3 class="text-[10px] font-black text-[#64748B] uppercase tracking-[0.3em]">Pegawai Baru Dipantau</h3>
+                    <p class="text-sm font-bold text-[#1E293B] mt-2">Akses cepat ke entitas terbaru dalam sistem.</p>
                 </div>
-                <div class="w-12 h-12 rounded-2xl bg-[#FCFBF9] border border-[#EFEFEF] flex items-center justify-center text-[#E85A4F]">
-                    <i data-lucide="users" class="w-5 h-5"></i>
+                <div class="w-12 h-12 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-[#1D4ED8]">
+                    <i data-lucide="user-plus" class="w-5 h-5"></i>
                 </div>
             </div>
             <div class="space-y-3">
                 @forelse($latestEmployees as $employee)
-                    <div class="flex items-center justify-between gap-4 rounded-[24px] border border-[#EFEFEF] bg-[#FCFBF9] px-4 py-4">
+                    <div class="flex items-center justify-between gap-4 rounded-[24px] border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-4">
                         <div class="min-w-0">
-                            <p class="text-xs font-black text-[#1E2432] truncate">{{ $employee->full_name }}</p>
-                            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A8A8A] mt-1 truncate">{{ $employee->work_unit->name ?? 'Tanpa Unit Kerja' }}</p>
+                            <p class="text-xs font-black text-[#1E293B] truncate">{{ $employee->full_name }}</p>
+                            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#64748B] mt-1 truncate">{{ $employee->work_unit->name ?? 'Tanpa Unit Kerja' }}</p>
                         </div>
-                        <span class="shrink-0 text-[10px] font-black uppercase tracking-[0.18em] text-[#E85A4F]">{{ $employee->created_at->diffForHumans() }}</span>
+                        <span class="shrink-0 text-[10px] font-black uppercase tracking-[0.18em] text-[#1D4ED8]">{{ $employee->created_at->diffForHumans() }}</span>
                     </div>
                 @empty
-                    <div class="rounded-[24px] border border-dashed border-[#E2E0DC] bg-[#FCFBF9] px-4 py-8 text-center text-[10px] font-black uppercase tracking-[0.24em] text-[#ABABAB]">
+                    <div class="rounded-[24px] border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-8 text-center text-[10px] font-black uppercase tracking-[0.24em] text-[#94A3B8]">
                         Belum ada data pegawai terbaru
                     </div>
                 @endforelse
@@ -315,35 +312,35 @@
         </div>
 
         <!-- Distribution Chart -->
-        <div class="bg-white p-10 rounded-[56px] border border-[#EFEFEF] shadow-sm bento-card relative overflow-hidden">
-            <h3 class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.4em] mb-10">Distribusi Data</h3>
-            <div class="h-[280px]">
+        <div class="bg-white p-10 rounded-[56px] border border-[#E2E8F0] shadow-sm bento-card relative overflow-hidden flex flex-col">
+            <h3 class="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] mb-8 shrink-0">Distribusi Data</h3>
+            <div class="flex-1 min-h-[320px] relative">
                 <canvas id="docChart"></canvas>
             </div>
         </div>
 
         <!-- Activity Log Hub -->
-        <div class="bg-[#1E2432] p-10 rounded-[56px] text-white shadow-2xl relative overflow-hidden bento-card h-[400px] flex flex-col">
-            <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
+        <div class="bg-[#1E293B] p-10 rounded-[56px] text-white shadow-2xl shadow-slate-900/20 relative overflow-hidden bento-card h-[400px] flex flex-col">
+            <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-[#1D4ED8]/20 rounded-full blur-3xl"></div>
             <div class="flex items-center justify-between mb-8 relative z-10">
                 <h3 class="text-[10px] font-black opacity-50 uppercase tracking-[0.4em]">Audit Trail</h3>
-                <span class="w-2 h-2 bg-[#E85A4F] rounded-full animate-ping"></span>
+                <span class="w-2 h-2 bg-[#FACC15] rounded-full animate-ping"></span>
             </div>
             <div class="space-y-8 flex-1 overflow-y-auto custom-scrollbar pr-4 relative z-10">
                 @foreach($recentLogs as $log)
                 <div class="flex gap-5 group">
-                    <div class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-[#E85A4F] transition-all flex-shrink-0">
+                    <div class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-[#1D4ED8] transition-all flex-shrink-0">
                         <i data-lucide="{{ str_contains($log->activity, 'upload') ? 'upload-cloud' : 'activity' }}" class="w-4 h-4 text-white"></i>
                     </div>
                     <div class="overflow-hidden">
                         <p class="text-[11px] font-black tracking-tight leading-tight">{{ $log->user->name ?? 'Sistem' }}</p>
-                        <p class="text-[10px] opacity-50 mt-1 truncate">{{ $log->details }}</p>
-                        <p class="text-[8px] font-bold opacity-30 uppercase mt-2 italic">{{ $log->created_at->diffForHumans() }}</p>
+                        <p class="text-[10px] opacity-60 mt-1 truncate">{{ $log->details }}</p>
+                        <p class="text-[8px] font-bold opacity-40 uppercase mt-2 italic">{{ $log->created_at->diffForHumans() }}</p>
                     </div>
                 </div>
                 @endforeach
             </div>
-            <a href="{{ route('audit.index') }}" class="mt-8 text-center text-[9px] font-black uppercase tracking-[0.3em] opacity-40 hover:opacity-100 hover:text-[#E85A4F] transition-all pt-6 border-t border-white/5 relative z-10">
+            <a href="{{ route('audit.index') }}" class="mt-8 text-center text-[9px] font-black uppercase tracking-[0.3em] opacity-40 hover:opacity-100 hover:text-[#FACC15] transition-all pt-6 border-t border-white/10 relative z-10">
                 Lihat Seluruh Log <i data-lucide="external-link" class="w-3 h-3 inline ml-1"></i>
             </a>
         </div>
@@ -351,37 +348,120 @@
 </div>
 
 <script>
+    const chartDataValues = {!! json_encode($chartData->pluck('documents_count')) !!};
+    const chartLabels = {!! json_encode($chartData->pluck('name')) !!};
+    const totalDocs = chartDataValues.reduce((a, b) => a + b, 0);
+    
     const ctx = document.getElementById('docChart').getContext('2d');
-    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, 'rgba(232, 90, 79, 1)');
-    gradient.addColorStop(1, 'rgba(232, 90, 79, 0.2)');
 
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: {!! json_encode($chartData->pluck('name')) !!},
-            datasets: [{
-                data: {!! json_encode($chartData->pluck('documents_count')) !!},
-                backgroundColor: ['#E85A4F', '#1E2432', '#F5F4F2', '#EFEFEF', '#ABABAB'],
-                borderWidth: 0,
-                hoverOffset: 20
-            }]
-        },
-        options: {
-            maintainAspectRatio: false,
-            cutout: '75%',
-            plugins: { 
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1E2432',
-                    padding: 16,
-                    cornerRadius: 16,
-                    titleFont: { family: 'Roboto', weight: 'bold' },
-                    bodyFont: { family: 'Roboto' }
-                }
-            },
-            animation: { animateRotate: true, duration: 2000 }
+    // Custom plugin to draw text in the center of the doughnut chart
+    const centerTextPlugin = {
+        id: 'centerText',
+        beforeDraw: function(chart) {
+            if (chart.config.type !== 'doughnut') return;
+            
+            var width = chart.chartArea.right - chart.chartArea.left,
+                height = chart.chartArea.bottom - chart.chartArea.top,
+                ctx = chart.ctx;
+
+            ctx.restore();
+            var fontSize = (height / 114).toFixed(2);
+            ctx.font = "900 " + fontSize + "em 'Inter', sans-serif";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = "#1E293B";
+
+            var text = totalDocs.toString(),
+                textX = chart.chartArea.left + Math.round((width - ctx.measureText(text).width) / 2),
+                textY = chart.chartArea.top + (height / 2);
+
+            ctx.fillText(text, textX, textY);
+            
+            ctx.font = "700 " + (fontSize / 2.5).toFixed(2) + "em 'Inter', sans-serif";
+            ctx.fillStyle = "#64748B";
+            var label = "Dokumen";
+            var labelX = chart.chartArea.left + Math.round((width - ctx.measureText(label).width) / 2);
+            ctx.fillText(label, labelX, textY + (height / 10));
+            
+            ctx.save();
         }
-    });
+    };
+
+    if (totalDocs === 0) {
+        // Empty State Chart
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Belum ada data'],
+                datasets: [{
+                    data: [1],
+                    backgroundColor: ['#F8FAFC'],
+                    borderWidth: 0,
+                    hoverOffset: 0
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                },
+                animation: { animateRotate: true, duration: 1000 }
+            },
+            plugins: [centerTextPlugin]
+        });
+    } else {
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    data: chartDataValues,
+                    backgroundColor: ['#1D4ED8', '#FACC15', '#334155', '#94A3B8', '#3B82F6', '#EAB308', '#64748B', '#CBD5E1'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: { 
+                    legend: { 
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            font: { family: "'Inter', sans-serif", weight: '600', size: 11 },
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 20,
+                            color: '#1E293B',
+                            boxWidth: 8
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1E293B',
+                        padding: 16,
+                        cornerRadius: 12,
+                        titleFont: { family: "'Inter', sans-serif", weight: 'bold' },
+                        bodyFont: { family: "'Inter', sans-serif", weight: 'normal' },
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += context.parsed + ' Berkas';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                animation: { animateRotate: true, duration: 2000 }
+            },
+            plugins: [centerTextPlugin]
+        });
+    }
 </script>
 @endsection

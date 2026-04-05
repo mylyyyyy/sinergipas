@@ -4,12 +4,12 @@
     <title>Laporan Dashboard Sinergi PAS</title>
     <style>
         body { font-family: sans-serif; font-size: 12px; color: #333; }
-        .kop { text-align: center; margin-bottom: 30px; border-bottom: 3px double #1E2432; padding-bottom: 15px; }
-        .kop h1 { margin: 0; font-size: 18px; font-weight: bold; color: #1E2432; }
+        .kop { text-align: center; margin-bottom: 30px; border-bottom: 3px double #0F172A; padding-bottom: 15px; }
+        .kop h1 { margin: 0; font-size: 18px; font-weight: bold; color: #0F172A; }
         .kop h2 { margin: 2px 0; font-size: 14px; font-weight: normal; }
         .kop p { margin: 2px 0; font-size: 10px; font-style: italic; color: #666; }
         
-        .section-title { background: #1E2432; color: white; padding: 10px; font-weight: bold; margin-top: 20px; text-transform: uppercase; }
+        .section-title { background: #0F172A; color: white; padding: 10px; font-weight: bold; margin-top: 20px; text-transform: uppercase; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
         th { background-color: #fcfcfc; font-weight: bold; width: 40%; }
@@ -17,7 +17,7 @@
         .summary-grid { margin-top: 20px; }
         .metric-box { border: 1px solid #eee; padding: 15px; margin-bottom: 10px; }
         .metric-label { font-size: 10px; color: #888; text-transform: uppercase; font-weight: bold; }
-        .metric-value { font-size: 20px; font-weight: bold; color: #1E2432; }
+        .metric-value { font-size: 20px; font-weight: bold; color: #0F172A; }
     </style>
 </head>
 <body>
