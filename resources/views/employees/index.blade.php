@@ -11,6 +11,49 @@
     .action-btn:hover { transform: translateY(-3px); }
 </style>
 
+@php
+    $filteredCount = $employees->total();
+    $unitLabel = $workUnits->firstWhere('id', request('work_unit_id'))?->name ?? 'Semua Unit Kerja';
+@endphp
+
+<div class="relative overflow-hidden rounded-[56px] bg-[#1E2432] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10 mb-12">
+    <div class="absolute -left-10 top-8 h-44 w-44 rounded-full bg-white/5 blur-3xl"></div>
+    <div class="absolute right-0 top-0 h-60 w-60 rounded-full bg-[#E85A4F]/20 blur-3xl"></div>
+
+    <div class="relative z-10 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
+        <div class="max-w-3xl">
+            <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/80">
+                <span class="h-2 w-2 rounded-full bg-[#E85A4F]"></span>
+                Data Pegawai
+            </div>
+            <h2 class="mt-5 text-3xl font-black tracking-tight sm:text-4xl">Pusat pengelolaan pegawai yang lebih rapi untuk pencarian, ekspor, dan aksi massal.</h2>
+            <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-white/65">
+                Halaman ini dipoles agar pencarian lebih cepat dipahami, status filter lebih jelas, dan kontrol tindakan pada setiap baris tetap nyaman dipakai di desktop maupun mobile.
+            </p>
+        </div>
+
+        <div class="rounded-[28px] border border-white/10 bg-white/5 px-6 py-5 backdrop-blur">
+            <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/50">Filter Unit Aktif</p>
+            <p class="mt-3 text-xl font-black tracking-tight">{{ $unitLabel }}</p>
+        </div>
+    </div>
+
+    <div class="relative z-10 mt-8 grid gap-4 md:grid-cols-3">
+        <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
+            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Data Tersaring</p>
+            <p class="mt-3 text-3xl font-black">{{ $filteredCount }}</p>
+        </div>
+        <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
+            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Master Jabatan</p>
+            <p class="mt-3 text-3xl font-black">{{ $positions->count() }}</p>
+        </div>
+        <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
+            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Master Unit Kerja</p>
+            <p class="mt-3 text-3xl font-black">{{ $workUnits->count() }}</p>
+        </div>
+    </div>
+</div>
+
 <div class="flex flex-col lg:flex-row gap-8 justify-between items-start lg:items-center mb-12">
     <!-- Search Bar & Filter -->
     <div class="flex flex-col md:flex-row gap-4 w-full lg:w-auto">
@@ -121,7 +164,7 @@
                             </div>
                         </td>
                         <td class="px-12 py-8 text-sm text-center">
-                            <div class="flex justify-center items-center gap-3 opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
+                            <div class="flex justify-center items-center gap-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all transform md:scale-90 md:group-hover:scale-100">
                                 @php
                                     $waMessage = "Halo " . $employee->full_name . ", mohon segera unggah dokumen wajib Anda di sistem Sinergi PAS Jombang. Terima kasih.";
                                     $waLink = "https://wa.me/" . preg_replace('/[^0-9]/', '', '628123456789') . "?text=" . urlencode($waMessage);

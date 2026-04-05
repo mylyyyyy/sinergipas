@@ -4,198 +4,257 @@
 @section('header-title', 'Helpdesk Support Center')
 
 @section('content')
-<div class="bg-white rounded-[56px] border border-[#EFEFEF] shadow-sm overflow-hidden transition-all hover:shadow-2xl hover:shadow-gray-100/50">
-    <div class="p-10 border-b border-[#EFEFEF] bg-[#FCFBF9]/50 flex items-center gap-6">
-        <div class="w-16 h-16 bg-[#1E2432] rounded-[24px] flex items-center justify-center text-white shadow-xl shadow-gray-200">
-            <i data-lucide="message-square" class="w-8 h-8"></i>
+@php
+    $openCount = $issues->getCollection()->where('status', 'open')->count();
+    $resolvedCount = $issues->getCollection()->where('status', 'resolved')->count();
+    $closedCount = $issues->getCollection()->where('status', 'closed')->count();
+@endphp
+
+<style>
+    .issue-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    .issue-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 24px 48px -32px rgba(30, 36, 50, 0.25);
+    }
+</style>
+
+<div class="space-y-8">
+    <section class="relative overflow-hidden rounded-[44px] bg-[#1E2432] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10">
+        <div class="absolute -left-8 top-8 h-40 w-40 rounded-full bg-white/5 blur-3xl"></div>
+        <div class="absolute right-0 top-0 h-56 w-56 rounded-full bg-[#E85A4F]/25 blur-3xl"></div>
+
+        <div class="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div class="max-w-3xl">
+                <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/80">
+                    <span class="h-2 w-2 rounded-full bg-[#E85A4F]"></span>
+                    Laporan Masalah
+                </div>
+                <h2 class="mt-5 text-3xl font-black tracking-tight sm:text-4xl">Pusat kendali untuk meninjau, menanggapi, dan menutup laporan pengguna.</h2>
+                <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-white/65">
+                    Semua laporan ditata ulang agar admin bisa melihat prioritas antrean lebih cepat, membuka detail tanpa kebingungan, dan memberi balasan dengan konteks yang lebih lengkap.
+                </p>
+            </div>
+
+            <div class="rounded-[28px] border border-white/10 bg-white/5 px-6 py-5 backdrop-blur">
+                <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/50">Total antrean saat ini</p>
+                <p class="mt-3 text-4xl font-black tracking-tight">{{ $issues->total() }}</p>
+            </div>
         </div>
-        <div>
-            <h3 class="text-xl font-black text-[#1E2432] tracking-tight italic">Daftar Aspirasi & Laporan Masalah</h3>
-            <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-widest mt-1">Total antrean: {{ $issues->total() }} laporan aktif</p>
+
+        <div class="relative z-10 mt-8 grid gap-4 md:grid-cols-3">
+            <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
+                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Open</p>
+                <p class="mt-3 text-3xl font-black">{{ $openCount }}</p>
+            </div>
+            <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
+                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Resolved</p>
+                <p class="mt-3 text-3xl font-black">{{ $resolvedCount }}</p>
+            </div>
+            <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
+                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Closed</p>
+                <p class="mt-3 text-3xl font-black">{{ $closedCount }}</p>
+            </div>
         </div>
-    </div>
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-[#FCFBF9]">
-                    <th class="px-10 py-5 text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em]">Identitas Pegawai</th>
-                    <th class="px-10 py-5 text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em]">Subjek & Keluhan</th>
-                    <th class="px-10 py-5 text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em]">Status Penanganan</th>
-                    <th class="px-10 py-5 text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em]">Waktu Kirim</th>
-                    <th class="px-10 py-5 text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em] text-center">Aksi</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-[#EFEFEF]">
-                @foreach($issues as $issue)
-                <tr class="hover:bg-[#FCFBF9]/50 transition-all group">
-                    <td class="px-10 py-6">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 bg-white border border-[#EFEFEF] rounded-xl flex items-center justify-center text-[10px] font-black text-[#1E2432] shadow-sm">
-                                {{ substr($issue->user->name, 0, 1) }}
+    </section>
+
+    <section class="overflow-hidden rounded-[40px] border border-[#EFEFEF] bg-white shadow-sm">
+        <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#E85A4F]">Daftar Laporan</p>
+                <h3 class="mt-2 text-2xl font-black tracking-tight text-[#1E2432]">Antrean dukungan yang sedang dipantau.</h3>
+            </div>
+            <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                <i data-lucide="message-square" class="h-4 w-4 text-[#E85A4F]"></i>
+                {{ $issues->count() }} laporan di halaman ini
+            </span>
+        </div>
+
+        <div class="divide-y divide-[#F2F1EE]">
+            @forelse($issues as $issue)
+                @php
+                    $employee = \App\Models\Employee::where('user_id', $issue->user_id)->first();
+                    $issueData = array_merge($issue->toArray(), [
+                        'user' => $issue->user,
+                        'employee' => $employee,
+                    ]);
+                @endphp
+
+                <div class="issue-card px-8 py-7 hover:bg-[#FCFBF9]">
+                    <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div class="flex items-center gap-4">
+                                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-sm font-black text-[#1E2432] shadow-sm">
+                                        {{ substr($issue->user->name, 0, 1) }}
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-black text-[#1E2432]">{{ $issue->user->name }}</p>
+                                        <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">{{ $issue->user->email }}</p>
+                                    </div>
+                                </div>
+
+                                <span class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] {{ $issue->status === 'open' ? 'border-red-100 bg-red-50 text-red-600' : ($issue->status === 'resolved' ? 'border-emerald-100 bg-emerald-50 text-emerald-600' : 'border-slate-200 bg-slate-50 text-slate-500') }}">
+                                    {{ $issue->status }}
+                                </span>
                             </div>
-                            <div>
-                                <p class="text-sm font-black text-[#1E2432]">{{ $issue->user->name }}</p>
-                                <p class="text-[9px] text-[#8A8A8A] font-bold uppercase tracking-widest">{{ $issue->user->email }}</p>
+
+                            <div class="mt-5">
+                                <h4 class="text-lg font-black tracking-tight text-[#1E2432]">{{ $issue->subject }}</h4>
+                                <p class="mt-3 max-w-3xl text-sm font-medium leading-relaxed text-[#8A8A8A]">{{ $issue->message }}</p>
+                            </div>
+
+                            <div class="mt-5 grid gap-3 text-sm font-medium text-[#8A8A8A] sm:grid-cols-3">
+                                <div class="rounded-[22px] border border-[#EFEFEF] bg-white px-4 py-3">
+                                    <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Pengirim</p>
+                                    <p class="mt-2 font-bold text-[#1E2432]">{{ $issue->user->name }}</p>
+                                </div>
+                                <div class="rounded-[22px] border border-[#EFEFEF] bg-white px-4 py-3">
+                                    <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Waktu Kirim</p>
+                                    <p class="mt-2 font-bold text-[#1E2432]">{{ $issue->created_at->format('d M Y, H:i') }}</p>
+                                </div>
+                                <div class="rounded-[22px] border border-[#EFEFEF] bg-white px-4 py-3">
+                                    <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Catatan Admin</p>
+                                    <p class="mt-2 font-bold text-[#1E2432]">{{ $issue->admin_note ? 'Sudah diisi' : 'Belum ada tanggapan' }}</p>
+                                </div>
                             </div>
                         </div>
-                    </td>
-                    <td class="px-10 py-6">
-                        <p class="text-xs font-black text-[#1E2432] mb-1 italic">"{{ $issue->subject }}"</p>
-                        <p class="text-[10px] text-[#8A8A8A] font-medium truncate max-w-[200px]">{{ $issue->message }}</p>
-                    </td>
-                    <td class="px-10 py-6">
-                        @if($issue->status === 'open')
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 text-[9px] font-black uppercase rounded-lg border border-red-100">
-                                <span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span> Open
-                            </span>
-                        @elseif($issue->status === 'resolved')
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 text-[9px] font-black uppercase rounded-lg border border-green-100">
-                                <i data-lucide="check-circle" class="w-3 h-3"></i> Resolved
-                            </span>
-                        @else
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-50 text-gray-600 text-[9px] font-black uppercase rounded-lg border border-gray-100">
-                                <i data-lucide="lock" class="w-3 h-3"></i> Closed
-                            </span>
-                        @endif
-                    </td>
-                    <td class="px-10 py-6">
-                        <p class="text-[10px] font-black text-[#1E2432]">{{ $issue->created_at->format('d M Y') }}</p>
-                        <p class="text-[9px] font-bold text-[#ABABAB] uppercase">{{ $issue->created_at->format('H:i') }} • {{ $issue->created_at->diffForHumans() }}</p>
-                    </td>
-                    <td class="px-10 py-6 text-sm text-center">
-                        <div class="flex justify-center items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform group-hover:scale-105">
-                            @php
-                                $employee = \App\Models\Employee::where('user_id', $issue->user_id)->first();
-                                $issueData = array_merge($issue->toArray(), [
-                                    'user' => $issue->user,
-                                    'employee' => $employee
-                                ]);
-                            @endphp
-                            <button onclick="openDetailModal({{ json_encode($issueData) }})" class="w-10 h-10 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-lg shadow-blue-100">
-                                <i data-lucide="eye" class="w-5 h-5"></i>
+
+                        <div class="flex shrink-0 gap-3 xl:flex-col">
+                            <button onclick="openDetailModal({{ \Illuminate\Support\Js::from($issueData) }})" class="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 shadow-sm transition-all hover:bg-blue-600 hover:text-white">
+                                <i data-lucide="eye" class="h-4 w-4"></i>
                             </button>
                             <form id="deleteIssue-{{ $issue->id }}" action="{{ route('admin.report-issues.destroy', $issue->id) }}" method="POST" class="no-loader">
-                                @csrf @method('DELETE')
-                                <button type="button" onclick="confirmDeleteIssue({{ $issue->id }})" class="w-10 h-10 bg-red-50 text-red-600 border border-red-100 rounded-xl flex items-center justify-center hover:bg-red-600 hover:text-white transition-all shadow-lg shadow-red-100">
-                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                @csrf
+                                @method('DELETE')
+                                <button type="button" onclick="confirmDeleteIssue({{ $issue->id }})" class="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-500 shadow-sm transition-all hover:bg-red-500 hover:text-white">
+                                    <i data-lucide="trash-2" class="h-4 w-4"></i>
                                 </button>
                             </form>
                         </div>
-                    </td>
-                </tr>
-                @endforeach
-                @if($issues->isEmpty())
-                <tr>
-                    <td colspan="5" class="px-10 py-24 text-center">
-                        <div class="w-20 h-20 bg-[#FCFBF9] rounded-full flex items-center justify-center mx-auto mb-6 text-gray-200">
-                            <i data-lucide="inbox" class="w-10 h-10"></i>
-                        </div>
-                        <p class="text-xs font-black text-[#ABABAB] uppercase tracking-widest italic">Belum ada laporan yang masuk.</p>
-                    </td>
-                </tr>
-                @endif
-            </tbody>
-        </table>
-    </div>
-    <div class="p-10 bg-[#FCFBF9]/50 border-t border-[#EFEFEF]">
-        {{ $issues->links() }}
-    </div>
+                    </div>
+                </div>
+            @empty
+                <div class="px-8 py-20 text-center">
+                    <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#FCFBF9] text-[#ABABAB]">
+                        <i data-lucide="inbox" class="h-9 w-9"></i>
+                    </div>
+                    <p class="mt-5 text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Belum ada laporan masuk</p>
+                    <p class="mx-auto mt-3 max-w-md text-sm font-medium leading-relaxed text-[#8A8A8A]">Saat pengguna mulai mengirim laporan atau aspirasi, seluruh detail akan ditampilkan di sini.</p>
+                </div>
+            @endforelse
+        </div>
+
+        <div class="border-t border-[#F2F1EE] bg-[#FCFBF9] px-8 py-6">
+            {{ $issues->links() }}
+        </div>
+    </section>
 </div>
 
-<!-- Detail Modal -->
-<div id="detailModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-6 backdrop-blur-md">
-    <div class="bg-white w-full max-w-3xl rounded-[56px] p-0 shadow-2xl animate-in zoom-in duration-300 overflow-hidden border border-[#EFEFEF]">
-        <div class="bg-[#1E2432] p-10 text-white flex justify-between items-center relative">
-            <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-            <div class="relative">
-                <h3 class="text-2xl font-black italic tracking-tight">Detail Laporan</h3>
-                <p class="text-[10px] font-black opacity-60 uppercase tracking-[0.3em] mt-1">Sinergi PAS Management System</p>
+<div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/55 p-6 backdrop-blur-md">
+    <div class="w-full max-w-4xl overflow-hidden rounded-[44px] border border-[#EFEFEF] bg-white shadow-2xl">
+        <div class="bg-[#1E2432] px-8 py-7 text-white">
+            <div class="flex items-center justify-between gap-6">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/55">Detail Penanganan</p>
+                    <h3 class="mt-2 text-2xl font-black tracking-tight">Buka konteks laporan dan kirim tanggapan admin.</h3>
+                </div>
+                <button onclick="document.getElementById('detailModal').classList.add('hidden')" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white transition-all hover:bg-white/20">
+                    <i data-lucide="x" class="h-5 w-5"></i>
+                </button>
             </div>
-            <button onclick="document.getElementById('detailModal').classList.add('hidden')" class="relative w-12 h-12 flex items-center justify-center rounded-2xl bg-white/10 hover:bg-white/20 transition-all border border-white/20">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
         </div>
-        
-        <form id="updateForm" method="POST" class="p-10">
-            @csrf @method('PUT')
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-                <!-- User Profile Info -->
-                <div class="md:col-span-1 space-y-8">
-                    <div class="p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF] text-center">
-                        <div class="w-20 h-20 bg-gray-100 rounded-[24px] mx-auto mb-4 flex items-center justify-center overflow-hidden border-2 border-white shadow-lg" id="detail_photo_container">
-                            <i data-lucide="user" class="w-10 h-10 text-gray-300"></i>
-                        </div>
-                        <h4 class="text-sm font-black text-[#1E2432]" id="detail_name"></h4>
-                        <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-widest mt-1" id="detail_nip"></p>
-                    </div>
 
-                    <div class="space-y-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600"><i data-lucide="mail" class="w-4 h-4"></i></div>
-                            <div class="flex-1 overflow-hidden"><p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">Email</p><p class="text-xs font-bold text-[#1E2432] truncate" id="detail_email"></p></div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-green-50 rounded-xl flex items-center justify-center text-green-600"><i data-lucide="briefcase" class="w-4 h-4"></i></div>
-                            <div class="flex-1"><p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">Jabatan</p><p class="text-xs font-bold text-[#1E2432]" id="detail_position"></p></div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600"><i data-lucide="calendar" class="w-4 h-4"></i></div>
-                            <div class="flex-1"><p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">Dikirim</p><p class="text-xs font-bold text-[#1E2432]" id="detail_date"></p></div>
-                        </div>
+        <form id="updateForm" method="POST" class="grid gap-8 p-8 lg:grid-cols-[320px,minmax(0,1fr)]">
+            @csrf
+            @method('PUT')
+
+            <div class="space-y-6">
+                <div class="rounded-[32px] border border-[#EFEFEF] bg-[#FCFBF9] p-6 text-center">
+                    <div id="detail_photo_container" class="mx-auto mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-[24px] border-2 border-white bg-white shadow-lg">
+                        <i data-lucide="user" class="h-10 w-10 text-gray-300"></i>
+                    </div>
+                    <h4 id="detail_name" class="text-sm font-black text-[#1E2432]"></h4>
+                    <p id="detail_nip" class="mt-1 text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]"></p>
+                </div>
+
+                <div class="space-y-4 rounded-[32px] border border-[#EFEFEF] bg-white p-6">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Email</p>
+                        <p id="detail_email" class="mt-2 text-sm font-bold text-[#1E2432]"></p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Jabatan</p>
+                        <p id="detail_position" class="mt-2 text-sm font-bold text-[#1E2432]"></p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Dikirim</p>
+                        <p id="detail_date" class="mt-2 text-sm font-bold text-[#1E2432]"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="rounded-[32px] border border-[#EFEFEF] bg-[#FCFBF9] p-6">
+                    <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#E85A4F]">Subjek Laporan</p>
+                    <h4 id="detail_subject" class="mt-3 text-xl font-black tracking-tight text-[#1E2432]"></h4>
+                    <div id="detail_message" class="mt-5 rounded-[24px] border border-[#EFEFEF] bg-white px-5 py-5 text-sm font-medium leading-relaxed text-[#1E2432]"></div>
+                </div>
+
+                <div class="grid gap-6 md:grid-cols-2">
+                    <div>
+                        <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Status Penanganan</label>
+                        <select name="status" id="detail_status" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                            <option value="open">Open</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="closed">Closed</option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- Issue Content & Action -->
-                <div class="md:col-span-2 space-y-8">
-                    <div>
-                        <div class="flex items-center gap-3 mb-4">
-                            <span class="w-2 h-2 rounded-full bg-[#E85A4F]"></span>
-                            <h4 class="text-xs font-black text-[#1E2432] uppercase tracking-[0.2em]" id="detail_subject"></h4>
-                        </div>
-                        <div class="p-8 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF] text-sm text-[#1E2432] leading-relaxed shadow-inner italic" id="detail_message"></div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="col-span-1">
-                            <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest block mb-2 ml-1">Update Status</label>
-                            <select name="status" id="detail_status" class="w-full px-5 py-4 rounded-[20px] border border-[#EFEFEF] bg-white text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/5 focus:border-[#E85A4F] transition-all">
-                                <option value="open">Open</option>
-                                <option value="resolved">Resolved</option>
-                                <option value="closed">Closed</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest block mb-2 ml-1">Catatan Admin / Tanggapan</label>
-                        <textarea name="admin_note" id="detail_note" rows="3" class="w-full px-6 py-5 rounded-[24px] border border-[#EFEFEF] bg-white text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/5 focus:border-[#E85A4F] transition-all" placeholder="Berikan tanggapan untuk laporan ini..."></textarea>
-                    </div>
-
-                    <button type="submit" class="w-full bg-[#E85A4F] text-white py-5 rounded-[24px] font-black hover:bg-[#d44d42] transition-all shadow-xl shadow-red-200 active:scale-[0.98] flex items-center justify-center gap-3">
-                        Perbarui & Simpan Perubahan
-                        <i data-lucide="save" class="w-5 h-5"></i>
-                    </button>
+                <div>
+                    <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Catatan Admin</label>
+                    <textarea name="admin_note" id="detail_note" rows="5" class="mt-3 w-full rounded-[24px] border border-[#EFEFEF] bg-white px-6 py-5 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5" placeholder="Berikan tanggapan atau langkah tindak lanjut untuk laporan ini..."></textarea>
                 </div>
+
+                <button type="submit" class="inline-flex w-full items-center justify-center gap-3 rounded-[24px] bg-[#E85A4F] px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-red-100 transition-all hover:bg-[#1E2432]">
+                    Simpan Penanganan
+                    <i data-lucide="save" class="h-4 w-4"></i>
+                </button>
             </div>
         </form>
     </div>
 </div>
 
+@if(session('success'))
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Perubahan Tersimpan',
+            text: "{{ session('success') }}",
+            confirmButtonColor: '#1E2432',
+            customClass: { popup: 'rounded-[32px]' }
+        });
+    </script>
+@endif
+
 <script>
     function confirmDeleteIssue(id) {
         Swal.fire({
-            title: 'Hapus Laporan?',
-            text: "Data aspirasi/laporan ini akan dihapus permanen.",
+            title: 'Hapus laporan ini?',
+            text: 'Laporan yang dihapus tidak dapat dipulihkan kembali.',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#E85A4F',
             cancelButtonColor: '#1E2432',
-            confirmButtonText: 'Ya, Hapus!',
+            confirmButtonText: 'Ya, hapus',
             cancelButtonText: 'Batal',
-            customClass: { popup: 'rounded-[48px]' }
+            customClass: { popup: 'rounded-[32px]' }
         }).then((result) => {
             if (result.isConfirmed) {
-                document.getElementById('deleteIssue-' + id).submit();
+                document.getElementById(`deleteIssue-${id}`).submit();
             }
         });
     }
@@ -203,31 +262,31 @@
     function openDetailModal(data) {
         document.getElementById('detailModal').classList.remove('hidden');
         document.getElementById('updateForm').action = `/admin/report-issues/${data.id}`;
-        
-        // User Info
+
         document.getElementById('detail_name').innerText = data.user.name;
         document.getElementById('detail_email').innerText = data.user.email;
-        document.getElementById('detail_nip').innerText = data.employee ? 'NIP. ' + data.employee.nip : 'Admin';
-        document.getElementById('detail_position').innerText = data.employee ? data.employee.position : 'N/A';
+        document.getElementById('detail_nip').innerText = data.employee ? `NIP. ${data.employee.nip}` : 'Data pegawai tidak ditemukan';
+        document.getElementById('detail_position').innerText = data.employee ? data.employee.position : 'Tidak tersedia';
         document.getElementById('detail_date').innerText = new Date(data.created_at).toLocaleString('id-ID', {
-            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
         });
 
-        // Photo
         const photoContainer = document.getElementById('detail_photo_container');
         if (data.employee && data.employee.photo) {
-            photoContainer.innerHTML = `<img src="${data.employee.photo}" class="w-full h-full object-cover">`;
+            photoContainer.innerHTML = `<img src="${data.employee.photo}" class="h-full w-full object-cover">`;
         } else {
-            photoContainer.innerHTML = `<i data-lucide="user" class="w-10 h-10 text-gray-300"></i>`;
-            lucide.createIcons();
+            photoContainer.innerHTML = '<i data-lucide="user" class="h-10 w-10 text-gray-300"></i>';
         }
 
-        // Issue Content
         document.getElementById('detail_subject').innerText = data.subject;
         document.getElementById('detail_message').innerText = data.message;
         document.getElementById('detail_status').value = data.status;
         document.getElementById('detail_note').value = data.admin_note || '';
-        
+
         lucide.createIcons();
     }
 </script>

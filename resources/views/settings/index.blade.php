@@ -4,326 +4,816 @@
 @section('header-title', 'Konfigurasi Platform')
 
 @section('content')
+@php
+    $widgetsList = [
+        ['key' => 'widget_stats', 'label' => 'Statistik Utama', 'icon' => 'bar-chart-3', 'description' => 'Ringkasan angka inti untuk memantau performa dokumen dan pegawai.'],
+        ['key' => 'widget_employees', 'label' => 'Status Unit Kerja', 'icon' => 'users', 'description' => 'Menampilkan kondisi setiap unit kerja secara ringkas di dashboard.'],
+        ['key' => 'widget_chart', 'label' => 'Grafik Distribusi', 'icon' => 'pie-chart', 'description' => 'Visual distribusi data agar perubahan lebih cepat dipahami.'],
+        ['key' => 'widget_activity', 'label' => 'Aktivitas Terkini', 'icon' => 'activity', 'description' => 'Riwayat gerakan terbaru dari pengguna dan sistem.'],
+        ['key' => 'widget_compliance', 'label' => 'Status Kepatuhan', 'icon' => 'shield-check', 'description' => 'Sorotan pegawai yang belum melengkapi dokumen wajib.'],
+        ['key' => 'widget_feed', 'label' => 'Antrean Berkas', 'icon' => 'zap', 'description' => 'Mempermudah admin melihat dokumen yang perlu ditindaklanjuti.'],
+    ];
+
+    $enabledWidgets = collect($widgetsList)->filter(fn ($widget) => ($settings[$widget['key']] ?? 'on') === 'on')->count();
+    $activeAnnouncementsCount = $announcements->filter(function ($announcement) {
+        return $announcement->is_active
+            && (!$announcement->starts_at || $announcement->starts_at->lte(now()))
+            && (!$announcement->expires_at || $announcement->expires_at->gte(now()));
+    })->count();
+    $scheduledAnnouncementsCount = $announcements->filter(fn ($announcement) => $announcement->starts_at && $announcement->starts_at->isFuture())->count();
+@endphp
+
 <style>
-    .settings-nav-link { 
-        @apply flex items-center gap-3 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-transparent;
+    .settings-anchor {
+        background: rgba(252, 251, 249, 0.9);
+        border: 1px solid transparent;
+        color: #8a8a8a;
+        transition: all 0.25s ease;
     }
-    .settings-nav-link.active {
-        @apply bg-[#1E2432] text-white shadow-xl border-[#1E2432];
+
+    .settings-anchor:hover {
+        color: #1e2432;
+        border-color: #efefef;
+        background: #ffffff;
+        box-shadow: 0 12px 24px -20px rgba(30, 36, 50, 0.35);
     }
-    .settings-nav-link:not(.active) {
-        @apply text-[#8A8A8A] hover:bg-white hover:border-[#EFEFEF] hover:text-[#1E2432];
+
+    .settings-anchor.is-active {
+        background: #1e2432;
+        border-color: #1e2432;
+        color: #ffffff;
+        box-shadow: 0 24px 48px -26px rgba(30, 36, 50, 0.6);
     }
-    .config-card {
-        @apply bg-white rounded-[40px] border border-[#EFEFEF] shadow-sm overflow-hidden flex flex-col;
+
+    .settings-pattern {
+        background-image:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.14), transparent 34%),
+            radial-gradient(circle at bottom left, rgba(232, 90, 79, 0.22), transparent 28%);
     }
-    .input-field {
-        @apply w-full px-6 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold text-[#1E2432] outline-none focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5 transition-all;
+
+    .settings-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(171, 171, 171, 0.55) transparent;
     }
-    .label-caps {
-        @apply text-[9px] font-black text-[#8A8A8A] uppercase tracking-[0.2em] ml-1 mb-2 block;
+
+    .settings-scrollbar::-webkit-scrollbar {
+        width: 7px;
     }
-    .master-item {
-        @apply flex justify-between items-center p-4 bg-[#FCFBF9] rounded-xl border border-[#EFEFEF] group transition-all hover:bg-white hover:border-[#E85A4F] hover:shadow-md;
+
+    .settings-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(171, 171, 171, 0.55);
+        border-radius: 999px;
+    }
+
+    .banner-preview-track {
+        animation: settings-banner-marquee linear infinite;
+    }
+
+    @keyframes settings-banner-marquee {
+        0% {
+            transform: translateX(0%);
+        }
+        100% {
+            transform: translateX(-50%);
+        }
     }
 </style>
 
-<div class="max-w-6xl mx-auto pb-24">
-    <!-- Header Nav -->
-    <div class="flex flex-col md:flex-row justify-between items-center gap-8 mb-12">
-        <div class="flex bg-[#F5F4F2] p-1.5 rounded-[24px] border border-[#EFEFEF] shadow-inner">
-            <a href="#general" class="settings-nav-link active">Umum</a>
-            <a href="#broadcast" class="settings-nav-link">Siaran</a>
-            <a href="#master" class="settings-nav-link">Master</a>
+<div class="mx-auto max-w-7xl space-y-8 pb-24">
+    @if ($errors->any())
+        <div class="rounded-[32px] border border-red-100 bg-red-50 px-6 py-5 text-sm text-red-700 shadow-sm">
+            <div class="flex items-start gap-4">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-red-500 shadow-sm">
+                    <i data-lucide="alert-triangle" class="h-5 w-5"></i>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-[10px] font-black uppercase tracking-[0.28em] text-red-500">Perlu Diperiksa</p>
+                    <p class="text-sm font-bold text-[#1E2432]">Beberapa input belum valid. Cek kembali bagian yang Anda ubah sebelum menyimpan.</p>
+                    <ul class="space-y-1 text-xs font-semibold text-red-700">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
         </div>
-        
-        <a href="{{ route('settings.health') }}" class="bg-white border border-[#EFEFEF] px-8 py-4 rounded-[24px] text-[10px] font-black uppercase tracking-widest text-[#1E2432] hover:bg-[#1E2432] hover:text-white transition-all shadow-sm flex items-center gap-3 group">
-            <i data-lucide="heart-pulse" class="w-4 h-4 text-[#E85A4F]"></i> 
-            Kesehatan Sistem 
-            <i data-lucide="arrow-right" class="w-3 h-3 group-hover:translate-x-1 transition-transform"></i>
-        </a>
+    @endif
+
+    <section class="settings-pattern relative overflow-hidden rounded-[40px] bg-[#1E2432] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10">
+        <div class="absolute -left-10 top-10 h-40 w-40 rounded-full bg-white/5 blur-3xl"></div>
+        <div class="absolute bottom-0 right-0 h-52 w-52 translate-x-10 translate-y-14 rounded-full bg-[#E85A4F]/30 blur-3xl"></div>
+
+        <div class="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div class="max-w-3xl">
+                <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/80">
+                    <span class="h-2 w-2 rounded-full bg-[#E85A4F]"></span>
+                    Panel Pengaturan Sistem
+                </div>
+                <h2 class="max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">Rapikan konfigurasi inti, siaran, dan master data dalam satu workspace yang lebih tertata.</h2>
+                <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-white/70">
+                    Halaman ini sekarang disusun ulang supaya tiap kelompok pengaturan punya hirarki yang jelas, preview yang lebih membantu, dan aksi yang mudah dijangkau saat bekerja cepat.
+                </p>
+            </div>
+
+            <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+                <a href="{{ route('settings.health') }}" class="inline-flex items-center justify-center gap-3 rounded-[24px] border border-white/10 bg-white px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-[#1E2432] shadow-xl shadow-slate-950/10 transition-all hover:-translate-y-0.5 hover:bg-[#FCFBF9]">
+                    <i data-lucide="heart-pulse" class="h-4 w-4 text-[#E85A4F]"></i>
+                    Kesehatan Sistem
+                </a>
+                <a href="#broadcast" class="inline-flex items-center justify-center gap-3 rounded-[24px] border border-white/15 bg-white/5 px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white transition-all hover:border-white/25 hover:bg-white/10">
+                    <i data-lucide="megaphone" class="h-4 w-4"></i>
+                    Kelola Siaran
+                </a>
+            </div>
+        </div>
+
+        <div class="relative z-10 mt-8 grid gap-4 md:grid-cols-3">
+            <div class="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur">
+                <p class="text-[10px] font-black uppercase tracking-[0.28em] text-white/55">Modul Dashboard Aktif</p>
+                <div class="mt-4 flex items-end justify-between gap-4">
+                    <div>
+                        <p class="text-4xl font-black tracking-tight">{{ $enabledWidgets }}</p>
+                        <p class="mt-1 text-xs font-bold text-white/65">dari {{ count($widgetsList) }} modul utama</p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/10">
+                        <i data-lucide="layout-grid" class="h-5 w-5"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur">
+                <p class="text-[10px] font-black uppercase tracking-[0.28em] text-white/55">Siaran Sedang Tayang</p>
+                <div class="mt-4 flex items-end justify-between gap-4">
+                    <div>
+                        <p class="text-4xl font-black tracking-tight">{{ $activeAnnouncementsCount }}</p>
+                        <p class="mt-1 text-xs font-bold text-white/65">{{ $scheduledAnnouncementsCount }} siaran terjadwal berikutnya</p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/10">
+                        <i data-lucide="radio" class="h-5 w-5"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur">
+                <p class="text-[10px] font-black uppercase tracking-[0.28em] text-white/55">Master Data Tersedia</p>
+                <div class="mt-4 flex items-end justify-between gap-4">
+                    <div>
+                        <p class="text-4xl font-black tracking-tight">{{ $positions->count() + $workUnits->count() }}</p>
+                        <p class="mt-1 text-xs font-bold text-white/65">{{ $positions->count() }} jabatan, {{ $workUnits->count() }} unit kerja</p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/10">
+                        <i data-lucide="database" class="h-5 w-5"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="sticky top-24 z-[5]">
+        <div class="overflow-x-auto rounded-[28px] border border-[#EFEFEF] bg-white/90 p-2 shadow-lg shadow-slate-900/5 backdrop-blur">
+            <div class="flex min-w-max gap-2">
+                <a href="#general" data-settings-anchor class="settings-anchor is-active inline-flex items-center gap-3 rounded-[20px] px-5 py-3 text-[10px] font-black uppercase tracking-[0.24em]">
+                    <i data-lucide="sliders-horizontal" class="h-4 w-4"></i>
+                    Konfigurasi Inti
+                </a>
+                <a href="#broadcast" data-settings-anchor class="settings-anchor inline-flex items-center gap-3 rounded-[20px] px-5 py-3 text-[10px] font-black uppercase tracking-[0.24em]">
+                    <i data-lucide="megaphone" class="h-4 w-4"></i>
+                    Siaran Pengumuman
+                </a>
+                <a href="#master" data-settings-anchor class="settings-anchor inline-flex items-center gap-3 rounded-[20px] px-5 py-3 text-[10px] font-black uppercase tracking-[0.24em]">
+                    <i data-lucide="blocks" class="h-4 w-4"></i>
+                    Master Data
+                </a>
+            </div>
+        </div>
     </div>
 
-    <!-- General Settings Form -->
-    <form action="{{ route('settings.update') }}" method="POST" class="space-y-10" id="general">
-        @csrf
-        
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            <!-- Widgets -->
-            <div class="lg:col-span-2 config-card">
-                <div class="p-8 border-b border-[#F5F4F2] bg-[#FCFBF9]/50 flex items-center gap-4">
-                    <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-[#EFEFEF] text-[#1E2432]">
-                        <i data-lucide="layout-grid" class="w-5 h-5"></i>
-                    </div>
-                    <h3 class="text-sm font-black text-[#1E2432] uppercase tracking-widest">Modul Dashboard</h3>
+    <section id="general" class="scroll-mt-32">
+        <form action="{{ route('settings.update') }}" method="POST" class="space-y-8">
+            @csrf
+
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#E85A4F]">Konfigurasi Inti</p>
+                    <h3 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Susun ulang tampilan dasar sistem dan identitas instansi.</h3>
+                    <p class="mt-3 max-w-3xl text-sm font-medium leading-relaxed text-[#8A8A8A]">
+                        Semua pengaturan utama dikelompokkan berdasarkan fungsi agar admin lebih cepat memindai modul aktif, keamanan dokumen, tampilan banner, dan detail kop surat.
+                    </p>
                 </div>
-                <div class="p-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        @php
-                            $widgetsList = [
-                                ['key' => 'widget_stats', 'label' => 'Statistik Utama', 'icon' => 'bar-chart-3'],
-                                ['key' => 'widget_employees', 'label' => 'Status Unit Kerja', 'icon' => 'users'],
-                                ['key' => 'widget_chart' , 'label' => 'Grafik Distribusi', 'icon' => 'pie-chart'],
-                                ['key' => 'widget_activity', 'label' => 'Aktivitas Terkini', 'icon' => 'activity'],
-                                ['key' => 'widget_compliance', 'label' => 'Status Kepatuhan', 'icon' => 'shield-check'],
-                                ['key' => 'widget_feed', 'label' => 'Antrean Berkas', 'icon' => 'zap'],
-                            ];
-                        @endphp
-                        @foreach($widgetsList as $w)
-                        <label class="flex items-center justify-between p-4 rounded-xl border border-[#EFEFEF] hover:bg-[#FCFBF9] transition-all cursor-pointer group">
-                            <div class="flex items-center gap-4">
-                                <i data-lucide="{{ $w['icon'] }}" class="w-4 h-4 text-[#ABABAB] group-hover:text-[#E85A4F]"></i>
-                                <span class="text-[10px] font-black text-[#1E2432] uppercase tracking-tighter">{{ $w['label'] }}</span>
+                <div class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A] shadow-sm">
+                    <i data-lucide="save" class="h-4 w-4 text-[#1E2432]"></i>
+                    Simpan setelah selesai menyesuaikan
+                </div>
+            </div>
+
+            <div class="grid gap-8 xl:grid-cols-3">
+                <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm xl:col-span-2">
+                    <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="flex items-start gap-4">
+                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#1E2432] shadow-sm">
+                                <i data-lucide="layout-grid" class="h-5 w-5"></i>
                             </div>
-                            <div class="relative inline-flex items-center">
-                                <input type="hidden" name="{{ $w['key'] }}" value="off">
-                                <input type="checkbox" name="{{ $w['key'] }}" value="on" class="sr-only peer" {{ ($settings[$w['key']] ?? 'on') == 'on' ? 'checked' : '' }}>
-                                <div class="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#E85A4F]"></div>
+                            <div>
+                                <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Modul Dashboard</h4>
+                                <p class="mt-2 max-w-2xl text-sm font-medium leading-relaxed text-[#8A8A8A]">Pilih komponen yang ingin tetap tampil di dashboard utama agar informasi terasa padat tapi tidak penuh.</p>
                             </div>
-                        </label>
+                        </div>
+                        <div class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#1E2432] shadow-sm">
+                            <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                            {{ $enabledWidgets }} aktif
+                        </div>
+                    </div>
+
+                    <div class="grid gap-4 p-8 md:grid-cols-2">
+                        @foreach ($widgetsList as $widget)
+                            @php $isChecked = ($settings[$widget['key']] ?? 'on') === 'on'; @endphp
+                            <label class="group flex cursor-pointer items-start justify-between gap-4 rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5 transition-all hover:-translate-y-0.5 hover:border-[#E85A4F]/30 hover:bg-white hover:shadow-lg hover:shadow-red-100/30">
+                                <div class="flex gap-4">
+                                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#8A8A8A] transition-colors group-hover:text-[#E85A4F]">
+                                        <i data-lucide="{{ $widget['icon'] }}" class="h-5 w-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-black uppercase tracking-[0.18em] text-[#1E2432]">{{ $widget['label'] }}</p>
+                                        <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">{{ $widget['description'] }}</p>
+                                    </div>
+                                </div>
+
+                                <div class="relative mt-1 inline-flex shrink-0 items-center">
+                                    <input type="hidden" name="{{ $widget['key'] }}" value="off">
+                                    <input type="checkbox" name="{{ $widget['key'] }}" value="on" class="peer sr-only" {{ $isChecked ? 'checked' : '' }}>
+                                    <div class="h-7 w-12 rounded-full bg-slate-200 transition-all peer-checked:bg-[#E85A4F] after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-all peer-checked:after:translate-x-5"></div>
+                                </div>
+                            </label>
                         @endforeach
                     </div>
                 </div>
-            </div>
 
-            <!-- Watermark -->
-            <div class="config-card">
-                <div class="p-8 border-b border-[#F5F4F2] bg-[#FCFBF9]/50 flex items-center gap-4">
-                    <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-[#EFEFEF] text-yellow-600">
-                        <i data-lucide="shield-check" class="w-5 h-5"></i>
-                    </div>
-                    <h3 class="text-sm font-black text-[#1E2432] uppercase tracking-widest">Keamanan</h3>
-                </div>
-                <div class="p-8 space-y-6">
-                    <div>
-                        <span class="label-caps">Watermarking</span>
-                        <select name="watermark_enabled" class="input-field py-3 text-xs uppercase">
-                            <option value="on" {{ ($settings['watermark_enabled'] ?? 'on') == 'on' ? 'selected' : '' }}>AKTIF</option>
-                            <option value="off" {{ ($settings['watermark_enabled'] ?? 'on') == 'off' ? 'selected' : '' }}>NONAKTIF</option>
-                        </select>
-                    </div>
-                    <div>
-                        <span class="label-caps">Teks Pengaman</span>
-                        <input type="text" name="watermark_text" value="{{ $settings['watermark_text'] ?? 'SINERGI PAS JOMBANG' }}" class="input-field py-3 text-xs">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Aligned Row: Visual & Identity -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <div class="config-card">
-                <div class="p-8 border-b border-[#F5F4F2] bg-[#FCFBF9]/50 flex items-center gap-4">
-                    <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-[#EFEFEF] text-blue-600">
-                        <i data-lucide="monitor" class="w-5 h-5"></i>
-                    </div>
-                    <h3 class="text-sm font-black text-[#1E2432] uppercase tracking-widest">Running Banner</h3>
-                </div>
-                <div class="p-8 space-y-6">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <span class="label-caps">Latar</span>
-                            <input type="color" name="running_text_bg" value="{{ $settings['running_text_bg'] ?? '#1E2432' }}" class="w-full h-10 rounded-lg border border-[#EFEFEF] bg-white p-1 cursor-pointer">
-                        </div>
-                        <div>
-                            <span class="label-caps">Teks</span>
-                            <input type="color" name="running_text_color" value="{{ $settings['running_text_color'] ?? '#FFFFFF' }}" class="w-full h-10 rounded-lg border border-[#EFEFEF] bg-white p-1 cursor-pointer">
+                <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm">
+                    <div class="border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7">
+                        <div class="flex items-start gap-4">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#E85A4F] shadow-sm">
+                                <i data-lucide="shield-check" class="h-5 w-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Keamanan Dokumen</h4>
+                                <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Atur watermark default agar dokumen yang diunduh tetap memiliki penanda institusi.</p>
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <span class="label-caps">Kecepatan (Detik)</span>
-                        <input type="number" name="running_text_speed" value="{{ $settings['running_text_speed'] ?? '20' }}" class="input-field py-3 text-xs">
-                    </div>
-                </div>
-            </div>
 
-            <div class="config-card">
-                <div class="p-8 border-b border-[#F5F4F2] bg-[#FCFBF9]/50 flex items-center gap-4">
-                    <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-[#EFEFEF] text-purple-600">
-                        <i data-lucide="building" class="w-5 h-5"></i>
-                    </div>
-                    <h3 class="text-sm font-black text-[#1E2432] uppercase tracking-widest">Detail Instansi</h3>
-                </div>
-                <div class="p-8 space-y-4">
-                    <div>
-                        <span class="label-caps">Baris Utama Kop</span>
-                        <input type="text" name="kop_line_1" value="{{ $settings['kop_line_1'] ?? 'LEMBAGA PEMASYARAKATAN JOMBANG' }}" class="input-field py-3 text-xs">
-                    </div>
-                    <div>
-                        <span class="label-caps">Baris Kedua Kop</span>
-                        <input type="text" name="kop_line_2" value="{{ $settings['kop_line_2'] ?? 'KANTOR WILAYAH KEMENTERIAN HUKUM DAN HAM JAWA TIMUR' }}" class="input-field py-3 text-xs">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <button type="submit" class="bg-[#1E2432] text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#E85A4F] transition-all shadow-xl active:scale-95 flex items-center gap-3">
-            <i data-lucide="save" class="w-4 h-4"></i> Simpan Perubahan Utama
-        </button>
-    </form>
-
-    <!-- Broadcast Section -->
-    <div class="mt-24 pt-20 border-t border-[#EFEFEF]" id="broadcast">
-        <div class="flex items-center gap-4 mb-10">
-            <div class="w-1.5 h-8 bg-[#E85A4F] rounded-full"></div>
-            <h3 class="text-xl font-black text-[#1E2432] uppercase tracking-tight">Siaran Pengumuman</h3>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            <div class="config-card h-fit">
-                <div class="p-8">
-                    <form action="{{ route('announcements.store') }}" method="POST" class="space-y-5">
-                        @csrf
-                        <div>
-                            <span class="label-caps">Pesan</span>
-                            <textarea name="message" rows="4" required class="input-field py-4 text-xs" placeholder="Tulis pesan resmi..."></textarea>
-                        </div>
-                        <div>
-                            <span class="label-caps">Tipe</span>
-                            <select name="type" class="input-field py-3 text-xs appearance-none">
-                                <option value="banner">RUNNING TEXT</option>
-                                <option value="popup">POPUP MODAL</option>
+                    <div class="space-y-6 p-8">
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                            <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Status Watermark</label>
+                            <select name="watermark_enabled" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                                <option value="on" {{ ($settings['watermark_enabled'] ?? 'on') === 'on' ? 'selected' : '' }}>Aktif</option>
+                                <option value="off" {{ ($settings['watermark_enabled'] ?? 'on') === 'off' ? 'selected' : '' }}>Nonaktif</option>
                             </select>
                         </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <span class="label-caps">Mulai</span>
-                                <input type="datetime-local" name="starts_at" class="input-field py-3 !px-2 !text-[9px]">
+
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                            <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Teks Pengaman</label>
+                            <input type="text" name="watermark_text" value="{{ $settings['watermark_text'] ?? 'SINERGI PAS JOMBANG' }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                        </div>
+
+                        <div class="rounded-[28px] border border-amber-100 bg-amber-50 px-5 py-4 text-sm font-medium leading-relaxed text-amber-800">
+                            <div class="flex items-start gap-3">
+                                <i data-lucide="badge-alert" class="mt-0.5 h-4 w-4 shrink-0 text-amber-600"></i>
+                                <p>Gunakan teks watermark yang singkat, jelas, dan konsisten agar dokumen resmi mudah dikenali tanpa mengganggu keterbacaan.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid gap-8 xl:grid-cols-2">
+                <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm">
+                    <div class="border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7">
+                        <div class="flex items-start gap-4">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-blue-600 shadow-sm">
+                                <i data-lucide="monitor" class="h-5 w-5"></i>
                             </div>
                             <div>
-                                <span class="label-caps">Selesai</span>
-                                <input type="datetime-local" name="expires_at" class="input-field py-3 !px-2 !text-[9px]">
+                                <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Running Banner</h4>
+                                <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Atur warna dan tempo banner pengumuman supaya tetap terbaca di area header aplikasi.</p>
                             </div>
                         </div>
-                        <button type="submit" class="w-full bg-[#E85A4F] text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#1E2432] transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
-                            <i data-lucide="send" class="w-3.5 h-3.5"></i> Publikasikan
-                        </button>
-                    </form>
+                    </div>
+
+                    <div class="space-y-6 p-8">
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                                <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Warna Latar</label>
+                                <input id="banner-bg-input" type="color" name="running_text_bg" value="{{ $settings['running_text_bg'] ?? '#1E2432' }}" class="mt-3 h-14 w-full cursor-pointer rounded-[20px] border border-[#EFEFEF] bg-white p-2">
+                            </div>
+                            <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                                <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Warna Teks</label>
+                                <input id="banner-text-input" type="color" name="running_text_color" value="{{ $settings['running_text_color'] ?? '#FFFFFF' }}" class="mt-3 h-14 w-full cursor-pointer rounded-[20px] border border-[#EFEFEF] bg-white p-2">
+                            </div>
+                        </div>
+
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Kecepatan Banner</label>
+                                    <p class="mt-2 text-sm font-medium text-[#8A8A8A]">Semakin kecil angkanya, semakin cepat teks berjalan.</p>
+                                </div>
+                                <span id="banner-speed-display" class="inline-flex items-center rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                                    {{ $settings['running_text_speed'] ?? '20' }} detik
+                                </span>
+                            </div>
+                            <input id="banner-speed-input" type="number" min="5" name="running_text_speed" value="{{ $settings['running_text_speed'] ?? '20' }}" class="mt-4 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                        </div>
+
+                        <div class="overflow-hidden rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9]">
+                            <div class="border-b border-[#EFEFEF] px-5 py-4">
+                                <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Preview Banner</p>
+                            </div>
+                            <div id="banner-preview" class="overflow-hidden px-4 py-3 text-[10px] font-black uppercase tracking-[0.24em]" style="background-color: {{ $settings['running_text_bg'] ?? '#1E2432' }}; color: {{ $settings['running_text_color'] ?? '#FFFFFF' }};">
+                                <div id="banner-preview-track" class="banner-preview-track flex min-w-max gap-10" style="animation-duration: {{ $settings['running_text_speed'] ?? '20' }}s;">
+                                    <span>Sistem informasi pegawai dan arsip berjalan sinkron untuk seluruh unit kerja.</span>
+                                    <span>Sistem informasi pegawai dan arsip berjalan sinkron untuk seluruh unit kerja.</span>
+                                    <span>Sistem informasi pegawai dan arsip berjalan sinkron untuk seluruh unit kerja.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm">
+                    <div class="border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7">
+                        <div class="flex items-start gap-4">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-emerald-600 shadow-sm">
+                                <i data-lucide="building-2" class="h-5 w-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Identitas Instansi</h4>
+                                <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Pastikan kop surat tampil konsisten di setiap dokumen resmi yang dihasilkan sistem.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6 p-8">
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                            <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Baris Utama Kop</label>
+                            <input id="kop-line-1-input" type="text" name="kop_line_1" value="{{ $settings['kop_line_1'] ?? 'LEMBAGA PEMASYARAKATAN JOMBANG' }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                        </div>
+
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                            <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Baris Kedua Kop</label>
+                            <input id="kop-line-2-input" type="text" name="kop_line_2" value="{{ $settings['kop_line_2'] ?? 'KANTOR WILAYAH KEMENTERIAN HUKUM DAN HAM JAWA TIMUR' }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                        </div>
+
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#1E2432] p-6 text-white">
+                            <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/55">Preview Identitas</p>
+                            <div class="mt-5 rounded-[24px] border border-white/10 bg-white/5 px-6 py-7 text-center">
+                                <p id="kop-line-1-preview" class="text-sm font-black uppercase tracking-[0.2em]">{{ $settings['kop_line_1'] ?? 'LEMBAGA PEMASYARAKATAN JOMBANG' }}</p>
+                                <div class="mx-auto my-4 h-px w-24 bg-white/20"></div>
+                                <p id="kop-line-2-preview" class="text-xs font-bold uppercase tracking-[0.18em] text-white/70">{{ $settings['kop_line_2'] ?? 'KANTOR WILAYAH KEMENTERIAN HUKUM DAN HAM JAWA TIMUR' }}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="lg:col-span-2 space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                @forelse(\App\Models\Announcement::latest()->get() as $ann)
-                <div class="bg-white p-6 rounded-3xl border border-[#EFEFEF] group flex justify-between items-start gap-6 hover:border-[#1E2432] transition-all">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-3">
-                            <span class="px-2.5 py-1 bg-[#F5F4F2] text-[#1E2432] text-[8px] font-black uppercase rounded-lg border border-[#EFEFEF]">{{ $ann->type }}</span>
-                            @if($ann->starts_at && $ann->starts_at > now())
-                                <span class="px-2.5 py-1 bg-blue-50 text-blue-600 text-[8px] font-black uppercase rounded-lg border border-blue-100">Scheduled</span>
-                            @elseif($ann->is_active && (!$ann->expires_at || $ann->expires_at > now()))
-                                <span class="px-2.5 py-1 bg-green-50 text-green-600 text-[8px] font-black uppercase rounded-lg border border-green-100">Live</span>
-                            @else
-                                <span class="px-2.5 py-1 bg-gray-50 text-gray-400 text-[8px] font-black uppercase rounded-lg border border-gray-100">Inactive</span>
-                            @endif
-                        </div>
-                        <p class="text-xs font-bold text-[#1E2432] leading-relaxed italic">"{{ $ann->message }}"</p>
+            <div class="flex flex-col gap-6 rounded-[32px] border border-[#EFEFEF] bg-white px-6 py-6 shadow-sm md:flex-row md:items-center md:justify-between md:px-8">
+                <div class="flex items-start gap-4">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FCFBF9] text-[#1E2432]">
+                        <i data-lucide="check-check" class="h-5 w-5"></i>
                     </div>
-                    <div class="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                        <form action="{{ route('announcements.toggle', $ann->id) }}" method="POST">
-                            @csrf @method('PATCH')
-                            <button type="submit" class="w-9 h-9 bg-white border border-[#EFEFEF] rounded-xl flex items-center justify-center text-[#1E2432] hover:bg-[#1E2432] hover:text-white shadow-sm transition-all"><i data-lucide="{{ $ann->is_active ? 'eye-off' : 'eye' }}" class="w-4 h-4"></i></button>
-                        </form>
-                        <form action="{{ route('announcements.destroy', $ann->id) }}" method="POST">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="w-9 h-9 bg-white border border-[#EFEFEF] rounded-xl flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white shadow-sm transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </form>
+                    <div>
+                        <p class="text-sm font-black text-[#1E2432]">Konfigurasi utama siap diperbarui.</p>
+                        <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Simpan perubahan setelah Anda selesai menyesuaikan modul, keamanan, banner, dan identitas instansi.</p>
                     </div>
                 </div>
-                @empty
-                <div class="text-center py-20 bg-[#FCFBF9] rounded-3xl border border-dashed border-[#EFEFEF] opacity-40 font-black text-[9px] uppercase tracking-widest text-[#ABABAB]">Belum ada riwayat siaran</div>
-                @endforelse
+                <button type="submit" class="inline-flex items-center justify-center gap-3 rounded-[22px] bg-[#1E2432] px-8 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-slate-900/10 transition-all hover:-translate-y-0.5 hover:bg-[#E85A4F]">
+                    <i data-lucide="save" class="h-4 w-4"></i>
+                    Simpan Perubahan Utama
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <section id="broadcast" class="scroll-mt-32 space-y-8 border-t border-[#EFEFEF] pt-10">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#E85A4F]">Siaran Pengumuman</p>
+                <h3 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Kelola banner dan popup pengumuman secara lebih jelas.</h3>
+                <p class="mt-3 max-w-3xl text-sm font-medium leading-relaxed text-[#8A8A8A]">
+                    Form pembuatan siaran dipisahkan dari riwayat agar fokus admin tidak bercampur antara membuat pengumuman baru dan meninjau yang sudah terbit.
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    {{ $activeAnnouncementsCount }} live
+                </span>
+                <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                    <span class="h-2 w-2 rounded-full bg-blue-500"></span>
+                    {{ $scheduledAnnouncementsCount }} terjadwal
+                </span>
             </div>
         </div>
-    </div>
 
-    <!-- Master Data Section: Perfectly Balanced & Aligned -->
-    <div class="mt-24 pt-20 border-t border-[#EFEFEF]" id="master">
-        <div class="flex items-center gap-4 mb-10">
-            <div class="w-1.5 h-8 bg-indigo-600 rounded-full"></div>
-            <h3 class="text-xl font-black text-[#1E2432] uppercase tracking-tight">Manajemen Master Data</h3>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <!-- Left: Positions -->
-            <div class="config-card h-full">
-                <div class="p-8 border-b border-[#F5F4F2] bg-[#FCFBF9]/50 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-[#EFEFEF] text-indigo-600 shadow-sm">
-                            <i data-lucide="briefcase" class="w-5 h-5"></i>
+        <div class="grid gap-8 xl:grid-cols-[380px,minmax(0,1fr)]">
+            <div class="h-fit overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm xl:sticky xl:top-36">
+                <div class="border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#E85A4F] shadow-sm">
+                            <i data-lucide="send" class="h-5 w-5"></i>
                         </div>
-                        <h4 class="text-xs font-black text-[#1E2432] uppercase tracking-widest">Master Jabatan</h4>
+                        <div>
+                            <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Buat Siaran Baru</h4>
+                            <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Gunakan banner untuk pengumuman berjalan dan popup untuk pesan yang perlu perhatian langsung.</p>
+                        </div>
                     </div>
-                    <span class="text-[9px] font-black bg-white px-3 py-1 rounded-full border border-[#EFEFEF] text-[#ABABAB]">{{ count($positions) }} TOTAL</span>
                 </div>
-                
-                <div class="p-8 flex-1 flex flex-col">
-                    <form action="{{ route('settings.positions.store') }}" method="POST" class="flex gap-2 mb-8">
+
+                <div class="space-y-6 p-8">
+                    <div class="overflow-hidden rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9]">
+                        <div class="border-b border-[#EFEFEF] px-5 py-4">
+                            <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Preview Mode</p>
+                        </div>
+                        <div class="space-y-4 p-5">
+                            <div class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                                <i data-lucide="sparkles" class="h-4 w-4 text-[#E85A4F]"></i>
+                                <span id="announcement-type-badge">Running Text</span>
+                            </div>
+                            <p id="announcement-type-hint" class="text-sm font-medium leading-relaxed text-[#8A8A8A]">Siaran akan tampil melintas pada bagian atas aplikasi dan cocok untuk informasi operasional singkat.</p>
+                        </div>
+                    </div>
+
+                    <form action="{{ route('announcements.store') }}" method="POST" class="space-y-5">
                         @csrf
-                        <input type="text" name="name" required placeholder="Tambah jabatan baru..." class="flex-1 px-5 py-3 rounded-xl border border-[#EFEFEF] bg-[#FCFBF9] text-xs font-bold text-[#1E2432] outline-none focus:border-indigo-500 transition-all">
-                        <button type="submit" class="bg-indigo-600 text-white px-5 rounded-xl hover:bg-indigo-700 transition-all active:scale-90 flex items-center justify-center shadow-lg shadow-indigo-100">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                            <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Pesan Siaran</label>
+                            <textarea name="message" rows="5" required class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5" placeholder="Tulis pesan resmi yang akan tampil kepada seluruh pengguna...">{{ old('message') }}</textarea>
+                        </div>
+
+                        <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                            <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Tipe Siaran</label>
+                            <select id="announcement-type" name="type" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                                <option value="banner" {{ old('type', 'banner') === 'banner' ? 'selected' : '' }}>Running Text</option>
+                                <option value="popup" {{ old('type') === 'popup' ? 'selected' : '' }}>Popup Modal</option>
+                            </select>
+                        </div>
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                                <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Mulai Tayang</label>
+                                <input type="datetime-local" name="starts_at" value="{{ old('starts_at') }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-4 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                            </div>
+                            <div class="rounded-[28px] border border-[#EFEFEF] bg-[#FCFBF9] p-5">
+                                <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Selesai Tayang</label>
+                                <input type="datetime-local" name="expires_at" value="{{ old('expires_at') }}" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-4 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-[#E85A4F] focus:ring-4 focus:ring-red-500/5">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="inline-flex w-full items-center justify-center gap-3 rounded-[22px] bg-[#E85A4F] px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-red-100 transition-all hover:-translate-y-0.5 hover:bg-[#1E2432]">
+                            <i data-lucide="send" class="h-4 w-4"></i>
+                            Publikasikan Siaran
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm">
+                <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Riwayat Siaran</h4>
+                        <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Pantau status, jadwal, dan aksi cepat untuk setiap pengumuman yang pernah dibuat.</p>
+                    </div>
+                    <div class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A] shadow-sm">
+                        <i data-lucide="history" class="h-4 w-4 text-[#1E2432]"></i>
+                        {{ $announcements->count() }} total siaran
+                    </div>
+                </div>
+
+                <div class="settings-scrollbar max-h-[920px] space-y-4 overflow-y-auto p-8">
+                    @forelse ($announcements as $announcement)
+                        @php
+                            $statusLabel = 'Tidak aktif';
+                            $statusClasses = 'bg-slate-100 text-slate-500 border-slate-200';
+
+                            if ($announcement->starts_at && $announcement->starts_at->isFuture()) {
+                                $statusLabel = 'Terjadwal';
+                                $statusClasses = 'bg-blue-50 text-blue-600 border-blue-100';
+                            } elseif ($announcement->is_active && (!$announcement->expires_at || $announcement->expires_at->isFuture())) {
+                                $statusLabel = 'Live';
+                                $statusClasses = 'bg-emerald-50 text-emerald-600 border-emerald-100';
+                            }
+                        @endphp
+
+                        <div class="rounded-[32px] border border-[#EFEFEF] bg-[#FCFBF9] p-6 transition-all hover:-translate-y-0.5 hover:border-[#1E2432]/10 hover:bg-white hover:shadow-lg hover:shadow-slate-900/5">
+                            <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] {{ $announcement->type === 'banner' ? 'border-[#EFEFEF] bg-white text-[#1E2432]' : 'border-violet-100 bg-violet-50 text-violet-600' }}">
+                                            {{ $announcement->type === 'banner' ? 'Running Text' : 'Popup Modal' }}
+                                        </span>
+                                        <span class="inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] {{ $statusClasses }}">
+                                            {{ $statusLabel }}
+                                        </span>
+                                    </div>
+
+                                    <p class="mt-4 text-base font-bold leading-relaxed text-[#1E2432]">
+                                        {{ $announcement->message }}
+                                    </p>
+
+                                    <div class="mt-5 grid gap-3 text-sm font-medium text-[#8A8A8A] sm:grid-cols-3">
+                                        <div class="rounded-[20px] border border-[#EFEFEF] bg-white px-4 py-3">
+                                            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Mulai</p>
+                                            <p class="mt-2 font-bold text-[#1E2432]">{{ $announcement->starts_at ? $announcement->starts_at->format('d M Y, H:i') : 'Langsung tayang' }}</p>
+                                        </div>
+                                        <div class="rounded-[20px] border border-[#EFEFEF] bg-white px-4 py-3">
+                                            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Berakhir</p>
+                                            <p class="mt-2 font-bold text-[#1E2432]">{{ $announcement->expires_at ? $announcement->expires_at->format('d M Y, H:i') : 'Sampai dimatikan' }}</p>
+                                        </div>
+                                        <div class="rounded-[20px] border border-[#EFEFEF] bg-white px-4 py-3">
+                                            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Dibuat</p>
+                                            <p class="mt-2 font-bold text-[#1E2432]">{{ $announcement->created_at->format('d M Y, H:i') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex shrink-0 gap-3 xl:flex-col">
+                                    <form action="{{ route('announcements.toggle', $announcement->id) }}" method="POST">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#1E2432] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#1E2432] hover:text-white" title="{{ $announcement->is_active ? 'Nonaktifkan' : 'Aktifkan' }}">
+                                            <i data-lucide="{{ $announcement->is_active ? 'eye-off' : 'eye' }}" class="h-4 w-4"></i>
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('announcements.destroy', $announcement->id) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-red-100 bg-white text-red-500 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-red-500 hover:text-white" title="Hapus siaran">
+                                            <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="rounded-[32px] border border-dashed border-[#E2E0DC] bg-[#FCFBF9] px-6 py-16 text-center">
+                            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-white text-[#ABABAB] shadow-sm">
+                                <i data-lucide="radio-tower" class="h-7 w-7"></i>
+                            </div>
+                            <p class="mt-5 text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Belum ada siaran</p>
+                            <p class="mx-auto mt-3 max-w-md text-sm font-medium leading-relaxed text-[#8A8A8A]">Saat pengumuman pertama dibuat, riwayat siaran akan tampil di sini lengkap dengan status dan jadwal tayangnya.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="master" class="scroll-mt-32 space-y-8 border-t border-[#EFEFEF] pt-10">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-[0.28em] text-[#E85A4F]">Master Data</p>
+                <h3 class="mt-2 text-3xl font-black tracking-tight text-[#1E2432]">Rapikan daftar jabatan dan unit kerja agar mudah dipelihara.</h3>
+                <p class="mt-3 max-w-3xl text-sm font-medium leading-relaxed text-[#8A8A8A]">
+                    Kedua daftar utama disusun berdampingan dengan ritme visual yang sama, sehingga penambahan maupun penghapusan data terasa lebih ringan dan jelas.
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                    <span class="h-2 w-2 rounded-full bg-indigo-500"></span>
+                    {{ $positions->count() }} jabatan
+                </span>
+                <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    {{ $workUnits->count() }} unit kerja
+                </span>
+            </div>
+        </div>
+
+        <div class="grid gap-8 xl:grid-cols-2">
+            <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm">
+                <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-indigo-600 shadow-sm">
+                            <i data-lucide="briefcase" class="h-5 w-5"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Master Jabatan</h4>
+                            <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Kelola struktur jabatan yang akan dipakai dalam data pegawai.</p>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                        {{ $positions->count() }} total
+                    </span>
+                </div>
+
+                <div class="space-y-6 p-8">
+                    <form action="{{ route('settings.positions.store') }}" method="POST" class="flex flex-col gap-3 sm:flex-row">
+                        @csrf
+                        <input type="text" name="name" required placeholder="Tambah jabatan baru..." class="flex-1 rounded-[22px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5">
+                        <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-[22px] bg-indigo-600 px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-lg shadow-indigo-100 transition-all hover:-translate-y-0.5 hover:bg-indigo-700">
+                            <i data-lucide="plus" class="h-4 w-4"></i>
+                            Tambah
                         </button>
                     </form>
 
-                    <div class="space-y-2 overflow-y-auto pr-2 custom-scrollbar h-[320px]">
-                        @foreach($positions as $pos)
-                        <div class="flex justify-between items-center p-4 bg-[#FCFBF9] rounded-xl border border-[#EFEFEF] group hover:border-indigo-200 transition-all">
-                            <span class="text-[10px] font-black text-[#1E2432] uppercase tracking-tighter">{{ $pos->name }}</span>
-                            <form action="{{ route('settings.positions.destroy', $pos->id) }}" method="POST" class="no-loader">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="w-7 h-7 flex items-center justify-center text-[#ABABAB] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100">
-                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                </button>
-                            </form>
-                        </div>
-                        @endforeach
+                    <div class="settings-scrollbar max-h-[420px] space-y-3 overflow-y-auto pr-1">
+                        @forelse ($positions as $position)
+                            <div class="flex items-center justify-between gap-4 rounded-[24px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 transition-all hover:bg-white hover:shadow-md">
+                                <div>
+                                    <p class="text-[11px] font-black uppercase tracking-[0.18em] text-[#1E2432]">{{ $position->name }}</p>
+                                    <p class="mt-1 text-[11px] font-medium text-[#8A8A8A]">Slug: {{ $position->slug }}</p>
+                                </div>
+                                <form action="{{ route('settings.positions.destroy', $position->id) }}" method="POST" class="no-loader">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#ABABAB] transition-all hover:border-red-100 hover:bg-red-50 hover:text-red-500" title="Hapus jabatan">
+                                        <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        @empty
+                            <div class="rounded-[28px] border border-dashed border-[#E2E0DC] bg-[#FCFBF9] px-6 py-12 text-center">
+                                <p class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Belum ada data jabatan</p>
+                                <p class="mt-3 text-sm font-medium leading-relaxed text-[#8A8A8A]">Tambahkan jabatan pertama untuk mulai membangun struktur organisasi pegawai.</p>
+                            </div>
+                        @endforelse
                     </div>
                 </div>
             </div>
 
-            <!-- Right: Work Units -->
-            <div class="config-card h-full">
-                <div class="p-8 border-b border-[#F5F4F2] bg-[#FCFBF9]/50 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-[#EFEFEF] text-emerald-600 shadow-sm">
-                            <i data-lucide="layout-grid" class="w-5 h-5"></i>
+            <div class="overflow-hidden rounded-[36px] border border-[#EFEFEF] bg-white shadow-sm">
+                <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-emerald-600 shadow-sm">
+                            <i data-lucide="blocks" class="h-5 w-5"></i>
                         </div>
-                        <h4 class="text-xs font-black text-[#1E2432] uppercase tracking-widest">Master Unit Kerja</h4>
+                        <div>
+                            <h4 class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Master Unit Kerja</h4>
+                            <p class="mt-2 text-sm font-medium leading-relaxed text-[#8A8A8A]">Simpan unit kerja agar filter, dashboard, dan data pegawai tetap konsisten.</p>
+                        </div>
                     </div>
-                    <span class="text-[9px] font-black bg-white px-3 py-1 rounded-full border border-[#EFEFEF] text-[#ABABAB]">{{ count($workUnits) }} TOTAL</span>
+                    <span class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#1E2432] shadow-sm">
+                        {{ $workUnits->count() }} total
+                    </span>
                 </div>
-                
-                <div class="p-8 flex-1 flex flex-col">
-                    <form action="{{ route('settings.work-units.store') }}" method="POST" class="flex gap-2 mb-8">
+
+                <div class="space-y-6 p-8">
+                    <form action="{{ route('settings.work-units.store') }}" method="POST" class="flex flex-col gap-3 sm:flex-row">
                         @csrf
-                        <input type="text" name="name" required placeholder="Tambah unit kerja baru..." class="flex-1 px-5 py-3 rounded-xl border border-[#EFEFEF] bg-[#FCFBF9] text-xs font-bold text-[#1E2432] outline-none focus:border-emerald-500 transition-all">
-                        <button type="submit" class="bg-emerald-600 text-white px-5 rounded-xl hover:bg-emerald-700 transition-all active:scale-90 flex items-center justify-center shadow-lg shadow-emerald-100">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        <input type="text" name="name" required placeholder="Tambah unit kerja baru..." class="flex-1 rounded-[22px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 text-sm font-bold text-[#1E2432] outline-none transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5">
+                        <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-[22px] bg-emerald-600 px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-lg shadow-emerald-100 transition-all hover:-translate-y-0.5 hover:bg-emerald-700">
+                            <i data-lucide="plus" class="h-4 w-4"></i>
+                            Tambah
                         </button>
                     </form>
 
-                    <div class="space-y-2 overflow-y-auto pr-2 custom-scrollbar h-[320px]">
-                        @foreach($workUnits as $unit)
-                        <div class="flex justify-between items-center p-4 bg-[#FCFBF9] rounded-xl border border-[#EFEFEF] group hover:border-emerald-200 transition-all">
-                            <span class="text-[10px] font-black text-[#1E2432] uppercase tracking-tighter">{{ $unit->name }}</span>
-                            <form action="{{ route('settings.work-units.destroy', $unit->id) }}" method="POST" class="no-loader">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="w-7 h-7 flex items-center justify-center text-[#ABABAB] hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100">
-                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                </button>
-                            </form>
-                        </div>
-                        @endforeach
+                    <div class="settings-scrollbar max-h-[420px] space-y-3 overflow-y-auto pr-1">
+                        @forelse ($workUnits as $workUnit)
+                            <div class="flex items-center justify-between gap-4 rounded-[24px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 transition-all hover:bg-white hover:shadow-md">
+                                <div>
+                                    <p class="text-[11px] font-black uppercase tracking-[0.18em] text-[#1E2432]">{{ $workUnit->name }}</p>
+                                    <p class="mt-1 text-[11px] font-medium text-[#8A8A8A]">Slug: {{ $workUnit->slug }}</p>
+                                </div>
+                                <form action="{{ route('settings.work-units.destroy', $workUnit->id) }}" method="POST" class="no-loader">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#ABABAB] transition-all hover:border-red-100 hover:bg-red-50 hover:text-red-500" title="Hapus unit kerja">
+                                        <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        @empty
+                            <div class="rounded-[28px] border border-dashed border-[#E2E0DC] bg-[#FCFBF9] px-6 py-12 text-center">
+                                <p class="text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Belum ada unit kerja</p>
+                                <p class="mt-3 text-sm font-medium leading-relaxed text-[#8A8A8A]">Tambahkan unit kerja aktif agar pemetaan pegawai dan dashboard dapat berjalan lengkap.</p>
+                            </div>
+                        @endforelse
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 </div>
 
-@if(session('success'))
-<script>
-    Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", confirmButtonColor: '#1E2432', customClass: { popup: 'rounded-[32px]' } });
-</script>
+@if (session('success'))
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: "{{ session('success') }}",
+            confirmButtonColor: '#1E2432',
+            customClass: { popup: 'rounded-[32px]' }
+        });
+    </script>
 @endif
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const anchorLinks = Array.from(document.querySelectorAll('[data-settings-anchor]'));
+            const sections = anchorLinks
+                .map((link) => document.querySelector(link.getAttribute('href')))
+                .filter(Boolean);
+
+            const setActiveAnchor = (targetId) => {
+                anchorLinks.forEach((link) => {
+                    link.classList.toggle('is-active', link.getAttribute('href') === targetId);
+                });
+            };
+
+            if (sections.length) {
+                const observer = new IntersectionObserver((entries) => {
+                    const visibleEntry = entries
+                        .filter((entry) => entry.isIntersecting)
+                        .sort((first, second) => second.intersectionRatio - first.intersectionRatio)[0];
+
+                    if (visibleEntry) {
+                        setActiveAnchor(`#${visibleEntry.target.id}`);
+                    }
+                }, {
+                    rootMargin: '-20% 0px -55% 0px',
+                    threshold: [0.2, 0.45, 0.7]
+                });
+
+                sections.forEach((section) => observer.observe(section));
+            }
+
+            anchorLinks.forEach((link) => {
+                link.addEventListener('click', () => setActiveAnchor(link.getAttribute('href')));
+            });
+
+            const bannerBgInput = document.getElementById('banner-bg-input');
+            const bannerTextInput = document.getElementById('banner-text-input');
+            const bannerSpeedInput = document.getElementById('banner-speed-input');
+            const bannerPreview = document.getElementById('banner-preview');
+            const bannerPreviewTrack = document.getElementById('banner-preview-track');
+            const bannerSpeedDisplay = document.getElementById('banner-speed-display');
+            const kopLine1Input = document.getElementById('kop-line-1-input');
+            const kopLine2Input = document.getElementById('kop-line-2-input');
+            const kopLine1Preview = document.getElementById('kop-line-1-preview');
+            const kopLine2Preview = document.getElementById('kop-line-2-preview');
+
+            const syncBannerPreview = () => {
+                if (!bannerPreview || !bannerPreviewTrack || !bannerBgInput || !bannerTextInput || !bannerSpeedInput) {
+                    return;
+                }
+
+                const animationDuration = `${Math.max(5, Number(bannerSpeedInput.value || 20))}s`;
+                bannerPreview.style.backgroundColor = bannerBgInput.value;
+                bannerPreview.style.color = bannerTextInput.value;
+                bannerPreviewTrack.style.animationDuration = animationDuration;
+                bannerSpeedDisplay.textContent = `${Math.max(5, Number(bannerSpeedInput.value || 20))} detik`;
+            };
+
+            [bannerBgInput, bannerTextInput, bannerSpeedInput].forEach((input) => {
+                if (input) {
+                    input.addEventListener('input', syncBannerPreview);
+                }
+            });
+
+            syncBannerPreview();
+
+            const syncInstitutionPreview = () => {
+                if (kopLine1Input && kopLine1Preview) {
+                    kopLine1Preview.textContent = kopLine1Input.value || 'LEMBAGA PEMASYARAKATAN JOMBANG';
+                }
+
+                if (kopLine2Input && kopLine2Preview) {
+                    kopLine2Preview.textContent = kopLine2Input.value || 'KANTOR WILAYAH KEMENTERIAN HUKUM DAN HAM JAWA TIMUR';
+                }
+            };
+
+            [kopLine1Input, kopLine2Input].forEach((input) => {
+                if (input) {
+                    input.addEventListener('input', syncInstitutionPreview);
+                }
+            });
+
+            syncInstitutionPreview();
+
+            const announcementType = document.getElementById('announcement-type');
+            const announcementTypeBadge = document.getElementById('announcement-type-badge');
+            const announcementTypeHint = document.getElementById('announcement-type-hint');
+
+            const syncAnnouncementPreview = () => {
+                if (!announcementType || !announcementTypeBadge || !announcementTypeHint) {
+                    return;
+                }
+
+                if (announcementType.value === 'popup') {
+                    announcementTypeBadge.textContent = 'Popup Modal';
+                    announcementTypeHint.textContent = 'Siaran akan muncul sebagai modal yang perlu diperhatikan pengguna saat halaman dimuat.';
+                    return;
+                }
+
+                announcementTypeBadge.textContent = 'Running Text';
+                announcementTypeHint.textContent = 'Siaran akan tampil melintas pada bagian atas aplikasi dan cocok untuk informasi operasional singkat.';
+            };
+
+            if (announcementType) {
+                announcementType.addEventListener('change', syncAnnouncementPreview);
+                syncAnnouncementPreview();
+            }
+        });
+    </script>
+@endpush
 @endsection

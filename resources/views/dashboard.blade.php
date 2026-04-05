@@ -27,6 +27,49 @@
     }
 </style>
 
+@php
+    $selectedUnitName = $workUnits->firstWhere('id', request('work_unit_id'))?->name;
+    $unitLabel = $selectedUnitName ?: 'Seluruh Unit Kerja';
+@endphp
+
+<div class="relative overflow-hidden rounded-[56px] bg-[#1E2432] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10 mb-12">
+    <div class="absolute -left-12 top-8 h-44 w-44 rounded-full bg-white/5 blur-3xl"></div>
+    <div class="absolute right-0 top-0 h-64 w-64 rounded-full bg-[#E85A4F]/20 blur-3xl"></div>
+
+    <div class="relative z-10 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
+        <div class="max-w-3xl">
+            <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/80">
+                <span class="h-2 w-2 rounded-full bg-[#E85A4F]"></span>
+                Admin Overview
+            </div>
+            <h2 class="mt-5 text-3xl font-black tracking-tight sm:text-4xl">Ringkasan operasional harian untuk memantau arsip, kepatuhan, dan antrean tindak lanjut.</h2>
+            <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-white/65">
+                Dashboard ini dipoles agar lebih cepat dipindai saat admin perlu melihat konteks unit, beban kerja hari ini, dan aktivitas yang perlu ditangani segera.
+            </p>
+        </div>
+
+        <div class="rounded-[28px] border border-white/10 bg-white/5 px-6 py-5 backdrop-blur">
+            <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/50">Filter Unit Aktif</p>
+            <p class="mt-3 text-xl font-black tracking-tight">{{ $unitLabel }}</p>
+        </div>
+    </div>
+
+    <div class="relative z-10 mt-8 grid gap-4 md:grid-cols-3">
+        <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
+            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Dokumen Hari Ini</p>
+            <p class="mt-3 text-3xl font-black">{{ $docsToday }}</p>
+        </div>
+        <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
+            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Pending Review</p>
+            <p class="mt-3 text-3xl font-black">{{ $pendingDocs }}</p>
+        </div>
+        <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
+            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Laporan Terbuka</p>
+            <p class="mt-3 text-3xl font-black">{{ $openIssues }}</p>
+        </div>
+    </div>
+</div>
+
 <!-- Top Status & Export Row -->
 <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-12">
     <div class="flex-1">
@@ -221,6 +264,33 @@
 
     <!-- Right Sidebar: Chart & Feed -->
     <div class="space-y-10">
+        <div class="bg-white p-8 rounded-[40px] border border-[#EFEFEF] shadow-sm bento-card">
+            <div class="flex items-center justify-between gap-4 mb-6">
+                <div>
+                    <h3 class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.3em]">Pegawai Baru Dipantau</h3>
+                    <p class="text-sm font-bold text-[#1E2432] mt-2">Akses cepat ke entitas terbaru dalam sistem.</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-[#FCFBF9] border border-[#EFEFEF] flex items-center justify-center text-[#E85A4F]">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="space-y-3">
+                @forelse($latestEmployees as $employee)
+                    <div class="flex items-center justify-between gap-4 rounded-[24px] border border-[#EFEFEF] bg-[#FCFBF9] px-4 py-4">
+                        <div class="min-w-0">
+                            <p class="text-xs font-black text-[#1E2432] truncate">{{ $employee->full_name }}</p>
+                            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A8A8A] mt-1 truncate">{{ $employee->work_unit->name ?? 'Tanpa Unit Kerja' }}</p>
+                        </div>
+                        <span class="shrink-0 text-[10px] font-black uppercase tracking-[0.18em] text-[#E85A4F]">{{ $employee->created_at->diffForHumans() }}</span>
+                    </div>
+                @empty
+                    <div class="rounded-[24px] border border-dashed border-[#E2E0DC] bg-[#FCFBF9] px-4 py-8 text-center text-[10px] font-black uppercase tracking-[0.24em] text-[#ABABAB]">
+                        Belum ada data pegawai terbaru
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
         <!-- Distribution Chart -->
         <div class="bg-white p-10 rounded-[56px] border border-[#EFEFEF] shadow-sm bento-card relative overflow-hidden">
             <h3 class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.4em] mb-10">Distribusi Data</h3>
