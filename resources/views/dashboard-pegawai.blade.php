@@ -4,159 +4,221 @@
 @section('header-title', 'Portal Mandiri Pegawai')
 
 @section('content')
-<!-- Top Hero Section -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-12">
-    <!-- Welcome Card -->
-    <div class="lg:col-span-2 relative overflow-hidden bg-white p-12 rounded-[56px] border border-[#EFEFEF] shadow-sm flex flex-col justify-between group">
-        <!-- Background Pattern -->
-        <div class="absolute top-0 right-0 w-64 h-64 bg-red-50 rounded-full blur-3xl opacity-20 -mr-20 -mt-20 group-hover:scale-125 transition-transform duration-1000"></div>
-        <div class="absolute bottom-0 left-0 w-32 h-32 bg-[#1E2432] rounded-full blur-3xl opacity-5 -ml-10 -mb-10 group-hover:scale-150 transition-transform duration-1000"></div>
+@php
+    $employeeName = auth()->user()->name;
+    $reviewDocs = max($myDocumentsCount - $verifiedDocs, 0);
+    $progressTone = $careerProgress >= 100 ? 'Lengkap' : ($careerProgress >= 60 ? 'Hampir Lengkap' : 'Perlu Dilengkapi');
+@endphp
 
-        <div class="relative z-10">
-            <h2 class="text-4xl font-black text-[#1E2432] tracking-tight mb-3">Selamat Datang, <span class="text-[#E85A4F]">{{ auth()->user()->name }}</span></h2>
-            <div class="flex items-center gap-4 mt-4">
-                <div class="px-4 py-2 bg-[#FCFBF9] border border-[#EFEFEF] rounded-2xl">
-                    <p class="text-[9px] font-black text-[#8A8A8A] uppercase tracking-widest">NIP Pegawai</p>
-                    <p class="text-xs font-bold text-[#1E2432]">{{ $employee->nip ?? '-' }}</p>
-                </div>
-                <div class="px-4 py-2 bg-[#FCFBF9] border border-[#EFEFEF] rounded-2xl">
-                    <p class="text-[9px] font-black text-[#8A8A8A] uppercase tracking-widest">Pangkat / Golongan</p>
-                    <p class="text-xs font-bold text-[#1E2432]">{{ $employee->rank ?? '-' }}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="mt-16 relative z-10">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="award" class="w-5 h-5 text-[#E85A4F]"></i>
-                    <span class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em]">Kelengkapan Berkas Wajib</span>
-                </div>
-                <span class="text-lg font-black text-[#E85A4F]">{{ number_format($careerProgress, 0) }}%</span>
-            </div>
-            <div class="w-full h-4 bg-[#FCFBF9] rounded-full overflow-hidden border border-[#EFEFEF] p-1 shadow-inner">
-                <div class="bg-gradient-to-r from-[#E85A4F] to-[#d44d42] h-full rounded-full transition-all duration-1000 shadow-lg shadow-red-100" style="width: {{ $careerProgress }}%"></div>
-            </div>
-        </div>
-    </div>
+<style>
+    .employee-surface {
+        transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+    }
 
-    <!-- Quick Salary Download -->
-    <div class="bg-[#1E2432] p-12 rounded-[56px] text-white shadow-2xl flex flex-col justify-between overflow-hidden relative group">
-        <!-- Abstract Shapes -->
-        <div class="absolute -right-10 -top-10 w-40 h-40 bg-[#E85A4F] rounded-full blur-[80px] opacity-20"></div>
-        <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-white rounded-full blur-[80px] opacity-5"></div>
+    .employee-surface:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 24px 50px -30px rgba(30, 36, 50, 0.28);
+    }
+</style>
 
-        <div class="relative z-10">
-            <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-6 border border-white/10">
-                <i data-lucide="banknote" class="w-6 h-6 text-white"></i>
-            </div>
-            <h3 class="text-2xl font-black leading-tight tracking-tight">Akses Cepat<br>Slip Gaji</h3>
-            <p class="text-xs font-bold opacity-50 mt-4 leading-relaxed tracking-wide">Unduh slip gaji terbaru Anda tanpa harus mencari di dalam folder.</p>
-        </div>
+<div class="space-y-10">
+    <section class="relative overflow-hidden rounded-[48px] bg-[#1E2432] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10">
+        <div class="absolute -left-10 top-10 h-40 w-40 rounded-full bg-white/5 blur-3xl"></div>
+        <div class="absolute -right-8 bottom-0 h-56 w-56 rounded-full bg-[#E85A4F]/25 blur-3xl"></div>
 
-        <div class="relative z-10 mt-10">
-            @if($latestSalary)
-                <a href="{{ route('documents.download', $latestSalary->id) }}" target="_blank" class="flex items-center justify-center gap-3 bg-[#E85A4F] text-white w-full py-5 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-red-900/40 hover:bg-[#d44d42] transition-all no-loader active:scale-95 group">
-                    Unduh Sekarang 
-                    <i data-lucide="download" class="w-4 h-4 group-hover:translate-y-1 transition-transform"></i>
-                </a>
-            @else
-                <div class="bg-white/5 border border-white/10 p-5 rounded-3xl text-center">
-                    <p class="text-[10px] font-black opacity-40 uppercase tracking-widest">Belum ada slip gaji</p>
+        <div class="relative z-10 grid gap-8 xl:grid-cols-[minmax(0,1.7fr),minmax(320px,1fr)]">
+            <div class="space-y-6">
+                <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/80">
+                    <span class="h-2 w-2 rounded-full bg-[#E85A4F]"></span>
+                    Portal Mandiri
                 </div>
-            @endif
-        </div>
-    </div>
-</div>
 
-<!-- Stats & Recent Documents -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-    <!-- Stats Row -->
-    <div class="lg:col-span-1 space-y-8">
-        <h3 class="text-xs font-black text-[#ABABAB] uppercase tracking-[0.4em] ml-2 mb-4">Status Arsip</h3>
-        
-        <div class="bg-white p-10 rounded-[48px] border border-[#EFEFEF] shadow-sm transform hover:-translate-y-1 transition-all duration-300">
-            <div class="flex items-center gap-6">
-                <div class="w-16 h-16 bg-green-50 rounded-[24px] flex items-center justify-center text-green-600 shadow-sm">
-                    <i data-lucide="verified" class="w-8 h-8"></i>
-                </div>
                 <div>
-                    <h4 class="text-4xl font-black text-[#1E2432]">{{ $verifiedDocs }}</h4>
-                    <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest mt-1">Terverifikasi</p>
+                    <h2 class="max-w-3xl text-3xl font-black tracking-tight sm:text-4xl">Selamat datang, <span class="text-[#FFB9B2]">{{ $employeeName }}</span>.</h2>
+                    <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-white/70">
+                        Pantau kelengkapan berkas, akses slip gaji terbaru, dan cek dokumen terakhir tanpa harus berpindah-pindah menu.
+                    </p>
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-3">
+                    <div class="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur">
+                        <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/50">NIP Pegawai</p>
+                        <p class="mt-3 text-sm font-black tracking-[0.14em] text-white">{{ $employee->nip ?? '-' }}</p>
+                    </div>
+                    <div class="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur">
+                        <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/50">Jabatan</p>
+                        <p class="mt-3 text-sm font-black text-white">{{ $employee->position ?? '-' }}</p>
+                    </div>
+                    <div class="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur">
+                        <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/50">Unit Kerja</p>
+                        <p class="mt-3 text-sm font-black text-white">{{ $employee?->work_unit?->name ?? '-' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-[36px] border border-white/10 bg-white/5 p-7 backdrop-blur">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/55">Progress Berkas Wajib</p>
+                        <h3 class="mt-3 text-5xl font-black tracking-tight">{{ number_format($careerProgress, 0) }}%</h3>
+                    </div>
+                    <span class="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-white/80">{{ $progressTone }}</span>
+                </div>
+
+                <div class="mt-6 h-4 overflow-hidden rounded-full border border-white/10 bg-white/10 p-1">
+                    <div class="h-full rounded-full bg-gradient-to-r from-[#E85A4F] to-[#FF8D84]" style="width: {{ min($careerProgress, 100) }}%"></div>
+                </div>
+
+                <div class="mt-6 grid gap-3 sm:grid-cols-2">
+                    <div class="rounded-[24px] border border-white/10 bg-[#10151f]/35 px-5 py-4">
+                        <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Terverifikasi</p>
+                        <p class="mt-2 text-2xl font-black">{{ $verifiedDocs }}</p>
+                    </div>
+                    <div class="rounded-[24px] border border-white/10 bg-[#10151f]/35 px-5 py-4">
+                        <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Butuh Tinjau</p>
+                        <p class="mt-2 text-2xl font-black">{{ $reviewDocs }}</p>
+                    </div>
                 </div>
             </div>
         </div>
+    </section>
 
-        <div class="bg-white p-10 rounded-[48px] border border-[#EFEFEF] shadow-sm transform hover:-translate-y-1 transition-all duration-300">
-            <div class="flex items-center gap-6">
-                <div class="w-16 h-16 bg-orange-50 rounded-[24px] flex items-center justify-center text-orange-600 shadow-sm">
-                    <i data-lucide="clock" class="w-8 h-8"></i>
-                </div>
-                <div>
-                    <h4 class="text-4xl font-black text-[#1E2432]">{{ $myDocumentsCount - $verifiedDocs }}</h4>
-                    <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest mt-1">Review Admin</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Problem Report CTA -->
-        <div class="bg-gradient-to-br from-[#1E2432] to-[#343d52] p-10 rounded-[48px] shadow-xl text-white">
-            <h4 class="text-lg font-black mb-2">Punya Kendala?</h4>
-            <p class="text-xs font-bold opacity-60 mb-8 leading-relaxed">Hubungi admin kepegawaian jika data Anda tidak sesuai.</p>
-            <button onclick="window.location='{{ route('profile.index') }}'" class="flex items-center justify-between w-full bg-white/10 border border-white/20 p-5 rounded-[24px] hover:bg-white/20 transition-all group">
-                <span class="text-[10px] font-black uppercase tracking-widest">Buka Pelaporan</span>
-                <i data-lucide="message-circle" class="w-5 h-5 text-[#E85A4F] group-hover:rotate-12 transition-transform"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="lg:col-span-2">
-        <div class="flex items-center justify-between mb-8 ml-2">
-            <h3 class="text-xs font-black text-[#ABABAB] uppercase tracking-[0.4em]">Unggahan Terakhir</h3>
-            <a href="{{ route('documents.index') }}" class="text-[10px] font-black text-[#E85A4F] uppercase tracking-widest hover:underline">Lihat Semua</a>
-        </div>
-
-        <div class="bg-white rounded-[56px] border border-[#EFEFEF] shadow-sm overflow-hidden">
-            <div class="divide-y divide-[#F5F4F2]">
-                @forelse($recentDocuments as $doc)
-                <div class="p-8 hover:bg-[#FCFBF9] transition-all flex items-center justify-between group">
-                    <div class="flex items-center gap-6">
-                        <div class="w-14 h-14 bg-[#F5F4F2] rounded-2xl flex items-center justify-center group-hover:bg-[#E85A4F] group-hover:text-white transition-all duration-500">
-                            @if(str_contains($doc->file_path, '.pdf'))
-                                <i data-lucide="file-text" class="w-6 h-6"></i>
-                            @else
-                                <i data-lucide="image" class="w-6 h-6"></i>
-                            @endif
-                        </div>
+    <section class="grid gap-8 xl:grid-cols-[minmax(0,1.7fr),380px]">
+        <div class="space-y-8">
+            <div class="grid gap-6 md:grid-cols-3">
+                <div class="employee-surface rounded-[36px] border border-[#EFEFEF] bg-white p-8 shadow-sm">
+                    <div class="flex items-start justify-between gap-4">
                         <div>
-                            <h5 class="text-sm font-black text-[#1E2432] group-hover:text-[#E85A4F] transition-colors">{{ $doc->title }}</h5>
-                            <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest mt-1">{{ $doc->category->name ?? 'Dokumen' }} • {{ $doc->created_at->diffForHumans() }}</p>
+                            <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Total Dokumen</p>
+                            <h4 class="mt-4 text-4xl font-black tracking-tight text-[#1E2432]">{{ $myDocumentsCount }}</h4>
+                        </div>
+                        <div class="flex h-14 w-14 items-center justify-center rounded-[24px] bg-blue-50 text-blue-600">
+                            <i data-lucide="folder-open" class="h-7 w-7"></i>
                         </div>
                     </div>
-                    
-                    <div class="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="window.open('{{ route('documents.preview', $doc->id) }}', '_blank')" class="w-10 h-10 bg-white border border-[#EFEFEF] rounded-xl flex items-center justify-center text-[#1E2432] hover:bg-[#1E2432] hover:text-white transition-all shadow-sm">
-                            <i data-lucide="eye" class="w-4 h-4"></i>
-                        </button>
+                </div>
+
+                <div class="employee-surface rounded-[36px] border border-[#EFEFEF] bg-white p-8 shadow-sm">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Sudah Valid</p>
+                            <h4 class="mt-4 text-4xl font-black tracking-tight text-[#1E2432]">{{ $verifiedDocs }}</h4>
+                        </div>
+                        <div class="flex h-14 w-14 items-center justify-center rounded-[24px] bg-emerald-50 text-emerald-600">
+                            <i data-lucide="shield-check" class="h-7 w-7"></i>
+                        </div>
                     </div>
                 </div>
-                @empty
-                <div class="p-20 text-center">
-                    <div class="w-20 h-20 bg-[#FCFBF9] rounded-[32px] flex items-center justify-center mx-auto mb-6">
-                        <i data-lucide="folder-open" class="w-8 h-8 text-[#ABABAB]"></i>
+
+                <div class="employee-surface rounded-[36px] border border-[#EFEFEF] bg-white p-8 shadow-sm">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Menunggu Review</p>
+                            <h4 class="mt-4 text-4xl font-black tracking-tight text-[#1E2432]">{{ $reviewDocs }}</h4>
+                        </div>
+                        <div class="flex h-14 w-14 items-center justify-center rounded-[24px] bg-amber-50 text-amber-600">
+                            <i data-lucide="clock" class="h-7 w-7"></i>
+                        </div>
                     </div>
-                    <p class="text-xs font-black text-[#ABABAB] uppercase tracking-widest">Belum ada dokumen yang diunggah</p>
                 </div>
-                @endforelse
             </div>
-            
-            @if($recentDocuments->count() > 0)
-            <div class="p-8 bg-[#FCFBF9]/50 text-center">
-                <p class="text-[9px] font-black text-[#ABABAB] uppercase tracking-[0.3em]">Hanya menampilkan 5 dokumen terakhir</p>
+
+            <div class="employee-surface overflow-hidden rounded-[40px] border border-[#EFEFEF] bg-white shadow-sm">
+                <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#E85A4F]">Unggahan Terakhir</p>
+                        <h3 class="mt-2 text-2xl font-black tracking-tight text-[#1E2432]">Dokumen yang paling baru Anda kirim.</h3>
+                    </div>
+                    <a href="{{ route('documents.index') }}" class="inline-flex items-center gap-3 rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-3 text-[10px] font-black uppercase tracking-[0.24em] text-[#1E2432] transition-all hover:bg-[#1E2432] hover:text-white no-loader">
+                        Lihat Semua
+                        <i data-lucide="arrow-right" class="h-4 w-4"></i>
+                    </a>
+                </div>
+
+                <div class="divide-y divide-[#F2F1EE]">
+                    @forelse($recentDocuments as $doc)
+                        <div class="flex flex-col gap-5 px-8 py-6 transition-all hover:bg-[#FCFBF9] sm:flex-row sm:items-center sm:justify-between">
+                            <div class="flex items-center gap-5">
+                                <div class="flex h-14 w-14 items-center justify-center rounded-[22px] bg-[#FCFBF9] text-[#1E2432]">
+                                    <i data-lucide="{{ str_contains($doc->file_path, '.pdf') ? 'file-text' : 'image' }}" class="h-6 w-6"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-black text-[#1E2432]">{{ $doc->title }}</h4>
+                                    <p class="mt-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">
+                                        {{ $doc->category->name ?? 'Dokumen' }} • {{ $doc->created_at->diffForHumans() }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <span class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] {{ $doc->status === 'verified' ? 'border-emerald-100 bg-emerald-50 text-emerald-600' : ($doc->status === 'pending' ? 'border-amber-100 bg-amber-50 text-amber-600' : 'border-slate-200 bg-slate-50 text-slate-500') }}">
+                                    {{ $doc->status }}
+                                </span>
+                                <button onclick="window.open('{{ route('documents.preview', $doc->id) }}', '_blank')" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-[#1E2432] shadow-sm transition-all hover:bg-[#1E2432] hover:text-white">
+                                    <i data-lucide="eye" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="px-8 py-20 text-center">
+                            <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#FCFBF9] text-[#ABABAB]">
+                                <i data-lucide="folder-open" class="h-9 w-9"></i>
+                            </div>
+                            <p class="mt-5 text-sm font-black uppercase tracking-[0.22em] text-[#1E2432]">Belum ada dokumen</p>
+                            <p class="mx-auto mt-3 max-w-md text-sm font-medium leading-relaxed text-[#8A8A8A]">Mulai unggah dokumen dari menu pusat dokumen agar riwayat aktivitas Anda tampil di sini.</p>
+                        </div>
+                    @endforelse
+                </div>
             </div>
-            @endif
         </div>
-    </div>
+
+        <div class="space-y-8">
+            <div class="employee-surface overflow-hidden rounded-[40px] bg-[#1E2432] text-white shadow-2xl shadow-slate-900/10">
+                <div class="px-8 py-8">
+                    <div class="flex h-14 w-14 items-center justify-center rounded-[24px] bg-white/10 text-white">
+                        <i data-lucide="banknote" class="h-7 w-7"></i>
+                    </div>
+                    <h3 class="mt-6 text-2xl font-black tracking-tight">Akses cepat slip gaji terbaru.</h3>
+                    <p class="mt-3 text-sm font-medium leading-relaxed text-white/65">Saat slip gaji terbaru tersedia, Anda bisa langsung mengunduhnya dari kartu ini.</p>
+                </div>
+                <div class="border-t border-white/10 px-8 py-6">
+                    @if($latestSalary)
+                        <a href="{{ route('documents.download', $latestSalary->id) }}" target="_blank" class="inline-flex w-full items-center justify-center gap-3 rounded-[22px] bg-[#E85A4F] px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-red-950/30 transition-all hover:bg-[#d44d42] no-loader">
+                            Unduh Slip Gaji
+                            <i data-lucide="download" class="h-4 w-4"></i>
+                        </a>
+                    @else
+                        <div class="rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 text-center text-[10px] font-black uppercase tracking-[0.22em] text-white/45">
+                            Belum ada slip gaji tersedia
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <div class="employee-surface overflow-hidden rounded-[40px] border border-[#EFEFEF] bg-white shadow-sm">
+                <div class="border-b border-[#F2F1EE] bg-[#FCFBF9] px-8 py-7">
+                    <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#E85A4F]">Aksi Cepat</p>
+                    <h3 class="mt-2 text-2xl font-black tracking-tight text-[#1E2432]">Butuh bantuan atau ingin meninjau data?</h3>
+                </div>
+                <div class="space-y-4 p-8">
+                    <a href="{{ route('documents.index') }}" class="flex items-center justify-between rounded-[26px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 transition-all hover:bg-white hover:shadow-md">
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-[0.18em] text-[#1E2432]">Pusat Dokumen</p>
+                            <p class="mt-2 text-sm font-medium text-[#8A8A8A]">Lihat arsip dan unggah dokumen baru.</p>
+                        </div>
+                        <i data-lucide="folder-open" class="h-5 w-5 text-[#E85A4F]"></i>
+                    </a>
+
+                    <a href="{{ route('profile.index') }}" class="flex items-center justify-between rounded-[26px] border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-4 transition-all hover:bg-white hover:shadow-md">
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-[0.18em] text-[#1E2432]">Perbarui Profil</p>
+                            <p class="mt-2 text-sm font-medium text-[#8A8A8A]">Atur akun dan laporkan ketidaksesuaian data.</p>
+                        </div>
+                        <i data-lucide="user-pen" class="h-5 w-5 text-[#E85A4F]"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
 @endsection

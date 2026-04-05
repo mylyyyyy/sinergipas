@@ -27,6 +27,50 @@
     }
 </style>
 
+@php
+    $selectedUnitName = $workUnits->firstWhere('id', request('work_unit_id'))?->name;
+    $unitLabel = $selectedUnitName ?: 'Seluruh Unit Kerja';
+    $displayedNonCompliantEmployees = $nonCompliantEmployees->count();
+@endphp
+
+<div class="relative overflow-hidden rounded-[56px] bg-[#1E2432] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10 mb-12">
+    <div class="absolute -left-12 top-8 h-44 w-44 rounded-full bg-white/5 blur-3xl"></div>
+    <div class="absolute right-0 top-0 h-64 w-64 rounded-full bg-[#E85A4F]/20 blur-3xl"></div>
+
+    <div class="relative z-10 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
+        <div class="max-w-3xl">
+            <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/80">
+                <span class="h-2 w-2 rounded-full bg-[#E85A4F]"></span>
+                Admin Overview
+            </div>
+            <h2 class="mt-5 text-3xl font-black tracking-tight sm:text-4xl">Ringkasan operasional harian untuk memantau arsip, kepatuhan, dan antrean tindak lanjut.</h2>
+            <p class="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-white/65">
+                Dashboard ini dipoles agar lebih cepat dipindai saat admin perlu melihat konteks unit, beban kerja hari ini, dan aktivitas yang perlu ditangani segera.
+            </p>
+        </div>
+
+        <div class="rounded-[28px] border border-white/10 bg-white/5 px-6 py-5 backdrop-blur">
+            <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/50">Filter Unit Aktif</p>
+            <p class="mt-3 text-xl font-black tracking-tight">{{ $unitLabel }}</p>
+        </div>
+    </div>
+
+    <div class="relative z-10 mt-8 grid gap-4 md:grid-cols-3">
+        <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
+            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Dokumen Hari Ini</p>
+            <p class="mt-3 text-3xl font-black">{{ $docsToday }}</p>
+        </div>
+        <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
+            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Pending Review</p>
+            <p class="mt-3 text-3xl font-black">{{ $pendingDocs }}</p>
+        </div>
+        <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
+            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Laporan Terbuka</p>
+            <p class="mt-3 text-3xl font-black">{{ $openIssues }}</p>
+        </div>
+    </div>
+</div>
+
 <!-- Top Status & Export Row -->
 <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-12">
     <div class="flex-1">
@@ -135,23 +179,44 @@
 </div>
 
 <!-- Main Analytics Row -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-10 items-stretch">
     <!-- Compliance Tracking (Improved UI) -->
-    <div class="lg:col-span-2 bg-white rounded-[56px] border border-[#EFEFEF] shadow-sm overflow-hidden flex flex-col bento-card">
+    <div class="lg:col-span-2 bg-white rounded-[56px] border border-[#EFEFEF] shadow-sm overflow-hidden flex flex-col bento-card h-full min-h-0">
         <div class="p-12 border-b border-[#F5F4F2] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-[#FCFBF9]/50">
             <div>
                 <h3 class="text-2xl font-black text-[#1E2432] tracking-tight italic flex items-center gap-3">
                     Pelacakan Kepatuhan <span class="bg-red-500 text-white text-[8px] font-black px-2.5 py-1 rounded-lg not-italic uppercase tracking-widest">LIVE</span>
                 </h3>
-                <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-[0.2em] mt-2">Daftar pegawai dengan dokumen tidak lengkap</p>
+                <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-[0.2em] mt-2">Preview pegawai dengan dokumen tidak lengkap</p>
             </div>
-            <button onclick="window.location.reload()" class="bg-white border border-[#EFEFEF] p-4 rounded-2xl hover:bg-[#1E2432] hover:text-white transition-all shadow-sm active:scale-95 group">
-                <i data-lucide="refresh-cw" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-700"></i>
-            </button>
+            <div class="flex items-center gap-3">
+                <div class="rounded-2xl border border-[#EFEFEF] bg-white px-4 py-3 text-right shadow-sm">
+                    <p class="text-[9px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Ditampilkan</p>
+                    <p class="mt-1 text-sm font-black text-[#1E2432]">{{ $displayedNonCompliantEmployees }}/{{ $nonCompliantEmployeesTotal }}</p>
+                </div>
+                <a href="{{ route('employees.index') }}" class="inline-flex items-center gap-2 rounded-2xl border border-[#EFEFEF] bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#1E2432] shadow-sm transition-all hover:border-[#E85A4F] hover:text-[#E85A4F]">
+                    <i data-lucide="arrow-up-right" class="h-4 w-4"></i>
+                    Lihat Semua
+                </a>
+                <button onclick="window.location.reload()" class="bg-white border border-[#EFEFEF] p-4 rounded-2xl hover:bg-[#1E2432] hover:text-white transition-all shadow-sm active:scale-95 group">
+                    <i data-lucide="refresh-cw" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-700"></i>
+                </button>
+            </div>
         </div>
         
-        <div class="p-8">
-            <div class="overflow-y-auto pr-2 custom-scrollbar" style="max-height: 600px;">
+        <div class="p-8 flex-1 min-h-0 flex flex-col">
+            <div class="mb-4 flex items-center justify-between gap-3 rounded-[24px] border border-[#F1EFEB] bg-[#FCFBF9] px-5 py-4">
+                <div>
+                    <p class="text-[9px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Ringkasan Widget</p>
+                    <p class="mt-1 text-sm font-bold text-[#1E2432]">Widget ini hanya menampilkan maksimal {{ $nonCompliantPreviewLimit }} pegawai agar dashboard tetap ringan dan fokus.</p>
+                </div>
+                <div class="shrink-0 rounded-2xl bg-white px-4 py-3 text-center shadow-sm">
+                    <p class="text-[9px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Total Isu</p>
+                    <p class="mt-1 text-base font-black text-[#E85A4F]">{{ $nonCompliantEmployeesTotal }}</p>
+                </div>
+            </div>
+
+            <div class="overflow-y-auto pr-2 custom-scrollbar flex-1 min-h-0">
                 @php $hasMandatory = \App\Models\DocumentCategory::where('is_mandatory', true)->exists(); @endphp
                 
                 @if(!$hasMandatory)
@@ -213,6 +278,18 @@
                                 <p class="text-[10px] text-[#8A8A8A] font-black uppercase tracking-[0.3em] mt-1">Seluruh pegawai telah mematuhi aturan administrasi.</p>
                             </div>
                         @endif
+
+                        @if($nonCompliantEmployeesTotal > $displayedNonCompliantEmployees)
+                            <div class="rounded-[28px] border border-dashed border-[#E2E0DC] bg-white px-6 py-5 text-center">
+                                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">
+                                    Menampilkan {{ $displayedNonCompliantEmployees }} dari {{ $nonCompliantEmployeesTotal }} pegawai yang perlu ditindaklanjuti.
+                                </p>
+                                <a href="{{ route('employees.index') }}" class="mt-4 inline-flex items-center gap-2 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#1E2432] transition-all hover:border-[#E85A4F] hover:text-[#E85A4F]">
+                                    <i data-lucide="list" class="h-4 w-4"></i>
+                                    Lihat Semua Data Pegawai
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 @endif
             </div>
@@ -221,6 +298,33 @@
 
     <!-- Right Sidebar: Chart & Feed -->
     <div class="space-y-10">
+        <div class="bg-white p-8 rounded-[40px] border border-[#EFEFEF] shadow-sm bento-card">
+            <div class="flex items-center justify-between gap-4 mb-6">
+                <div>
+                    <h3 class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.3em]">Pegawai Baru Dipantau</h3>
+                    <p class="text-sm font-bold text-[#1E2432] mt-2">Akses cepat ke entitas terbaru dalam sistem.</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-[#FCFBF9] border border-[#EFEFEF] flex items-center justify-center text-[#E85A4F]">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                </div>
+            </div>
+            <div class="space-y-3">
+                @forelse($latestEmployees as $employee)
+                    <div class="flex items-center justify-between gap-4 rounded-[24px] border border-[#EFEFEF] bg-[#FCFBF9] px-4 py-4">
+                        <div class="min-w-0">
+                            <p class="text-xs font-black text-[#1E2432] truncate">{{ $employee->full_name }}</p>
+                            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A8A8A] mt-1 truncate">{{ $employee->work_unit->name ?? 'Tanpa Unit Kerja' }}</p>
+                        </div>
+                        <span class="shrink-0 text-[10px] font-black uppercase tracking-[0.18em] text-[#E85A4F]">{{ $employee->created_at->diffForHumans() }}</span>
+                    </div>
+                @empty
+                    <div class="rounded-[24px] border border-dashed border-[#E2E0DC] bg-[#FCFBF9] px-4 py-8 text-center text-[10px] font-black uppercase tracking-[0.24em] text-[#ABABAB]">
+                        Belum ada data pegawai terbaru
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
         <!-- Distribution Chart -->
         <div class="bg-white p-10 rounded-[56px] border border-[#EFEFEF] shadow-sm bento-card relative overflow-hidden">
             <h3 class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.4em] mb-10">Distribusi Data</h3>

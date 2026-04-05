@@ -113,6 +113,8 @@ Route::middleware('auth')->group(function () {
 
         // Report Issues Management
         Route::get('/admin/report-issues', [\App\Http\Controllers\Admin\ReportIssueController::class, 'index'])->name('admin.report-issues.index');
+        Route::delete('/admin/report-issues/bulk-destroy', [\App\Http\Controllers\Admin\ReportIssueController::class, 'bulkDestroy'])->name('admin.report-issues.bulk-destroy');
+        Route::delete('/admin/report-issues/destroy-all', [\App\Http\Controllers\Admin\ReportIssueController::class, 'destroyAll'])->name('admin.report-issues.destroy-all');
         Route::put('/admin/report-issues/{issue}', [\App\Http\Controllers\Admin\ReportIssueController::class, 'update'])->name('admin.report-issues.update');
         Route::delete('/admin/report-issues/{issue}', [\App\Http\Controllers\Admin\ReportIssueController::class, 'destroy'])->name('admin.report-issues.destroy');
     });
