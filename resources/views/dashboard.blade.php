@@ -1,31 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Admin Control Center')
-@section('header-title', 'Control Center Analytics')
+@section('title', 'Admin Dashboard')
+@section('header-title', 'Pusat Analitik & Kontrol')
 
 @section('content')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-    .bento-card {
-        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .bento-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 30px 60px -12px rgba(30, 36, 50, 0.15);
-    }
-    .stat-card-gradient {
-        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-    }
-    .accent-gradient {
-        background: linear-gradient(135deg, #EAB308 0%, #3B82F6 100%);
-    }
-    .glass-stat {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-</style>
 
 @php
     $selectedUnitName = $workUnits->firstWhere('id', request('work_unit_id'))?->name;
@@ -34,315 +13,209 @@
     $hasMandatory = $totalMandatoryCategories > 0;
 @endphp
 
-<div class="relative overflow-hidden rounded-[56px] bg-[#1E293B] px-8 py-8 text-white shadow-2xl shadow-slate-900/15 sm:px-10 sm:py-10 mb-12">
-    <div class="absolute -left-12 top-8 h-44 w-44 rounded-full bg-white/5 blur-3xl"></div>
-    <div class="absolute right-0 top-0 h-64 w-64 rounded-full bg-[#FACC15]/20 blur-3xl"></div>
+<div class="space-y-8">
+    <!-- Hero Stats Section -->
+    <div class="relative overflow-hidden rounded-3xl bg-slate-900 px-8 py-10 text-white shadow-xl">
+        <div class="absolute -left-12 top-8 h-44 w-44 rounded-full bg-blue-500/10 blur-3xl"></div>
+        <div class="absolute right-0 top-0 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl"></div>
 
-    <div class="relative z-10 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
-        <div class="max-w-3xl">
-            <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/80">
-                <span class="h-2 w-2 rounded-full bg-[#FACC15]"></span>
-                Admin Overview
-            </div>
-            <h2 class="mt-5 text-3xl font-black tracking-tight sm:text-4xl">Ringkasan operasional harian.</h2>
-        </div>
-
-        <div class="rounded-[28px] border border-white/10 bg-white/5 px-6 py-5 backdrop-blur">
-            <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/50">Filter Unit Aktif</p>
-            <p class="mt-3 text-xl font-black tracking-tight">{{ $unitLabel }}</p>
-        </div>
-    </div>
-
-    <div class="relative z-10 mt-8 grid gap-4 md:grid-cols-3">
-        <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
-            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Dokumen Hari Ini</p>
-            <p class="mt-3 text-3xl font-black">{{ $docsToday }}</p>
-        </div>
-        <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
-            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Pending Review</p>
-            <p class="mt-3 text-3xl font-black">{{ $pendingDocs }}</p>
-        </div>
-        <div class="rounded-[24px] border border-white/10 bg-white/5 p-5">
-            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">Laporan Terbuka</p>
-            <p class="mt-3 text-3xl font-black">{{ $openIssues }}</p>
-        </div>
-    </div>
-</div>
-
-<!-- Top Status & Export Row -->
-<div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-12">
-    <div class="flex-1">
-        <div class="flex items-center gap-4 mb-3">
-            <div class="w-2 h-10 bg-[#FACC15] rounded-full shadow-lg shadow-red-200"></div>
+        <div class="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <h2 class="text-3xl font-black text-[#1E293B] tracking-tight italic">Dashboard Utama</h2>
-                <p class="text-[10px] font-black text-[#64748B] uppercase tracking-[0.3em]">Ringkasan Operasional & Monitoring Sistem</p>
+                <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                    Ringkasan Sistem
+                </div>
+                <h2 class="mt-4 text-3xl font-bold tracking-tight">Selamat Datang di Sinergi PAS</h2>
+                <p class="mt-2 text-slate-400 font-medium">Monitoring operasional harian Lapas Jombang secara real-time.</p>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="px-5 py-3 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Unit Aktif</p>
+                    <p class="text-lg font-bold">{{ $unitLabel }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative z-10 mt-10 grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="p-4 rounded-2xl bg-white/5 border border-white/5">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Dokumen Baru</p>
+                <p class="mt-2 text-2xl font-bold">{{ $docsToday }}</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-white/5 border border-white/5">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Menunggu Review</p>
+                <p class="mt-2 text-2xl font-bold text-amber-400">{{ $pendingDocs }}</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-white/5 border border-white/5">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Laporan Masalah</p>
+                <p class="mt-2 text-2xl font-bold text-red-400">{{ $openIssues }}</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-white/5 border border-white/5">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Total Pegawai</p>
+                <p class="mt-2 text-2xl font-bold">{{ $totalEmployees }}</p>
             </div>
         </div>
     </div>
-    
-    <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-        <form action="{{ route('dashboard') }}" method="GET" class="w-full sm:w-auto no-loader group">
-            <div class="relative">
-                <i data-lucide="filter" class="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] group-hover:text-[#FACC15] transition-all"></i>
-                <select name="work_unit_id" onchange="this.form.submit()" class="w-full sm:w-[260px] pl-14 pr-10 py-4 rounded-[24px] border border-[#E2E8F0] bg-white text-[10px] font-black uppercase tracking-widest text-[#1E293B] outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-[#1D4ED8] transition-all shadow-sm cursor-pointer appearance-none hover:shadow-md">
+
+    <!-- Actions & Filter Row -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <form action="{{ route('dashboard') }}" method="GET" class="w-full md:w-auto flex items-center gap-3">
+            <div class="relative flex-1 md:w-64">
+                <i data-lucide="filter" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                <select name="work_unit_id" onchange="this.form.submit()" class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 transition-all appearance-none cursor-pointer">
                     <option value="">Seluruh Unit Kerja</option>
                     @foreach($workUnits as $unit)
                         <option value="{{ $unit->id }}" {{ request('work_unit_id') == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
                     @endforeach
                 </select>
-                <i data-lucide="chevron-down" class="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B] pointer-events-none"></i>
+                <i data-lucide="chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
             </div>
         </form>
 
-        <div class="flex gap-3 w-full sm:w-auto">
-            <a href="{{ route('dashboard.export.excel') }}" class="flex-1 sm:flex-none bg-white border border-[#E2E8F0] text-[#1E293B] px-8 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-widest hover:bg-[#1D4ED8] hover:text-white hover:border-[#1D4ED8] transition-all shadow-sm flex items-center justify-center gap-2 no-loader group">
-                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-green-600 group-hover:text-white transition-transform group-hover:scale-110"></i> Excel
+        <div class="flex items-center gap-3 w-full md:w-auto">
+            <a href="{{ route('dashboard.export.excel') }}" class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-green-600"></i>
+                Excel
             </a>
-            <a href="{{ route('dashboard.export.pdf') }}" class="flex-1 sm:flex-none bg-[#1E293B] text-white px-8 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-widest hover:bg-[#FACC15] hover:text-[#1E293B] transition-all shadow-xl shadow-gray-200 flex items-center justify-center gap-2 no-loader group">
-                <i data-lucide="file-text" class="w-4 h-4 group-hover:rotate-6 transition-transform"></i> PDF
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- Statistics Bento Grid -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-    <!-- Archive Size Widget -->
-    <div class="md:col-span-2 bg-[#1E293B] rounded-[56px] p-12 text-white relative overflow-hidden bento-card shadow-2xl shadow-gray-900/20">
-        <div class="absolute top-0 right-0 p-12 opacity-10 rotate-12 text-[#1D4ED8]">
-            <i data-lucide="database" class="w-64 h-64"></i>
-        </div>
-        <div class="relative z-10 h-full flex flex-col justify-between">
-            <div>
-                <p class="text-[10px] font-black opacity-50 uppercase tracking-[0.4em]">Volume Data Digital</p>
-                <h3 class="text-5xl font-black mt-4 tracking-tighter">{{ $storageUsed }} <span class="text-xl opacity-40">MB</span></h3>
-                <p class="text-xs font-bold opacity-60 mt-4 leading-relaxed max-w-xs">Total akumulasi ukuran dokumen yang telah diunggah dan terarsip dalam server.</p>
-            </div>
-            <div class="mt-12 flex gap-4">
-                <div class="glass-stat px-6 py-4 rounded-[24px]">
-                    <p class="text-[8px] font-black opacity-40 uppercase mb-1">Status Server</p>
-                    <p class="text-sm font-black italic flex items-center gap-2">
-                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.5)]"></span> Sinkron & Optimal
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Stats Column -->
-    <div class="space-y-8">
-        <div class="bg-white p-10 rounded-[48px] border border-[#E2E8F0] shadow-sm bento-card relative overflow-hidden">
-            <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-[#1D4ED8] mb-6">
-                <i data-lucide="users" class="w-7 h-7"></i>
-            </div>
-            <p class="text-[10px] font-black text-[#64748B] uppercase tracking-widest">Total Pegawai</p>
-            <h4 class="text-4xl font-black text-[#1E293B] mt-2 tracking-tighter">{{ $totalEmployees }}</h4>
-        </div>
-        <div class="bg-white p-10 rounded-[48px] border border-[#E2E8F0] shadow-sm bento-card relative overflow-hidden">
-            <div class="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 mb-6">
-                <i data-lucide="file-check" class="w-7 h-7"></i>
-            </div>
-            <p class="text-[10px] font-black text-[#64748B] uppercase tracking-widest">Total Arsip</p>
-            <h4 class="text-4xl font-black text-[#1E293B] mt-2 tracking-tighter">{{ $totalDocuments }}</h4>
-        </div>
-    </div>
-
-    <!-- Urgent Alerts Column -->
-    <div class="bg-[#FACC15] p-10 rounded-[56px] text-[#1E293B] shadow-2xl shadow-yellow-200 bento-card flex flex-col justify-between group">
-        <div>
-            <div class="w-14 h-14 bg-white/40 rounded-2xl flex items-center justify-center mb-8 border border-white/40">
-                <i data-lucide="bell-ring" class="w-7 h-7 animate-bounce"></i>
-            </div>
-            <h4 class="text-xl font-black leading-tight italic">Tindakan<br>Segera</h4>
-            <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest mt-4">Memerlukan Respon Admin</p>
-        </div>
-        <div class="space-y-4">
-            <a href="{{ route('documents.index', ['status' => 'pending']) }}" class="flex items-center justify-between bg-white/20 hover:bg-white/40 border border-white/20 p-5 rounded-[24px] transition-all group/link">
-                <div class="flex flex-col">
-                    <span class="text-2xl font-black leading-none">{{ $pendingDocs }}</span>
-                    <span class="text-[8px] font-black uppercase opacity-70 mt-1">Pending Verif</span>
-                </div>
-                <i data-lucide="arrow-right" class="w-4 h-4 group-hover/link:translate-x-1 transition-transform"></i>
-            </a>
-            <a href="{{ route('admin.report-issues.index') }}" class="flex items-center justify-between bg-white/20 hover:bg-white/40 border border-white/20 p-5 rounded-[24px] transition-all group/link">
-                <div class="flex flex-col">
-                    <span class="text-2xl font-black leading-none">{{ $openIssues }}</span>
-                    <span class="text-[8px] font-black uppercase opacity-70 mt-1">Laporan Baru</span>
-                </div>
-                <i data-lucide="arrow-right" class="w-4 h-4 group-hover/link:translate-x-1 transition-transform"></i>
+            <a href="{{ route('dashboard.export.pdf') }}" class="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
+                <i data-lucide="file-text" class="w-4 h-4 text-amber-400"></i>
+                PDF Report
             </a>
         </div>
     </div>
-</div>
 
-<!-- Main Analytics Row -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-10 items-stretch">
-    <!-- Compliance Tracking (Improved UI) -->
-    <div class="lg:col-span-2 bg-white rounded-[56px] border border-[#E2E8F0] shadow-sm overflow-hidden flex flex-col bento-card h-full min-h-0">
-        <div class="p-12 border-b border-[#F8FAFC] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-[#F8FAFC]/50">
-            <div>
-                <h3 class="text-2xl font-black text-[#1E293B] tracking-tight italic flex items-center gap-3">
-                    Pelacakan Kepatuhan <span class="bg-red-500 text-white text-[8px] font-black px-2.5 py-1 rounded-lg not-italic uppercase tracking-widest">LIVE</span>
-                </h3>
-                <p class="text-[10px] font-bold text-[#64748B] uppercase tracking-[0.2em] mt-2">Preview pegawai dengan dokumen tidak lengkap</p>
-            </div>
-            <div class="flex items-center gap-3">
-                <div class="rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-right shadow-sm">
-                    <p class="text-[9px] font-black uppercase tracking-[0.24em] text-[#64748B]">Ditampilkan</p>
-                    <p class="mt-1 text-sm font-black text-[#1E293B]">{{ $displayedNonCompliantEmployees }}/{{ $nonCompliantEmployeesTotal }}</p>
-                </div>
-                <a href="{{ route('employees.index') }}" class="inline-flex items-center gap-2 rounded-2xl border border-[#E2E8F0] bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#1E293B] shadow-sm transition-all hover:border-[#1D4ED8] hover:text-[#1D4ED8]">
-                    <i data-lucide="arrow-up-right" class="h-4 w-4"></i>
-                    Lihat Semua
-                </a>
-                <button onclick="window.location.reload()" class="bg-white border border-[#E2E8F0] p-4 rounded-2xl hover:bg-[#1E293B] hover:text-white transition-all shadow-sm active:scale-95 group">
-                    <i data-lucide="refresh-cw" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-700"></i>
-                </button>
-            </div>
-        </div>
-        
-        <div class="p-8 flex-1 min-h-0 flex flex-col">
-            <div class="mb-4 flex items-center justify-between gap-3 rounded-[24px] border border-[#E2E8F0] bg-[#F8FAFC] px-5 py-4">
-                <div>
-                    <p class="text-[9px] font-black uppercase tracking-[0.24em] text-[#64748B]">Ringkasan Widget</p>
-                    <p class="mt-1 text-sm font-bold text-[#1E293B]">Maksimal {{ $nonCompliantPreviewLimit }} pegawai.</p>
-                </div>
-                <div class="shrink-0 rounded-2xl bg-white px-4 py-3 text-center shadow-sm">
-                    <p class="text-[9px] font-black uppercase tracking-[0.22em] text-[#64748B]">Total Isu</p>
-                    <p class="mt-1 text-base font-black text-[#1D4ED8]">{{ $nonCompliantEmployeesTotal }}</p>
-                </div>
-            </div>
-
-            <div class="overflow-y-auto pr-2 custom-scrollbar flex-1 min-h-0">
-                @if(!$hasMandatory)
-                    <div class="py-20 text-center">
-                        <div class="w-20 h-20 bg-orange-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-orange-500 rotate-3 border border-orange-100 shadow-inner">
-                            <i data-lucide="alert-circle" class="w-10 h-10"></i>
-                        </div>
-                        <h4 class="text-lg font-black text-[#1E293B] uppercase tracking-widest">Aturan Belum Diatur</h4>
-                        <p class="text-xs text-[#64748B] mt-2 max-w-xs mx-auto leading-relaxed">Tandai minimal satu kategori sebagai <span class="font-black text-[#1E293B]">Wajib</span> untuk mengaktifkan sistem deteksi kepatuhan.</p>
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left: Compliance & Storage -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Compliance Tracker -->
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <i data-lucide="shield-alert" class="w-4 h-4 text-red-500"></i>
+                            Monitoring Kepatuhan Dokumen
+                        </h3>
                     </div>
-                @else
-                    <div class="grid grid-cols-1 gap-4">
-                        @foreach($nonCompliantEmployees as $emp)
-                        <div class="group bg-[#F8FAFC] border border-[#E2E8F0] p-6 rounded-[32px] hover:bg-white hover:border-[#1D4ED8] hover:shadow-xl transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6">
-                            <div class="flex items-center gap-6 flex-1 w-full">
-                                <div class="w-16 h-16 rounded-[24px] overflow-hidden border-4 border-white shadow-lg bg-[#1E293B] flex items-center justify-center text-white text-xl font-black">
-                                    @if($emp->photo)
-                                        <img src="{{ $emp->photo }}" class="w-full h-full object-cover">
-                                    @else
-                                        {{ substr($emp->full_name, 0, 1) }}
-                                    @endif
-                                </div>
-                                <div>
-                                    <h5 class="text-base font-black text-[#1E293B] group-hover:text-[#1D4ED8] transition-colors">{{ $emp->full_name }}</h5>
-                                    <p class="text-[10px] font-black text-[#64748B] uppercase tracking-widest mt-1">NIP. {{ $emp->nip }}</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex flex-col items-center sm:items-end gap-3 w-full sm:w-auto">
+                    <a href="{{ route('employees.index') }}" class="text-xs font-bold text-blue-600 hover:underline">Lihat Semua</a>
+                </div>
+                
+                <div class="p-6">
+                    @if(!$hasMandatory)
+                        <div class="py-12 text-center">
+                            <i data-lucide="settings" class="w-12 h-12 text-slate-200 mx-auto mb-4"></i>
+                            <p class="text-sm font-bold text-slate-400">Kategori wajib belum dikonfigurasi.</p>
+                        </div>
+                    @else
+                        <div class="space-y-4">
+                            @forelse($nonCompliantEmployees as $emp)
+                            <div class="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-100 hover:shadow-md transition-all group">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                        <div class="h-full bg-[#1D4ED8] rounded-full transition-all duration-1000" style="width: {{ $emp->compliance_percent }}%"></div>
+                                    <div class="w-12 h-12 rounded-xl bg-slate-200 overflow-hidden flex items-center justify-center text-slate-500 font-bold">
+                                        @if($emp->photo)
+                                            <img src="{{ $emp->photo }}" class="w-full h-full object-cover">
+                                        @else
+                                            {{ substr($emp->full_name, 0, 1) }}
+                                        @endif
                                     </div>
-                                    <span class="text-[10px] font-black text-red-600 uppercase">{{ $emp->uploaded_mandatory_count }}/{{ $emp->total_mandatory_count }}</span>
+                                    <div>
+                                        <h4 class="text-sm font-bold text-slate-900">{{ $emp->full_name }}</h4>
+                                        <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{{ $emp->nip }}</p>
+                                    </div>
                                 </div>
-                                <a href="{{ $emp->whatsapp_link }}" target="_blank" class="flex items-center gap-2 bg-white px-6 py-2.5 rounded-xl border border-[#E2E8F0] text-[9px] font-black uppercase tracking-[0.2em] hover:bg-green-600 hover:text-white hover:border-green-600 transition-all shadow-sm">
-                                    <i data-lucide="message-circle" class="w-3 h-3"></i> WhatsApp Blast
-                                </a>
+                                
+                                <div class="flex items-center gap-6">
+                                    <div class="hidden sm:flex flex-col items-end">
+                                        <div class="w-24 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                            <div class="h-full bg-blue-600 rounded-full" style="width: {{ $emp->compliance_percent }}%"></div>
+                                        </div>
+                                        <p class="text-[10px] font-bold text-slate-500 mt-1">{{ $emp->uploaded_mandatory_count }}/{{ $emp->total_mandatory_count }} Dokumen</p>
+                                    </div>
+                                    <a href="{{ $emp->whatsapp_link }}" target="_blank" class="p-2.5 rounded-xl bg-green-50 text-green-600 border border-green-100 hover:bg-green-600 hover:text-white transition-all" title="WhatsApp Blast">
+                                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            @empty
+                            <div class="py-12 text-center">
+                                <i data-lucide="check-circle" class="w-12 h-12 text-green-100 mx-auto mb-4"></i>
+                                <p class="text-sm font-bold text-slate-400 italic">Seluruh pegawai telah patuh.</p>
+                            </div>
+                            @endforelse
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Storage Info -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-lg group">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
+                        <i data-lucide="database" class="w-32 h-32"></i>
+                    </div>
+                    <h4 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Penyimpanan Server</h4>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-4xl font-bold">{{ $storageUsed }}</span>
+                        <span class="text-sm font-bold text-slate-500">MB Terpakai</span>
+                    </div>
+                    <div class="mt-6 flex items-center gap-2 text-[10px] font-bold text-green-400 bg-green-400/10 w-fit px-3 py-1 rounded-full uppercase tracking-wider">
+                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                        Status Optimal
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Total Entitas</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-semibold text-slate-600">Arsip Digital</span>
+                                <span class="text-lg font-bold text-slate-900">{{ $totalDocuments }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-semibold text-slate-600">Unit Kerja</span>
+                                <span class="text-lg font-bold text-slate-900">{{ $workUnits->count() }}</span>
                             </div>
                         </div>
-                        @endforeach
-                        
-                        @if($nonCompliantEmployees->isEmpty())
-                            <div class="py-20 text-center">
-                                <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600 shadow-inner rotate-6">
-                                    <i data-lucide="shield-check" class="w-10 h-10"></i>
-                                </div>
-                                <p class="text-base font-black text-[#1E293B] italic">Zero Compliance Issues</p>
-                                <p class="text-[10px] text-[#64748B] font-black uppercase tracking-[0.3em] mt-1">Seluruh pegawai telah mematuhi aturan administrasi.</p>
-                            </div>
-                        @endif
-
-                        @if($nonCompliantEmployeesTotal > $displayedNonCompliantEmployees)
-                            <div class="rounded-[28px] border border-dashed border-[#CBD5E1] bg-white px-6 py-5 text-center">
-                                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#64748B]">
-                                    Menampilkan {{ $displayedNonCompliantEmployees }} dari {{ $nonCompliantEmployeesTotal }} pegawai yang perlu ditindaklanjuti.
-                                </p>
-                                <a href="{{ route('employees.index') }}" class="mt-4 inline-flex items-center gap-2 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#1E293B] transition-all hover:border-[#1D4ED8] hover:text-[#1D4ED8]">
-                                    <i data-lucide="list" class="h-4 w-4"></i>
-                                    Lihat Semua Data Pegawai
-                                </a>
-                            </div>
-                        @endif
                     </div>
-                @endif
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Right Sidebar: Chart & Feed -->
-    <div class="space-y-10">
-        <div class="bg-white p-8 rounded-[40px] border border-[#E2E8F0] shadow-sm bento-card">
-            <div class="flex items-center justify-between gap-4 mb-6">
-                <div>
-                    <h3 class="text-[10px] font-black text-[#64748B] uppercase tracking-[0.3em]">Pegawai Baru Dipantau</h3>
-                    <p class="text-sm font-bold text-[#1E293B] mt-2">Akses cepat ke entitas terbaru dalam sistem.</p>
-                </div>
-                <div class="w-12 h-12 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-[#1D4ED8]">
-                    <i data-lucide="user-plus" class="w-5 h-5"></i>
+        <!-- Right: Charts & Logs -->
+        <div class="space-y-8">
+            <!-- Distribution Chart -->
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Distribusi Dokumen</h3>
+                <div class="relative h-64">
+                    <canvas id="docChart"></canvas>
                 </div>
             </div>
-            <div class="space-y-3">
-                @forelse($latestEmployees as $employee)
-                    <div class="flex items-center justify-between gap-4 rounded-[24px] border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-4">
+
+            <!-- Activity Log -->
+            <div class="bg-slate-900 rounded-3xl border border-slate-800 shadow-xl overflow-hidden flex flex-col h-[480px]">
+                <div class="p-5 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Audit Trail</h3>
+                    <i data-lucide="history" class="w-4 h-4 text-slate-500"></i>
+                </div>
+                <div class="p-6 overflow-y-auto custom-scrollbar space-y-6 flex-1">
+                    @foreach($recentLogs as $log)
+                    <div class="flex gap-4 group">
+                        <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 group-hover:bg-blue-600 transition-colors">
+                            <i data-lucide="{{ str_contains($log->activity, 'upload') ? 'upload-cloud' : 'activity' }}" class="w-4 h-4 text-slate-400 group-hover:text-white"></i>
+                        </div>
                         <div class="min-w-0">
-                            <p class="text-xs font-black text-[#1E293B] truncate">{{ $employee->full_name }}</p>
-                            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#64748B] mt-1 truncate">{{ $employee->work_unit->name ?? 'Tanpa Unit Kerja' }}</p>
+                            <p class="text-xs font-bold text-white leading-tight">{{ $log->user->name ?? 'Sistem' }}</p>
+                            <p class="text-[10px] text-slate-400 mt-1 line-clamp-2">{{ $log->details }}</p>
+                            <p class="text-[9px] font-medium text-slate-500 mt-1.5">{{ $log->created_at->diffForHumans() }}</p>
                         </div>
-                        <span class="shrink-0 text-[10px] font-black uppercase tracking-[0.18em] text-[#1D4ED8]">{{ $employee->created_at->diffForHumans() }}</span>
                     </div>
-                @empty
-                    <div class="rounded-[24px] border border-dashed border-[#CBD5E1] bg-[#F8FAFC] px-4 py-8 text-center text-[10px] font-black uppercase tracking-[0.24em] text-[#94A3B8]">
-                        Belum ada data pegawai terbaru
-                    </div>
-                @endforelse
-            </div>
-        </div>
-
-        <!-- Distribution Chart -->
-        <div class="bg-white p-10 rounded-[56px] border border-[#E2E8F0] shadow-sm bento-card relative overflow-hidden flex flex-col">
-            <h3 class="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] mb-8 shrink-0">Distribusi Data</h3>
-            <div class="flex-1 min-h-[320px] relative">
-                <canvas id="docChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Activity Log Hub -->
-        <div class="bg-[#1E293B] p-10 rounded-[56px] text-white shadow-2xl shadow-slate-900/20 relative overflow-hidden bento-card h-[400px] flex flex-col">
-            <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-[#1D4ED8]/20 rounded-full blur-3xl"></div>
-            <div class="flex items-center justify-between mb-8 relative z-10">
-                <h3 class="text-[10px] font-black opacity-50 uppercase tracking-[0.4em]">Audit Trail</h3>
-                <span class="w-2 h-2 bg-[#FACC15] rounded-full animate-ping"></span>
-            </div>
-            <div class="space-y-8 flex-1 overflow-y-auto custom-scrollbar pr-4 relative z-10">
-                @foreach($recentLogs as $log)
-                <div class="flex gap-5 group">
-                    <div class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-[#1D4ED8] transition-all flex-shrink-0">
-                        <i data-lucide="{{ str_contains($log->activity, 'upload') ? 'upload-cloud' : 'activity' }}" class="w-4 h-4 text-white"></i>
-                    </div>
-                    <div class="overflow-hidden">
-                        <p class="text-[11px] font-black tracking-tight leading-tight">{{ $log->user->name ?? 'Sistem' }}</p>
-                        <p class="text-[10px] opacity-60 mt-1 truncate">{{ $log->details }}</p>
-                        <p class="text-[8px] font-bold opacity-40 uppercase mt-2 italic">{{ $log->created_at->diffForHumans() }}</p>
-                    </div>
+                    @endforeach
                 </div>
-                @endforeach
+                <div class="p-4 border-t border-slate-800 text-center">
+                    <a href="{{ route('audit.index') }}" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-white transition-colors">Lihat Seluruh Log</a>
+                </div>
             </div>
-            <a href="{{ route('audit.index') }}" class="mt-8 text-center text-[9px] font-black uppercase tracking-[0.3em] opacity-40 hover:opacity-100 hover:text-[#FACC15] transition-all pt-6 border-t border-white/10 relative z-10">
-                Lihat Seluruh Log <i data-lucide="external-link" class="w-3 h-3 inline ml-1"></i>
-            </a>
         </div>
     </div>
 </div>
@@ -354,114 +227,57 @@
     
     const ctx = document.getElementById('docChart').getContext('2d');
 
-    // Custom plugin to draw text in the center of the doughnut chart
     const centerTextPlugin = {
         id: 'centerText',
         beforeDraw: function(chart) {
             if (chart.config.type !== 'doughnut') return;
-            
             var width = chart.chartArea.right - chart.chartArea.left,
                 height = chart.chartArea.bottom - chart.chartArea.top,
                 ctx = chart.ctx;
-
             ctx.restore();
-            var fontSize = (height / 114).toFixed(2);
-            ctx.font = "900 " + fontSize + "em 'Inter', sans-serif";
+            ctx.font = "bold 24px 'Plus Jakarta Sans'";
             ctx.textBaseline = "middle";
-            ctx.fillStyle = "#1E293B";
-
+            ctx.fillStyle = "#0F172A";
             var text = totalDocs.toString(),
                 textX = chart.chartArea.left + Math.round((width - ctx.measureText(text).width) / 2),
-                textY = chart.chartArea.top + (height / 2);
-
+                textY = chart.chartArea.top + (height / 2) - 10;
             ctx.fillText(text, textX, textY);
-            
-            ctx.font = "700 " + (fontSize / 2.5).toFixed(2) + "em 'Inter', sans-serif";
-            ctx.fillStyle = "#64748B";
-            var label = "Dokumen";
+            ctx.font = "bold 10px 'Plus Jakarta Sans'";
+            ctx.fillStyle = "#94A3B8";
+            var label = "DOKUMEN";
             var labelX = chart.chartArea.left + Math.round((width - ctx.measureText(label).width) / 2);
-            ctx.fillText(label, labelX, textY + (height / 10));
-            
+            ctx.fillText(label, labelX, textY + 25);
             ctx.save();
         }
     };
 
-    if (totalDocs === 0) {
-        // Empty State Chart
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Belum ada data'],
-                datasets: [{
-                    data: [1],
-                    backgroundColor: ['#F8FAFC'],
-                    borderWidth: 0,
-                    hoverOffset: 0
-                }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: { enabled: false }
-                },
-                animation: { animateRotate: true, duration: 1000 }
-            },
-            plugins: [centerTextPlugin]
-        });
-    } else {
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: chartLabels,
-                datasets: [{
-                    data: chartDataValues,
-                    backgroundColor: ['#1D4ED8', '#FACC15', '#334155', '#94A3B8', '#3B82F6', '#EAB308', '#64748B', '#CBD5E1'],
-                    borderWidth: 0,
-                    hoverOffset: 10
-                }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: { 
-                    legend: { 
-                        display: true,
-                        position: 'bottom',
-                        labels: {
-                            font: { family: "'Inter', sans-serif", weight: '600', size: 11 },
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            padding: 20,
-                            color: '#1E293B',
-                            boxWidth: 8
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: '#1E293B',
-                        padding: 16,
-                        cornerRadius: 12,
-                        titleFont: { family: "'Inter', sans-serif", weight: 'bold' },
-                        bodyFont: { family: "'Inter', sans-serif", weight: 'normal' },
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed !== null) {
-                                    label += context.parsed + ' Berkas';
-                                }
-                                return label;
-                            }
-                        }
-                    }
-                },
-                animation: { animateRotate: true, duration: 2000 }
-            },
-            plugins: [centerTextPlugin]
-        });
-    }
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                data: chartDataValues,
+                backgroundColor: ['#0F172A', '#B45309', '#1D4ED8', '#64748B', '#94A3B8', '#CBD5E1'],
+                borderWidth: 4,
+                borderColor: '#ffffff',
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            cutout: '80%',
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0F172A',
+                    padding: 12,
+                    cornerRadius: 12,
+                    titleFont: { family: "'Plus Jakarta Sans'", weight: 'bold', size: 12 },
+                    bodyFont: { family: "'Plus Jakarta Sans'", size: 12 }
+                }
+            }
+        },
+        plugins: [centerTextPlugin]
+    });
 </script>
 @endsection
