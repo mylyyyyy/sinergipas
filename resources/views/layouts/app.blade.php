@@ -103,13 +103,11 @@
             }
             .sidebar-item:hover { 
             background-color: rgba(15, 23, 42, 0.05); 
-            transform: translateX(6px); 
             }
             .sidebar-item.active { 
             background: var(--color-primary); 
             color: white !important; 
             box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.3);
-            transform: scale(1.02);
             }
             .sidebar-item.active i { color: white !important; }
 
