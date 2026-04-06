@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::get('/documents/employee/{employee}', [DocumentController::class, 'showEmployeeFolders'])->name('documents.employee');
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
+    Route::post('/documents/bulk-action', [DocumentController::class, 'bulkAction'])->name('documents.bulk-action');
     Route::post('/documents/category', [DocumentController::class, 'storeCategory'])->name('documents.category.store');
     Route::delete('/documents/category/{category}', [DocumentController::class, 'destroyCategory'])->name('documents.category.destroy');
     Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
