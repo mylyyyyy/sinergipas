@@ -104,6 +104,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [ScheduleController::class, 'index'])->name('index');
             Route::post('/', [ScheduleController::class, 'store'])->name('store');
             Route::post('/generate', [ScheduleController::class, 'generateRoster'])->name('generate');
+            Route::get('/export', [ScheduleController::class, 'export'])->name('export');
         });
     });
 });

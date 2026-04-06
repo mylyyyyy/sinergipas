@@ -48,61 +48,40 @@ class AttendanceController extends Controller
     {
         $request->validate(['file' => 'required']);
 
-        $file = $request->file('file');
-        $path = $file->getRealPath();
-
         try {
-            // Enhanced reader selection for machine-generated files
-            $reader = IOFactory::createReaderForFile($path);
-            $spreadsheet = $reader->load($path);
+            $file = $request->file('file');
+            $spreadsheet = IOFactory::load($file->getRealPath());
             $data = $spreadsheet->getActiveSheet()->toArray();
 
-            if (count($data) < 2) {
-                return back()->with('error', 'File Excel kosong atau header tidak ditemukan.');
-            }
+            if (count($data) < 2) return back()->with('error', 'File Excel kosong.');
 
-            // Detect Header Index (sometimes there are blank rows at top)
-            $headerRowIndex = 0;
-            foreach($data as $index => $row) {
-                if (isset($row[4]) && (str_contains(strtolower((string)$row[4]), 'nip') || is_numeric($row[4]))) {
-                    $headerRowIndex = $index;
-                    // If it's the actual header string 'NIP', we skip this row
-                    if (str_contains(strtolower((string)$row[4]), 'nip')) {
-                        $headerRowIndex = $index + 1;
-                    }
-                    break;
-                }
-            }
-
+            // Column Mapping (Based on user request):
+            // Tanggal scan (0), Tanggal (1), Jam (2), PIN (3), NIP (4), Nama (5)
+            
             $importedCount = 0;
             $skippedCount = 0;
-            $invalidNips = [];
+            $employees = Employee::all()->keyBy('nip');
 
             DB::beginTransaction();
-            $employees = Employee::all()->keyBy('nip');
             
-            // Start from detected data row
-            for ($i = $headerRowIndex; $i < count($data); $i++) {
-                $row = $data[$i];
-                
-                // User Column Mapping: Index 4 is NIP
-                if (!isset($row[4]) || empty(trim((string)$row[4]))) continue;
+            foreach ($data as $index => $row) {
+                // Skip header (detect by "NIP" string or numeric PIN)
+                if ($index === 0 || !isset($row[4]) || $row[4] == 'NIP') continue;
 
                 $nip = trim((string)$row[4]);
+                if (empty($nip)) continue;
+
                 if (!isset($employees[$nip])) {
-                    $invalidNips[] = $nip;
                     $skippedCount++;
                     continue;
                 }
 
                 $emp = $employees[$nip];
                 
-                // Index 1: Tanggal, Index 2: Jam
                 try {
                     $date = Carbon::parse($row[1])->format('Y-m-d');
                     $time = Carbon::parse($row[2])->format('H:i:s');
                 } catch (\Exception $e) {
-                    $skippedCount++;
                     continue;
                 }
 
@@ -128,19 +107,10 @@ class AttendanceController extends Controller
                 'user_id' => auth()->id(),
                 'activity' => 'import_attendance',
                 'ip_address' => $request->ip(),
-                'details' => auth()->user()->name . " mengimpor $importedCount data fingerprint"
+                'details' => "Impor $importedCount data absensi"
             ]);
 
-            if ($importedCount === 0) {
-                return back()->with('error', 'Tidak ada data yang cocok dengan NIP pegawai di sistem. Periksa kembali file Anda.');
-            }
-
-            $msg = "Sinkronisasi Selesai! $importedCount baris berhasil diproses.";
-            if ($skippedCount > 0) {
-                $msg .= " ($skippedCount data dilewati karena NIP tidak terdaftar).";
-            }
-
-            return redirect()->route('admin.attendance.index')->with('success', $msg);
+            return back()->with('success', "Sinkronisasi Selesai! $importedCount data diproses.");
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -151,13 +121,7 @@ class AttendanceController extends Controller
     private function calculateAttendanceMetrics($attendance, $employee)
     {
         $schedule = Schedule::where('employee_id', $employee->id)->where('date', $attendance->date)->first();
-        
-        $shift = null;
-        if ($schedule) {
-            $shift = $schedule->shift;
-        } elseif ($employee->employee_type === 'non_regu_jaga') {
-            $shift = Shift::where('name', 'Kantor')->first();
-        }
+        $shift = $schedule ? $schedule->shift : ($employee->employee_type === 'non_regu_jaga' ? Shift::where('name', 'Kantor')->first() : null);
 
         if ($shift) {
             $startTime = Carbon::parse($shift->start_time);
@@ -172,33 +136,24 @@ class AttendanceController extends Controller
             }
         }
 
-        $attendance->allowance_amount = $this->getMealAllowance($employee->rank_class);
-    }
-
-    private function getMealAllowance($rankClass)
-    {
-        $class = strtoupper((string)$rankClass);
-        if (str_contains($class, 'IV')) return (float) Setting::getValue('meal_allowance_iv', 41000);
-        if (str_contains($class, 'III')) return (float) Setting::getValue('meal_allowance_iii', 37000);
-        if (str_contains($class, 'II')) return (float) Setting::getValue('meal_allowance_ii', 35000);
-        return 0;
+        $class = strtoupper((string)$employee->rank_class);
+        $rate = 0;
+        if (str_contains($class, 'IV')) $rate = Setting::getValue('meal_allowance_iv', 41000);
+        elseif (str_contains($class, 'III')) $rate = Setting::getValue('meal_allowance_iii', 37000);
+        elseif (str_contains($class, 'II')) $rate = Setting::getValue('meal_allowance_ii', 35000);
+        
+        $attendance->allowance_amount = $rate;
     }
 
     public function export(Request $request)
     {
         $monthStr = $request->month ?? now()->format('Y-m');
         $date = Carbon::parse($monthStr);
-        $type = $request->type ?? 'pdf';
-
         $attendances = Attendance::with('employee.work_unit')
-            ->whereMonth('date', $date->month)
-            ->whereYear('date', $date->year)
-            ->orderBy('date', 'asc')
-            ->get();
+            ->whereMonth('date', $date->month)->whereYear('date', $date->year)
+            ->orderBy('date', 'asc')->get();
 
-        if ($type === 'excel') {
-            return $this->exportExcel($attendances, $date);
-        }
+        if ($request->type === 'excel') return $this->exportExcel($attendances, $date);
 
         $pdf = Pdf::loadView('admin.attendance.pdf', compact('attendances', 'date'));
         return $pdf->download("rekap-absensi-{$monthStr}.pdf");
@@ -207,47 +162,25 @@ class AttendanceController extends Controller
     private function exportExcel($attendances, $date)
     {
         return Excel::download(new class($attendances, $date) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithStyles, \Maatwebsite\Excel\Concerns\WithDrawings, \Maatwebsite\Excel\Concerns\WithCustomStartCell {
-            protected $data;
-            protected $date;
+            protected $data, $date;
             public function __construct($data, $date) { $this->data = $data; $this->date = $date; }
             public function collection() {
-                return $this->data->map(function($a, $i) {
-                    return [
-                        $i + 1,
-                        $a->date,
-                        $a->employee->full_name,
-                        $a->employee->nip,
-                        $a->check_in,
-                        $a->check_out,
-                        $a->status,
-                        $a->allowance_amount
-                    ];
-                });
+                return $this->data->map(fn($a, $i) => [$i+1, $a->date, $a->employee->full_name, $a->employee->nip, $a->check_in, $a->check_out, $a->status, $a->allowance_amount]);
             }
-            public function headings(): array {
-                return ['NO', 'TANGGAL', 'NAMA PEGAWAI', 'NIP', 'MASUK', 'PULANG', 'STATUS', 'UANG MAKAN'];
-            }
+            public function headings(): array { return ['NO', 'TANGGAL', 'NAMA PEGAWAI', 'NIP', 'MASUK', 'PULANG', 'STATUS', 'UANG MAKAN']; }
             public function startCell(): string { return 'A7'; }
             public function drawings() {
                 $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
-                $drawing->setName('Logo');
-                $drawing->setPath(public_path('logo1.png'));
-                $drawing->setHeight(80);
-                $drawing->setCoordinates('A1');
+                $drawing->setPath(public_path('logo1.png'))->setHeight(80)->setCoordinates('A1');
                 return $drawing;
             }
-            public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet) {
-                $kop1 = Setting::getValue('kop_line_1', 'KEMENTERIAN HUKUM DAN HAM RI');
-                $kop2 = Setting::getValue('kop_line_2', 'LAPAS KELAS IIB JOMBANG');
-                $sheet->mergeCells('B1:H1'); $sheet->setCellValue('B1', $kop1);
-                $sheet->mergeCells('B2:H2'); $sheet->setCellValue('B2', $kop2);
+            public function styles($sheet) {
+                $sheet->mergeCells('B1:H1'); $sheet->setCellValue('B1', Setting::getValue('kop_line_1'));
+                $sheet->mergeCells('B2:H2'); $sheet->setCellValue('B2', Setting::getValue('kop_line_2'));
                 $sheet->getStyle('B1:B2')->getFont()->setBold(true)->setSize(12);
-                $sheet->mergeCells('A5:H5');
-                $sheet->setCellValue('A5', 'REKAPITULASI ABSENSI & UANG MAKAN PERIODE ' . strtoupper($this->date->translatedFormat('F Y')));
+                $sheet->mergeCells('A5:H5'); $sheet->setCellValue('A5', 'REKAPITULASI ABSENSI PERIODE ' . strtoupper($this->date->translatedFormat('F Y')));
                 $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14)->setUnderline(true);
-                $sheet->getStyle('A5')->getAlignment()->setHorizontal('center');
                 $sheet->getStyle('A7:H7')->getFont()->setBold(true);
-                $sheet->getStyle('A7:H7')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F1F5F9');
                 $lastRow = $sheet->getHighestRow();
                 $sheet->getStyle("A7:H$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
                 return [];

@@ -137,7 +137,7 @@
     <div id="mobileSidebarBackdrop" class="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm lg:hidden hidden" onclick="closeSidebar()"></div>
 
     <div class="flex min-h-screen">
-        <aside id="appSidebar" class="fixed inset-y-0 left-0 z-40 flex h-full w-72 -translate-x-full flex-col border-r border-slate-200 bg-white px-6 py-8 transition-transform duration-300 lg:w-64 lg:translate-x-0">
+        <aside id="appSidebar" class="fixed inset-y-0 left-0 z-40 flex h-full w-64 -translate-x-full flex-col border-r border-slate-200 bg-white px-6 py-8 transition-transform duration-300 lg:translate-x-0 shrink-0">
             <div class="flex items-center gap-3 mb-10 px-2">
                 <img src="{{ asset('logo1.png') }}" class="w-9 h-9 object-contain">
                 <div>
@@ -146,7 +146,7 @@
                 </div>
             </div>
             
-            <nav class="flex-1 space-y-1">
+            <nav class="flex-1 space-y-1 custom-scrollbar overflow-y-auto">
                 <a href="{{ route('dashboard') }}" class="sidebar-item {{ request()->routeIs('dashboard') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                     <span class="text-sm font-semibold">Dashboard</span>

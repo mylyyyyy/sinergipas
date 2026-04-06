@@ -1,8 +1,7 @@
-const CACHE_NAME = 'sinergi-pas-v1';
+const CACHE_NAME = 'sinergi-pas-v2';
 const urlsToCache = [
     '/',
-    '/logo1.png',
-    '/manifest.json'
+    '/logo1.png'
 ];
 
 self.addEventListener('install', event => {
@@ -11,7 +10,7 @@ self.addEventListener('install', event => {
             .then(cache => {
                 return cache.addAll(urlsToCache);
             })
-            .catch(err => console.log('SW Cache error during install', err))
+            .catch(err => console.error('PWA: Failed to cache resources:', err))
     );
 });
 
@@ -20,11 +19,6 @@ self.addEventListener('fetch', event => {
         caches.match(event.request)
             .then(response => {
                 return response || fetch(event.request);
-            })
-            .catch(() => {
-                if (event.request.mode === 'navigate') {
-                    return caches.match('/');
-                }
             })
     );
 });
