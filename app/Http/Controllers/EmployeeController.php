@@ -34,7 +34,7 @@ class EmployeeController extends Controller
             $query->where('work_unit_id', $request->work_unit_id);
         }
 
-        $employees = $query->latest()->paginate(10)->withQueryString();
+        $employees = $query->orderBy('full_name')->get();
         $positions = Position::orderBy('name')->get();
         $workUnits = WorkUnit::orderBy('name')->get();
         $ranks = \App\Models\Rank::orderBy('name')->get();

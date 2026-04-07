@@ -203,11 +203,6 @@
                 </tbody>
             </table>
         </div>
-        @if($employees->hasPages())
-        <div class="p-6 border-t border-slate-100 bg-slate-50/30">
-            {{ $employees->links() }}
-        </div>
-        @endif
     </div>
 </div>
 
