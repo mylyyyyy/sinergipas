@@ -94,8 +94,8 @@ class DashboardController extends Controller
             }
 
             $nonCompliantEmployeesTotal = $nonCompliantEmployees->count();
-            $nonCompliantPreviewLimit = 10;
-            $nonCompliantEmployees = $nonCompliantEmployees->take($nonCompliantPreviewLimit)->values();
+            // Show all for scrolling widget
+            $nonCompliantEmployees = $nonCompliantEmployees->values();
 
             $unitPerformance = WorkUnit::withCount('employees')->get();
             $latestEmployees = (clone $employeeQuery)->with(['user', 'work_unit'])->latest()->take(5)->get();

@@ -57,6 +57,46 @@
         </div>
     </div>
 
+    <!-- Quick Access Section -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <a href="{{ route('employees.index') }}" class="p-6 rounded-[32px] bg-white border border-slate-200 shadow-sm hover:border-blue-500 hover:shadow-xl transition-all group flex flex-col items-center text-center gap-3 card-3d">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <i data-lucide="user-plus" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">Tambah Pegawai</span>
+        </a>
+        <a href="{{ route('admin.attendance.index') }}?tab=recap" class="p-6 rounded-[32px] bg-white border border-slate-200 shadow-sm hover:border-emerald-500 hover:shadow-xl transition-all group flex flex-col items-center text-center gap-3 card-3d">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                <i data-lucide="fingerprint" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">Impor Absensi</span>
+        </a>
+        <a href="{{ route('documents.index', ['status' => 'pending']) }}" class="p-6 rounded-[32px] bg-white border border-slate-200 shadow-sm hover:border-amber-500 hover:shadow-xl transition-all group flex flex-col items-center text-center gap-3 card-3d">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-all">
+                <i data-lucide="shield-check" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">Verifikasi Dokumen</span>
+        </a>
+        <a href="{{ route('admin.schedules.index') }}" class="p-6 rounded-[32px] bg-white border border-slate-200 shadow-sm hover:border-indigo-500 hover:shadow-xl transition-all group flex flex-col items-center text-center gap-3 card-3d">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                <i data-lucide="calendar-range" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">Atur Jadwal</span>
+        </a>
+        <a href="{{ route('dashboard.export.pdf') }}" class="p-6 rounded-[32px] bg-white border border-slate-200 shadow-sm hover:border-red-500 hover:shadow-xl transition-all group flex flex-col items-center text-center gap-3 card-3d no-loader">
+            <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-all">
+                <i data-lucide="file-text" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">Download PDF</span>
+        </a>
+        <a href="{{ route('settings.index') }}" class="p-6 rounded-[32px] bg-white border border-slate-200 shadow-sm hover:border-slate-900 hover:shadow-xl transition-all group flex flex-col items-center text-center gap-3 card-3d">
+            <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white transition-all">
+                <i data-lucide="settings-2" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">Pengaturan</span>
+        </a>
+    </div>
+
     <!-- Main Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Left: Compliance Tracker -->
@@ -70,7 +110,7 @@
                         </h3>
                     </div>
                     <div class="flex items-center gap-3">
-                        <form action="{{ route('dashboard') }}" method="GET" id="unitFilterForm">
+                        <form action="{{ route('dashboard') }}" method="GET" id="unitFilterForm" class="no-loader">
                             <select name="work_unit_id" onchange="this.form.submit()" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-600 outline-none">
                                 <option value="">Semua Unit</option>
                                 @foreach($workUnits as $unit)
@@ -78,6 +118,9 @@
                                 @endforeach
                             </select>
                         </form>
+                        <a href="{{ route('documents.index') }}" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg">
+                            Lihat Semua
+                        </a>
                     </div>
                 </div>
                 
@@ -88,7 +131,8 @@
                             <p class="text-sm font-bold text-slate-400 italic text-[10px] uppercase tracking-widest">Konfigurasi kategori wajib belum tersedia.</p>
                         </div>
                     @else
-                        <div class="space-y-4">
+                        <!-- Scrollable Container -->
+                        <div class="space-y-4 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
                             @forelse($nonCompliantEmployees as $emp)
                             <div class="flex items-center justify-between p-5 rounded-3xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 hover:shadow-xl transition-all group">
                                 <div class="flex items-center gap-5">
@@ -112,7 +156,7 @@
                                         </div>
                                         <p class="text-[10px] font-black text-slate-500 mt-2 uppercase tracking-tighter">{{ $emp->uploaded_mandatory_count }}/{{ $emp->total_mandatory_count }} Berkas Terverifikasi</p>
                                     </div>
-                                    <a href="{{ $emp->whatsapp_link }}" target="_blank" class="w-12 h-12 rounded-2xl bg-green-50 text-green-600 border border-green-100 flex items-center justify-center hover:bg-green-600 hover:text-white transition-all shadow-sm active:scale-95" title="WhatsApp Reminder">
+                                    <a href="{{ $emp->whatsapp_link }}" target="_blank" class="w-12 h-12 rounded-2xl bg-green-50 text-green-600 border border-green-100 flex items-center justify-center hover:bg-green-600 hover:text-white transition-all shadow-sm active:scale-95 no-loader" title="WhatsApp Reminder">
                                         <i data-lucide="message-circle" class="w-5 h-5"></i>
                                     </a>
                                 </div>

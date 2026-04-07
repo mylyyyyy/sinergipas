@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Employee extends Model
 {
@@ -64,6 +65,11 @@ class Employee extends Model
         return $this->hasMany(Attendance::class);
     }
 
+    public function audit_logs(): MorphMany
+    {
+        return $this->morphMany(AuditLog::class, 'auditable');
+    }
+
     public function getPhotoAttribute($value)
     {
         if (!$value) return null;
@@ -85,5 +91,13 @@ class Employee extends Model
     public function getCategoryLabelAttribute()
     {
         return $this->is_regu ? 'Petugas Jaga' : 'Staf';
+    }
+
+    public function getWhatsAppLinkAttribute()
+    {
+        $number = preg_replace('/[^0-9]/', '', $this->phone_number ?: '');
+        if (empty($number)) return '#';
+        if (str_starts_with($number, '0')) $number = '62' . substr($number, 1);
+        return "https://wa.me/{$number}";
     }
 }

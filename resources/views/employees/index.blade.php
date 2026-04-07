@@ -175,7 +175,10 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex justify-center items-center gap-2">
-                                <button onclick="openEditModal({{ json_encode($employee) }}, '{{ $employee->user->email }}')" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all btn-3d bg-white shadow-sm flex items-center justify-center">
+                                <a href="{{ route('employees.show', $employee->id) }}" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all btn-3d bg-white shadow-sm flex items-center justify-center" title="Detail & Riwayat">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </a>
+                                <button onclick="openEditModal({{ json_encode($employee) }}, '{{ $employee->user->email }}')" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-all btn-3d bg-white shadow-sm flex items-center justify-center" title="Edit Profil">
                                     <i data-lucide="pencil" class="w-4 h-4"></i>
                                 </button>
                                 <button type="button" onclick="confirmDelete({{ $employee->id }})" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all btn-3d bg-white shadow-sm flex items-center justify-center">

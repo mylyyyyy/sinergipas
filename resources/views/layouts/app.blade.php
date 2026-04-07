@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sinergi PAS - @yield('title')</title>
     
     <!-- Scripts & Styles -->
@@ -24,10 +24,14 @@
     <!-- PWA Support -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0F172A">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SinergiPAS">
-    <link rel="apple-touch-icon" href="/logo1.png">
+    <link rel="apple-touch-icon" href="{{ asset('logo1.png') }}">
+    
+    <!-- iOS Splash Screens -->
+    <link rel="apple-touch-startup-image" href="{{ asset('logo1.png') }}">
 
     <!-- SweetAlert & Progress Bar -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
@@ -60,6 +64,7 @@
             font-size: 14px;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
             }
 
             h1, h2, h3, h4, h5, h6 { 
@@ -124,6 +129,40 @@
             .page-fade { animation: pageIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
             @keyframes pageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
+            /* Mobile Optimizations */
+            @media (max-width: 1024px) {
+                body { padding-bottom: 80px; }
+            }
+
+            .bottom-nav-item.active {
+                color: #3B82F6;
+            }
+            .bottom-nav-item.active i {
+                transform: translateY(-4px);
+                color: #3B82F6;
+            }
+
+            #global-loading {
+                position: fixed;
+                inset: 0;
+                z-index: 9999;
+                background: white;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                transition: opacity 0.5s ease;
+            }
+            .loader-ring {
+                width: 48px;
+                height: 48px;
+                border: 4px solid #F1F5F9;
+                border-top-color: #0F172A;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+            @keyframes spin { to { transform: rotate(360deg); } }
+
     </style>
 </head>
 <body class="antialiased">
@@ -135,6 +174,7 @@
     <div id="mobileSidebarBackdrop" class="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm lg:hidden hidden" onclick="closeSidebar()"></div>
 
     <div class="flex min-h-screen">
+        <!-- Sidebar -->
         <aside id="appSidebar" class="fixed inset-y-0 left-0 z-40 flex h-full w-64 -translate-x-full flex-col border-r border-slate-200 bg-white px-6 py-8 transition-transform duration-300 lg:translate-x-0 shrink-0">
             <div class="flex items-center gap-3 mb-10 px-2">
                 <img src="{{ asset('logo1.png') }}" class="w-9 h-9 object-contain">
@@ -228,6 +268,7 @@
             </div>
         </aside>
 
+        <!-- Main Content -->
         <main class="relative min-h-screen flex-1 lg:ml-64 bg-slate-50">
             @php 
                 $activeBanner = \App\Models\Announcement::active()->where('type', 'banner')->latest()->first();
@@ -316,6 +357,36 @@
         </main>
     </div>
 
+    <!-- Mobile Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/90 backdrop-blur-xl border-t border-slate-200 flex items-center justify-around px-4 py-3 pb-safe-area shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+        <a href="{{ route('dashboard') }}" class="bottom-nav-item {{ request()->routeIs('dashboard') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group">
+            <i data-lucide="layout-dashboard" class="w-6 h-6 transition-transform group-active:scale-90"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Beranda</span>
+        </a>
+        
+        @if(auth()->user()->role === 'superadmin')
+        <a href="{{ route('employees.index') }}" class="bottom-nav-item {{ request()->routeIs('employees.*') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group">
+            <i data-lucide="users" class="w-6 h-6 transition-transform group-active:scale-90"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Pegawai</span>
+        </a>
+        @else
+        <a href="{{ route('documents.index') }}" class="bottom-nav-item {{ request()->routeIs('documents.*') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group">
+            <i data-lucide="folder-open" class="w-6 h-6 transition-transform group-active:scale-90"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Arsip</span>
+        </a>
+        @endif
+
+        <a href="{{ auth()->user()->role === 'superadmin' ? route('admin.attendance.index') : route('dashboard') }}" class="bottom-nav-item {{ request()->routeIs('admin.attendance.*') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group">
+            <i data-lucide="fingerprint" class="w-6 h-6 transition-transform group-active:scale-90"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Absensi</span>
+        </a>
+
+        <a href="{{ route('profile.index') }}" class="bottom-nav-item {{ request()->routeIs('profile.index') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group">
+            <i data-lucide="user-circle" class="w-6 h-6 transition-transform group-active:scale-90"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Profil</span>
+        </a>
+    </nav>
+
     <script>
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
@@ -344,7 +415,9 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            NProgress.done();
+            const loader = document.getElementById('global-loading');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 500);
         });
 
         window.addEventListener('beforeunload', () => {
@@ -379,6 +452,7 @@
             form.addEventListener('submit', function() {
                 if(!this.classList.contains('no-loader')) {
                     document.getElementById('global-loading').style.display = 'flex';
+                    document.getElementById('global-loading').style.opacity = '1';
                 }
             });
         });

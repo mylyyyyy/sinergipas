@@ -43,6 +43,14 @@ class EmployeeController extends Controller
         return view('employees.index', compact('employees', 'positions', 'workUnits', 'ranks'));
     }
 
+    public function show(Employee $employee)
+    {
+        $employee->load(['user', 'work_unit', 'position_relation', 'rank_relation', 'audit_logs.user']);
+        $history = $employee->audit_logs()->with('user')->latest()->get();
+        
+        return view('employees.show', compact('employee', 'history'));
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -53,7 +61,6 @@ class EmployeeController extends Controller
             'work_unit_id' => 'required|exists:work_units,id',
             'rank_id' => 'nullable|exists:ranks,id',
             'password' => 'required|min:8',
-            'employee_type' => 'required|in:regu_jaga,non_regu_jaga',
             'picket_regu' => 'nullable|string',
         ]);
 
@@ -67,12 +74,12 @@ class EmployeeController extends Controller
         $position = Position::find($request->position_id);
         $rank = $request->rank_id ? Rank::find($request->rank_id) : null;
 
-        // Auto-correct employee_type based on position if needed
+        // Auto-correct employee_type based on position
         $jNameUpper = strtoupper($position->name);
         $isJaga = str_contains($jNameUpper, 'JAGA') || str_contains($jNameUpper, 'PENGAMANAN') || str_contains($jNameUpper, 'PENJAGA');
         $employeeType = $isJaga ? 'regu_jaga' : 'non_regu_jaga';
 
-        Employee::create([
+        $employee = Employee::create([
             'user_id' => $user->id,
             'nip' => $request->nip,
             'full_name' => $request->full_name,
@@ -88,8 +95,11 @@ class EmployeeController extends Controller
         AuditLog::create([
             'user_id' => auth()->id(),
             'activity' => 'create_employee',
+            'auditable_id' => $employee->id,
+            'auditable_type' => Employee::class,
             'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . ' mendaftarkan pegawai baru: ' . $request->full_name
+            'details' => auth()->user()->name . ' mendaftarkan pegawai baru: ' . $request->full_name,
+            'new_values' => $employee->toArray()
         ]);
 
         return back()->with('success', 'Pegawai berhasil didaftarkan.');
@@ -108,6 +118,9 @@ class EmployeeController extends Controller
             'picket_regu' => 'nullable|string',
         ]);
 
+        $oldValues = $employee->toArray();
+        $oldUserValues = $employee->user->only(['name', 'email']);
+
         $employee->user->update([
             'name' => $request->full_name,
             'email' => $request->email,
@@ -120,7 +133,6 @@ class EmployeeController extends Controller
         $position = Position::find($request->position_id);
         $rank = $request->rank_id ? Rank::find($request->rank_id) : null;
 
-        // Auto-correct employee_type based on updated position
         $jNameUpper = strtoupper($position->name);
         $isJaga = str_contains($jNameUpper, 'JAGA') || str_contains($jNameUpper, 'PENGAMANAN') || str_contains($jNameUpper, 'PENJAGA');
         $employeeType = $isJaga ? 'regu_jaga' : 'non_regu_jaga';
@@ -137,12 +149,26 @@ class EmployeeController extends Controller
             'picket_regu' => $request->picket_regu,
         ]);
 
-        AuditLog::create([
-            'user_id' => auth()->id(),
-            'activity' => 'update_employee',
-            'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . ' memperbarui data pegawai: ' . $request->full_name
-        ]);
+        $newValues = $employee->fresh()->toArray();
+        
+        // Only log if something changed
+        $changedFields = array_diff_assoc($newValues, $oldValues);
+        
+        // Remove timestamps from comparison
+        unset($changedFields['updated_at']);
+
+        if (!empty($changedFields) || $employee->user->wasChanged()) {
+            AuditLog::create([
+                'user_id' => auth()->id(),
+                'activity' => 'update_employee',
+                'auditable_id' => $employee->id,
+                'auditable_type' => Employee::class,
+                'ip_address' => $request->ip(),
+                'details' => auth()->user()->name . ' memperbarui data pegawai: ' . $request->full_name,
+                'old_values' => $oldValues,
+                'new_values' => $newValues
+            ]);
+        }
 
         return back()->with('success', 'Data pegawai berhasil diperbarui.');
     }
@@ -156,15 +182,16 @@ class EmployeeController extends Controller
             Storage::disk('public')->delete($employee->getRawOriginal('photo'));
         }
 
-        $employee->delete();
-        if ($user) $user->delete();
-
         AuditLog::create([
             'user_id' => auth()->id(),
             'activity' => 'delete_employee',
             'ip_address' => request()->ip(),
-            'details' => auth()->user()->name . ' menghapus data pegawai: ' . $name
+            'details' => auth()->user()->name . ' menghapus data pegawai: ' . $name,
+            'old_values' => $employee->toArray()
         ]);
+
+        $employee->delete();
+        if ($user) $user->delete();
 
         return back()->with('success', 'Data pegawai berhasil dihapus.');
     }
@@ -179,16 +206,18 @@ class EmployeeController extends Controller
             if ($emp->getRawOriginal('photo')) {
                 Storage::disk('public')->delete($emp->getRawOriginal('photo'));
             }
+            
+            AuditLog::create([
+                'user_id' => auth()->id(),
+                'activity' => 'delete_employee',
+                'ip_address' => $request->ip(),
+                'details' => auth()->user()->name . ' menghapus data pegawai: ' . $emp->full_name,
+                'old_values' => $emp->toArray()
+            ]);
+
             if ($emp->user) $emp->user->delete();
             $emp->delete();
         }
-
-        AuditLog::create([
-            'user_id' => auth()->id(),
-            'activity' => 'bulk_delete_employee',
-            'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . ' menghapus ' . count($ids) . ' data pegawai secara massal'
-        ]);
 
         return back()->with('success', count($ids) . ' data pegawai berhasil dihapus.');
     }
@@ -198,8 +227,6 @@ class EmployeeController extends Controller
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
             $currentUserId = auth()->id();
-            
-            // Get all employees except the one linked to current user
             $employees = Employee::where('user_id', '!=', $currentUserId)->get();
             $count = $employees->count();
 
