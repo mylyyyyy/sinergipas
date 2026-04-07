@@ -108,12 +108,21 @@
                         </div>
                     </div>
 
-                    <!-- Meal Allowance Configuration -->
+                    <!-- Attendance & Meal Allowance Configuration -->
                     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 card-3d">
                         <h4 class="text-sm font-bold text-slate-900 mb-6 flex items-center gap-2">
-                            <i data-lucide="banknote" class="w-4 h-4 text-slate-400"></i>
-                            Konfigurasi Uang Makan
+                            <i data-lucide="fingerprint" class="w-4 h-4 text-slate-400"></i>
+                            Parameter Kehadiran & Uang Makan
                         </h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 pb-8 border-b border-slate-50">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Batas Jam Masuk Kantor (Staf / Non-Regu)</label>
+                                <input type="time" name="office_late_threshold" value="{{ $settings['office_late_threshold'] ?? '07:30' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none font-semibold text-sm transition-all">
+                                <p class="text-[9px] text-slate-400 mt-2 italic">Pegawai non-regu jaga dianggap terlambat setelah jam ini.</p>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Golongan II (Rp)</label>

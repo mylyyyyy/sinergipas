@@ -14,7 +14,11 @@ class SquadController extends Controller
     {
         $squads = Squad::withCount('employees')->get();
         $unassignedEmployees = Employee::whereNull('squad_id')
-            ->where('employee_type', 'regu_jaga')
+            ->where(function($q) {
+                $q->where('employee_type', 'regu_jaga')
+                  ->orWhere('position', 'like', '%JAGA%')
+                  ->orWhere('position', 'like', '%PENJAGA%');
+            })
             ->orderBy('full_name')
             ->get();
             

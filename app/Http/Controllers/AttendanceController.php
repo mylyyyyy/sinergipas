@@ -52,6 +52,8 @@ class AttendanceController extends Controller
 
     public function import(Request $request)
     {
+        set_time_limit(0);
+        ini_set('memory_limit', '512M');
         $request->validate(['file' => 'required']);
 
         try {
@@ -70,7 +72,6 @@ class AttendanceController extends Controller
             $importedCount = 0;
             $employees = Employee::all()->keyBy('nip');
             
-            // Collect rows to process by employee and date to handle MIN/MAX logic
             $groupedData = [];
 
             foreach ($data as $index => $row) {
@@ -100,24 +101,19 @@ class AttendanceController extends Controller
                 $date = $entry['date'];
                 $times = $entry['times'];
 
-                // Load existing attendance if any
-                $existing = Attendance::where('employee_id', $emp->id)->where('date', $date)->first();
-                if ($existing) {
-                    if ($existing->check_in) $times[] = $existing->check_in;
-                    if ($existing->check_out) $times[] = $existing->check_out;
-                }
-
                 $minTime = min($times);
                 $maxTime = max($times);
 
-                $attendance = Attendance::updateOrCreate(
-                    ['employee_id' => $emp->id, 'date' => $date],
-                    [
-                        'check_in' => $minTime,
-                        'check_out' => $maxTime,
-                        'status' => 'present'
-                    ]
-                );
+                // REPLACE Logic: Delete existing if any
+                Attendance::where('employee_id', $emp->id)->where('date', $date)->delete();
+
+                $attendance = Attendance::create([
+                    'employee_id' => $emp->id,
+                    'date' => $date,
+                    'check_in' => $minTime,
+                    'check_out' => $maxTime,
+                    'status' => 'present'
+                ]);
 
                 $this->calculateAttendanceMetrics($attendance, $emp);
                 $attendance->save();
@@ -136,25 +132,25 @@ class AttendanceController extends Controller
     private function calculateAttendanceMetrics($attendance, $employee)
     {
         $schedule = Schedule::where('employee_id', $employee->id)->where('date', $attendance->date)->first();
+        $pos = strtoupper((string)$employee->position);
         
-        // AUTO-SHIFT LOGIC:
-        // Default to Office (Kantor) if not a Guard/Commander
+        // Identify Regu Staff
+        $isRegu = str_contains($pos, 'JAGA') || str_contains($pos, 'PENJAGA') || $employee->squad_id != null;
+        
         $shift = null;
+        $startTime = null;
+
         if ($schedule) {
             $shift = $schedule->shift;
-        } else {
-            $pos = strtoupper((string)$employee->position);
-            $isGuard = str_contains($pos, 'JAGA') || str_contains($pos, 'PENGAMANAN') || str_contains($pos, 'KOMANDAN');
-            
-            if (!$isGuard) {
-                $shift = Shift::where('name', 'Kantor')->first();
-            }
+            if ($shift) $startTime = Carbon::parse($shift->start_time);
+        } elseif (!$isRegu) {
+            // Non-Regu uses Admin Setting or Default 07:30
+            $threshold = Setting::getValue('office_late_threshold', '07:30');
+            $startTime = Carbon::parse($threshold);
         }
 
-        if ($shift) {
-            $startTime = Carbon::parse($shift->start_time);
+        if ($startTime) {
             $checkIn = Carbon::parse($attendance->check_in);
-            
             if ($checkIn->gt($startTime)) {
                 $attendance->late_minutes = $checkIn->diffInMinutes($startTime);
                 $attendance->status = 'late';
@@ -164,7 +160,7 @@ class AttendanceController extends Controller
             }
         }
 
-        // Meal Allowance from Settings
+        // Meal Allowance
         $class = strtoupper((string)$employee->rank_class);
         $rate = 0;
         if (str_contains($class, 'IV')) $rate = Setting::getValue('meal_allowance_iv', 41000);
@@ -176,9 +172,13 @@ class AttendanceController extends Controller
 
     public function export(Request $request)
     {
+        set_time_limit(0);
+        ini_set('memory_limit', '1024M'); // Increased for large PDF exports
+
         $filter = $request->filter ?? 'monthly';
         $date = Carbon::parse($request->month ?? now());
         
+        // Use cursor for memory efficiency if data is huge
         $query = Attendance::with(['employee.work_unit'])->orderBy('date', 'asc');
 
         if ($filter === 'daily') {
@@ -189,10 +189,13 @@ class AttendanceController extends Controller
             $query->whereMonth('date', $date->month)->whereYear('date', $date->year);
         }
 
+        if ($request->type === 'excel') {
+            $attendances = $query->get();
+            return $this->exportExcel($attendances, $date, $filter);
+        }
+
+        // For PDF, we still need the collection
         $attendances = $query->get();
-
-        if ($request->type === 'excel') return $this->exportExcel($attendances, $date, $filter);
-
         $pdf = Pdf::loadView('admin.attendance.pdf', compact('attendances', 'date', 'filter'));
         return $pdf->download("rekap-absensi-{$filter}.pdf");
     }
@@ -219,7 +222,9 @@ class AttendanceController extends Controller
                 $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14);
                 $sheet->getStyle('A7:H7')->getFont()->setBold(true);
                 $lastRow = $sheet->getHighestRow();
-                $sheet->getStyle("A7:H$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                if ($lastRow >= 7) {
+                    $sheet->getStyle("A7:H$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                }
                 return [];
             }
         }, "rekap-absensi-{$filter}.xlsx");
