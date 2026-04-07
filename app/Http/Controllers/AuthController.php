@@ -44,16 +44,18 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        \App\Models\AuditLog::create([
-            'user_id' => auth()->id(),
-            'activity' => 'logout',
-            'ip_address' => $request->ip(),
-            'details' => 'Keluar dari sistem.'
-        ]);
+        if (Auth::check()) {
+            \App\Models\AuditLog::create([
+                'user_id' => Auth::id(),
+                'activity' => 'logout',
+                'ip_address' => $request->ip(),
+                'details' => Auth::user()->name . ' keluar dari sistem.'
+            ]);
+        }
 
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/');
+        return redirect()->route('login');
     }
 }

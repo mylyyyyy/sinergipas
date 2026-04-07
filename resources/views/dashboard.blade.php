@@ -9,7 +9,6 @@
 @php
     $selectedUnitName = $workUnits->firstWhere('id', request('work_unit_id'))?->name;
     $unitLabel = $selectedUnitName ?: 'Seluruh Unit Kerja';
-    $displayedNonCompliantEmployees = $nonCompliantEmployees->count();
     $hasMandatory = $totalMandatoryCategories > 0;
 @endphp
 
@@ -83,12 +82,12 @@
             </div>
             <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">Atur Jadwal</span>
         </a>
-        <a href="{{ route('dashboard.export.pdf') }}" class="p-6 rounded-[32px] bg-white border border-slate-200 shadow-sm hover:border-red-500 hover:shadow-xl transition-all group flex flex-col items-center text-center gap-3 card-3d no-loader">
+        <button onclick="handleDownload('{{ route('dashboard.export.pdf') }}', 'laporan-operasional.pdf')" class="p-6 rounded-[32px] bg-white border border-slate-200 shadow-sm hover:border-red-500 hover:shadow-xl transition-all group flex flex-col items-center text-center gap-3 card-3d no-loader">
             <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-all">
                 <i data-lucide="file-text" class="w-6 h-6"></i>
             </div>
             <span class="text-[10px] font-black uppercase tracking-widest text-slate-600">Download PDF</span>
-        </a>
+        </button>
         <a href="{{ route('settings.index') }}" class="p-6 rounded-[32px] bg-white border border-slate-200 shadow-sm hover:border-slate-900 hover:shadow-xl transition-all group flex flex-col items-center text-center gap-3 card-3d">
             <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white transition-all">
                 <i data-lucide="settings-2" class="w-6 h-6"></i>

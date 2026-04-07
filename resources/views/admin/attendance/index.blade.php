@@ -32,7 +32,7 @@
             </div>
         </div>
         <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm card-3d flex items-center gap-5 border-l-4 border-l-amber-500">
-            <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <div class="w-14 h-14 rounded-2xl bg-amber text-amber-600 flex items-center justify-center shrink-0">
                 <i data-lucide="clock-alert" class="w-7 h-7"></i>
             </div>
             <div>
@@ -283,7 +283,7 @@
 <div id="exportModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
     <div class="bg-white w-full max-w-md rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200">
         <h3 class="text-2xl font-bold text-slate-900 mb-6 italic">Export Laporan Kehadiran</h3>
-        <form action="{{ route('admin.attendance.export') }}" method="GET" class="space-y-6">
+        <form id="exportForm" class="space-y-6">
             <div class="space-y-4">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Filter Jenis Laporan</label>
@@ -298,30 +298,30 @@
                 <div id="range_container" class="hidden grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Dari</label>
-                        <input type="date" name="start_date" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                        <input type="date" name="start_date" id="export_start_date" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Sampai</label>
-                        <input type="date" name="end_date" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                        <input type="date" name="end_date" id="export_end_date" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
                     </div>
                 </div>
 
                 <!-- Single Date Container (Daily) -->
                 <div id="date_input_container" class="hidden">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Pilih Tanggal</label>
-                    <input type="date" name="exact_date" value="{{ date('Y-m-d') }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                    <input type="date" name="exact_date" id="export_exact_date" value="{{ date('Y-m-d') }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Format File</label>
-                    <select name="type" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                    <select name="type" id="export_type" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
                         <option value="pdf">Dokumen PDF Resmi (KOP & Logo)</option>
                         <option value="excel">Microsoft Excel (.xlsx)</option>
                     </select>
                 </div>
-                <input type="hidden" name="month" value="{{ $monthStr }}">
+                <input type="hidden" name="month" id="export_month" value="{{ $monthStr }}">
             </div>
-            <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg btn-3d">
+            <button type="button" onclick="submitGlobalExport()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg btn-3d">
                 Download Laporan Sekarang
             </button>
             <button type="button" onclick="document.getElementById('exportModal').classList.add('hidden')" class="w-full text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-2">Batal</button>
@@ -335,20 +335,20 @@
         <h3 class="text-xl font-bold text-slate-900 mb-2 italic">Export Laporan Individu</h3>
         <p id="individual_name" class="text-sm font-bold text-blue-600 mb-6"></p>
         
-        <form action="{{ route('admin.attendance.export') }}" method="GET" class="space-y-6">
+        <form id="individualExportForm" class="space-y-6">
             <input type="hidden" name="filter" value="individual">
             <input type="hidden" name="employee_id" id="individual_emp_id">
-            <input type="hidden" name="month" value="{{ $monthStr }}">
+            <input type="hidden" name="month" id="individual_month" value="{{ $monthStr }}">
             
             <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Format Laporan</label>
-                <select name="type" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                <select name="type" id="individual_type" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
                     <option value="pdf">Dokumen PDF Resmi</option>
                     <option value="excel">Microsoft Excel (.xlsx)</option>
                 </select>
             </div>
 
-            <button type="submit" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg">
+            <button type="button" onclick="submitIndividualExport()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg">
                 Download Laporan Individu
             </button>
             <button type="button" onclick="document.getElementById('individualExportModal').classList.add('hidden')" class="w-full text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-2">Batal</button>
@@ -385,6 +385,34 @@
         
         dateContainer.classList.toggle('hidden', filter !== 'daily');
         rangeContainer.classList.toggle('hidden', filter !== 'weekly');
+    }
+
+    function submitGlobalExport() {
+        const filter = document.getElementById('export_filter').value;
+        const type = document.getElementById('export_type').value;
+        const month = document.getElementById('export_month').value;
+        const startDate = document.getElementById('export_start_date').value;
+        const endDate = document.getElementById('export_end_date').value;
+        const exactDate = document.getElementById('export_exact_date').value;
+
+        let url = `/admin/attendance/export?filter=${filter}&type=${type}&month=${month}`;
+        if (filter === 'weekly') url += `&start_date=${startDate}&end_date=${endDate}`;
+        if (filter === 'daily') url += `&exact_date=${exactDate}`;
+
+        document.getElementById('exportModal').classList.add('hidden');
+        handleDownload(url, `laporan-kehadiran-${filter}.${type === 'pdf' ? 'pdf' : 'xlsx'}`);
+    }
+
+    function submitIndividualExport() {
+        const empId = document.getElementById('individual_emp_id').value;
+        const type = document.getElementById('individual_type').value;
+        const month = document.getElementById('individual_month').value;
+        const name = document.getElementById('individual_name').innerText;
+
+        const url = `/admin/attendance/export?filter=individual&employee_id=${empId}&type=${type}&month=${month}`;
+        
+        document.getElementById('individualExportModal').classList.add('hidden');
+        handleDownload(url, `laporan-${name}.${type === 'pdf' ? 'pdf' : 'xlsx'}`);
     }
 
     function switchTab(tabName) {

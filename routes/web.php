@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 // Guest Routes
 Route::middleware('guest')->group(function () {
     Route::get('/', [AuthController::class, 'showLogin'])->name('login');
+    Route::get('/login', [AuthController::class, 'showLogin']); // Support both / and /login
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
     Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
@@ -27,6 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index']);
 
     // Announcements
     Route::post('/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('announcements.store');

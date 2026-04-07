@@ -78,9 +78,9 @@
                     <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
                         <i data-lucide="file-up" class="w-4 h-4 text-amber-400"></i> Impor
                     </button>
-                    <a href="{{ route('employees.export.excel') }}" class="p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest no-loader">
+                    <button onclick="handleDownload('{{ route('employees.export.excel') }}', 'data-pegawai.xlsx')" class="p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest no-loader">
                         <i data-lucide="download-cloud" class="w-4 h-4 text-emerald-400"></i> Ekspor
-                    </a>
+                    </button>
                     <a href="{{ route('admin.ranks.index') }}" class="p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
                         <i data-lucide="shield-check" class="w-4 h-4 text-blue-400"></i> Golongan
                     </a>

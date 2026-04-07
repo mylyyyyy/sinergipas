@@ -6,11 +6,29 @@
 @section('content')
 @php
     $employeeName = auth()->user()->name;
-    $reviewDocs = max($myDocumentsCount - $verifiedDocs, 0);
+    $reviewDocs = max($myDocumentsCount - $verifiedDocs - $rejectedDocsCount, 0);
     $progressTone = $careerProgress >= 100 ? 'Lengkap' : ($careerProgress >= 60 ? 'Hampir Lengkap' : 'Perlu Dilengkapi');
 @endphp
 
 <div class="space-y-10 page-fade">
+    @if($rejectedDocsCount > 0)
+    <!-- Rejected Documents Alert -->
+    <div class="bg-red-50 border-2 border-red-100 rounded-[32px] p-6 flex items-center justify-between shadow-sm animate-pulse group hover:scale-[1.01] transition-all">
+        <div class="flex items-center gap-5">
+            <div class="w-14 h-14 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-200">
+                <i data-lucide="alert-octagon" class="w-8 h-8"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-black text-red-900 italic uppercase tracking-tight">Tindakan Diperlukan!</h3>
+                <p class="text-sm font-bold text-red-600">Ada {{ $rejectedDocsCount }} dokumen yang ditolak dan memerlukan revisi segera.</p>
+            </div>
+        </div>
+        <a href="{{ route('documents.index') }}" class="px-6 py-3 rounded-xl bg-red-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-red-700 transition-all shadow-md">
+            Perbaiki Sekarang
+        </a>
+    </div>
+    @endif
+
     <section class="relative overflow-hidden rounded-[48px] bg-slate-900 px-8 py-10 text-white shadow-xl card-3d">
         <div class="absolute -left-10 top-10 h-40 w-40 rounded-full bg-blue-500/10 blur-3xl"></div>
         <div class="absolute -right-8 bottom-0 h-56 w-56 rounded-full bg-amber-500/10 blur-3xl"></div>
@@ -58,14 +76,18 @@
                     <div class="h-2 overflow-hidden rounded-full bg-white/5">
                         <div class="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-400" style="width: {{ min($careerProgress, 100) }}%"></div>
                     </div>
-                    <div class="mt-4 grid gap-3 grid-cols-2">
-                        <div class="rounded-xl bg-slate-900/50 p-3 border border-white/5 text-center group-hover:bg-slate-800 transition-colors">
-                            <p class="text-[8px] font-bold uppercase text-slate-500">Berkas Valid</p>
-                            <p class="text-lg font-bold">{{ $verifiedDocs }}</p>
+                    <div class="mt-4 grid gap-3 grid-cols-3">
+                        <div class="rounded-xl bg-slate-900/50 p-2.5 border border-white/5 text-center group-hover:bg-slate-800 transition-colors">
+                            <p class="text-[7px] font-bold uppercase text-slate-500">Valid</p>
+                            <p class="text-base font-black text-emerald-400">{{ $verifiedDocs }}</p>
                         </div>
-                        <div class="rounded-xl bg-slate-900/50 p-3 border border-white/5 text-center group-hover:bg-slate-800 transition-colors">
-                            <p class="text-[8px] font-bold uppercase text-slate-500">Antrean</p>
-                            <p class="text-lg font-bold text-amber-400">{{ $reviewDocs }}</p>
+                        <div class="rounded-xl bg-slate-900/50 p-2.5 border border-white/5 text-center group-hover:bg-slate-800 transition-colors">
+                            <p class="text-[7px] font-bold uppercase text-slate-500">Antrean</p>
+                            <p class="text-base font-black text-amber-400">{{ $reviewDocs }}</p>
+                        </div>
+                        <div class="rounded-xl bg-red-500/10 p-2.5 border border-red-500/20 text-center group-hover:bg-red-500/20 transition-colors">
+                            <p class="text-[7px] font-bold uppercase text-red-400">Ditolak</p>
+                            <p class="text-base font-black text-red-500">{{ $rejectedDocsCount }}</p>
                         </div>
                     </div>
                 </div>
@@ -133,8 +155,8 @@
                                     </p>
                                 </div>
                             </div>
-                            <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border {{ $doc->status === 'verified' ? 'bg-green-50 text-green-600 border-green-100' : ($doc->status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-slate-100 text-slate-500 border-slate-200') }}">
-                                {{ $doc->status }}
+                            <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border {{ $doc->status === 'verified' ? 'bg-green-50 text-green-600 border-green-100' : ($doc->status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-red-50 text-red-600 border-red-100') }}">
+                                {{ $doc->status === 'rejected' ? 'Ditolak' : $doc->status }}
                             </span>
                         </div>
                     @empty
@@ -158,10 +180,10 @@
                 <h3 class="text-2xl font-bold tracking-tight leading-snug">Unduh Slip Gaji<br>Periode Berjalan.</h3>
                 <div class="mt-8">
                     @if($latestSalary)
-                        <a href="{{ route('documents.download', $latestSalary->id) }}" target="_blank" class="inline-flex w-full items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-amber-600 text-white font-black text-xs uppercase tracking-widest hover:bg-amber-700 transition-all shadow-lg btn-3d no-loader">
+                        <button onclick="handleDownload('{{ route('documents.download', $latestSalary->id) }}', 'Slip-Gaji-{{ auth()->user()->name }}.pdf')" class="inline-flex w-full items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-amber-600 text-white font-black text-xs uppercase tracking-widest hover:bg-amber-700 transition-all shadow-lg btn-3d no-loader">
                             <i data-lucide="download-cloud" class="w-5 h-5"></i>
                             Download PDF
-                        </a>
+                        </button>
                     @else
                         <div class="px-6 py-4 rounded-2xl bg-white/5 border border-white/5 text-center text-[10px] font-bold uppercase text-slate-500 italic">
                             Belum diunggah bendahara

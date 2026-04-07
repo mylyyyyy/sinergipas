@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\Setting;
 use App\Models\Squad;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
@@ -59,13 +60,14 @@ class ScheduleController extends Controller
             'month' => 'required|string',
             'start_date' => 'required|date',
             'pattern' => 'required|array',
+            'duration_months' => 'nullable|integer|min:1|max:12'
         ]);
 
-        $month = Carbon::parse($request->month);
+        $baseMonth = Carbon::parse($request->month);
         $startDate = Carbon::parse($request->start_date);
         $squad = Squad::find($request->squad_id);
+        $duration = $request->duration_months ?? 1;
         
-        // Fetch specific squad for pattern and also handle all staff automatically
         $reguEmployees = Employee::where('squad_id', $request->squad_id)->get();
         $staffEmployees = Employee::where('employee_type', 'non_regu_jaga')->get();
         
@@ -79,40 +81,44 @@ class ScheduleController extends Controller
 
         DB::beginTransaction();
         try {
-            // 1. Process Regu Jaga (Pattern Based)
-            foreach ($reguEmployees as $employee) {
-                for ($day = 1; $day <= $month->daysInMonth; $day++) {
-                    $currentDate = $month->copy()->day($day);
-                    $diffDays = $startDate->diffInDays($currentDate, false);
-                    $index = ($diffDays % $patternCount);
-                    if ($index < 0) $index += $patternCount;
+            for ($m = 0; $m < $duration; $m++) {
+                $currentMonth = $baseMonth->copy()->addMonths($m);
+                
+                // 1. Process Regu Jaga
+                foreach ($reguEmployees as $employee) {
+                    for ($day = 1; $day <= $currentMonth->daysInMonth; $day++) {
+                        $dateObj = $currentMonth->copy()->day($day);
+                        $diffDays = $startDate->diffInDays($dateObj, false);
+                        
+                        $index = ($diffDays % $patternCount);
+                        if ($index < 0) $index += $patternCount;
 
-                    $shiftId = $pattern[$index];
+                        $shiftId = $pattern[$index];
 
-                    if ($shiftId) {
-                        Schedule::updateOrCreate(
-                            ['employee_id' => $employee->id, 'date' => $currentDate->format('Y-m-d')],
-                            ['shift_id' => $shiftId]
-                        );
-                    } else {
-                        Schedule::where('employee_id', $employee->id)->where('date', $currentDate->format('Y-m-d'))->delete();
-                    }
-                }
-            }
-
-            // 2. Process Staff (Office Hours: Mon-Fri)
-            if ($officeShift) {
-                foreach ($staffEmployees as $employee) {
-                    for ($day = 1; $day <= $month->daysInMonth; $day++) {
-                        $currentDate = $month->copy()->day($day);
-                        // Monday (1) to Friday (5)
-                        if ($currentDate->isWeekday()) {
+                        if ($shiftId) {
                             Schedule::updateOrCreate(
-                                ['employee_id' => $employee->id, 'date' => $currentDate->format('Y-m-d')],
-                                ['shift_id' => $officeShift->id]
+                                ['employee_id' => $employee->id, 'date' => $dateObj->format('Y-m-d')],
+                                ['shift_id' => $shiftId]
                             );
                         } else {
-                            Schedule::where('employee_id', $employee->id)->where('date', $currentDate->format('Y-m-d'))->delete();
+                            Schedule::where('employee_id', $employee->id)->where('date', $dateObj->format('Y-m-d'))->delete();
+                        }
+                    }
+                }
+
+                // 2. Process Staff
+                if ($officeShift) {
+                    foreach ($staffEmployees as $employee) {
+                        for ($day = 1; $day <= $currentMonth->daysInMonth; $day++) {
+                            $dateObj = $currentMonth->copy()->day($day);
+                            if ($dateObj->isWeekday()) {
+                                Schedule::updateOrCreate(
+                                    ['employee_id' => $employee->id, 'date' => $dateObj->format('Y-m-d')],
+                                    ['shift_id' => $officeShift->id]
+                                );
+                            } else {
+                                Schedule::where('employee_id', $employee->id)->where('date', $dateObj->format('Y-m-d'))->delete();
+                            }
                         }
                     }
                 }
@@ -128,10 +134,10 @@ class ScheduleController extends Controller
             'user_id' => auth()->id(),
             'activity' => 'generate_roster',
             'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . " men-generate roster otomatis untuk Regu $squad->name dan seluruh Staf bulan " . $month->translatedFormat('F Y')
+            'details' => auth()->user()->name . " men-generate roster otomatis ($duration bulan) untuk Regu $squad->name dan Staf mulai " . $baseMonth->translatedFormat('F Y')
         ]);
 
-        return back()->with('success', "Roster untuk Regu $squad->name dan jadwal seluruh Staf berhasil di-generate.");
+        return back()->with('success', "Roster ($duration bulan) berhasil di-generate.");
     }
 
     public function export(Request $request)
@@ -189,19 +195,22 @@ class ScheduleController extends Controller
                 return $drawing;
             }
             public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet) {
-                $kop1 = Setting::getValue('kop_line_1', 'KEMENTERIAN HUKUM DAN HAM RI');
-                $kop2 = Setting::getValue('kop_line_2', 'LAPAS KELAS IIB JOMBANG');
-                $sheet->mergeCells('B1:AF1'); $sheet->setCellValue('B1', $kop1);
-                $sheet->mergeCells('B2:AF2'); $sheet->setCellValue('B2', $kop2);
-                $sheet->getStyle('B1:B2')->getFont()->setBold(true)->setSize(12);
-                $sheet->mergeCells('A5:AF5');
+                $kop1 = Setting::getValue('kop_line_1', 'KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN RI');
+                $kop2 = Setting::getValue('kop_line_2', 'KANTOR WILAYAH KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN');
+                $endCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(3 + $this->days);
+                $sheet->mergeCells("B1:{$endCol}1"); $sheet->setCellValue('B1', $kop1);
+                $sheet->mergeCells("B2:{$endCol}2"); $sheet->setCellValue('B2', $kop2);
+                $sheet->getStyle("B1:{$endCol}2")->getFont()->setBold(true)->setSize(12);
+                $sheet->mergeCells("A5:{$endCol}5");
                 $sheet->setCellValue('A5', 'JADWAL DINAS PEGAWAI PERIODE ' . strtoupper($this->date->translatedFormat('F Y')));
-                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14)->setUnderline(true)->setUnderline(true);
+                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14)->setUnderline(true);
                 $sheet->getStyle('A5')->getAlignment()->setHorizontal('center');
-                $sheet->getStyle('A7:AF7')->getFont()->setBold(true);
-                $sheet->getStyle('A7:AF7')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F1F5F9');
+                $sheet->getStyle("A7:{$endCol}7")->getFont()->setBold(true);
+                $sheet->getStyle("A7:{$endCol}7")->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F1F5F9');
                 $lastRow = $sheet->getHighestRow();
-                $sheet->getStyle("A7:AF$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                $sheet->getStyle("A7:{$endCol}{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                $sheet->getColumnDimension('B')->setAutoSize(true);
+                $sheet->getColumnDimension('C')->setAutoSize(true);
                 return [];
             }
         }, "jadwal-dinas-{$date->format('Y-m')}.xlsx");

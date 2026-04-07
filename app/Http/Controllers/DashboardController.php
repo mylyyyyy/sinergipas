@@ -108,8 +108,7 @@ class DashboardController extends Controller
                 'totalEmployees', 'totalDocuments', 'docsToday', 'pendingDocs', 
                 'openIssues', 'storageUsed', 'unitPerformance', 
                 'latestEmployees', 'chartData', 'workUnits', 'nonCompliantEmployees',
-                'nonCompliantEmployeesTotal', 'nonCompliantPreviewLimit',
-                'widgets', 'recentLogs', 'totalMandatoryCategories'
+                'nonCompliantEmployeesTotal', 'widgets', 'recentLogs', 'totalMandatoryCategories'
             ));
         } 
         
@@ -120,6 +119,8 @@ class DashboardController extends Controller
             
             $myDocumentsCount = $myDocs->count();
             $verifiedDocs = $myDocs->where('status', 'verified')->count();
+            $rejectedDocsCount = $myDocs->where('status', 'rejected')->count();
+            
             $recentDocuments = Document::where('employee_id', $employee?->id)
                 ->with('category')
                 ->latest()
@@ -150,7 +151,7 @@ class DashboardController extends Controller
                 ->first();
 
             return view('dashboard-pegawai', compact(
-                'myDocumentsCount', 'verifiedDocs', 'careerProgress', 'latestSalary', 
+                'myDocumentsCount', 'verifiedDocs', 'rejectedDocsCount', 'careerProgress', 'latestSalary', 
                 'employee', 'recentDocuments', 'myAttendanceToday'
             ));
         }

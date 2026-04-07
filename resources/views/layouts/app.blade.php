@@ -121,7 +121,7 @@
             .rounded-button { border-radius: 0.875rem; }
 
             /* Smooth Scrollbar */
-            .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+            .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
             .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
             .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
             .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
@@ -176,7 +176,7 @@
     <div class="flex min-h-screen">
         <!-- Sidebar -->
         <aside id="appSidebar" class="fixed inset-y-0 left-0 z-40 flex h-full w-64 -translate-x-full flex-col border-r border-slate-200 bg-white px-6 py-8 transition-transform duration-300 lg:translate-x-0 shrink-0">
-            <div class="flex items-center gap-3 mb-10 px-2">
+            <div class="flex items-center gap-3 mb-10 px-2" onclick="window.location.href='{{ route('dashboard') }}'" style="cursor: pointer;">
                 <img src="{{ asset('logo1.png') }}" class="w-9 h-9 object-contain">
                 <div>
                     <h1 class="text-base font-bold text-slate-900 leading-tight uppercase tracking-tight">SINERGI PAS</h1>
@@ -258,7 +258,7 @@
             </nav>
 
             <div class="pt-6 mt-auto border-t border-slate-100">
-                <form action="{{ route('logout') }}" method="POST">
+                <form action="{{ route('logout') }}" method="POST" class="no-loader">
                     @csrf
                     <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-colors text-sm font-bold">
                         <i data-lucide="log-out" class="w-5 h-5"></i>
@@ -420,9 +420,71 @@
             setTimeout(() => loader.style.display = 'none', 500);
         });
 
-        window.addEventListener('beforeunload', () => {
+        window.addEventListener('beforeunload', (e) => {
+            // Check if the clicked element is a download link or has no-loader class
+            const activeElement = document.activeElement;
+            if (activeElement && (activeElement.hasAttribute('download') || activeElement.classList.contains('no-loader') || activeElement.target === '_blank')) {
+                return;
+            }
             NProgress.start();
         });
+
+        // Instant click feel for links
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (link && !link.hasAttribute('download') && !link.classList.contains('no-loader') && link.target !== '_blank' && link.href && link.href.startsWith(window.location.origin)) {
+                // We don't use full SPA here to keep it stable, but we can prefetch
+                const prefetch = document.createElement('link');
+                prefetch.rel = 'prefetch';
+                prefetch.href = link.href;
+                document.head.appendChild(prefetch);
+            }
+        });
+
+        // Global Download Handler with SweetAlert2
+        window.handleDownload = async function(url, filename) {
+            Swal.fire({
+                title: 'Mempersiapkan Dokumen',
+                html: 'Mohon tunggu sebentar, sistem sedang menggenerate berkas Anda...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                },
+                customClass: { popup: 'rounded-[32px]' }
+            });
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Download failed');
+                
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = filename || 'document';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(downloadUrl);
+                a.remove();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil Didownload',
+                    text: 'Dokumen Anda telah berhasil diunduh.',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    customClass: { popup: 'rounded-[32px]' }
+                });
+            } catch (error) {
+                console.error(error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Download Gagal',
+                    text: 'Terjadi kesalahan saat mengunduh dokumen. Silakan coba lagi.',
+                    customClass: { popup: 'rounded-[32px]' }
+                });
+            }
+        };
 
         function toggleNotifications() {
             document.getElementById('notificationDropdown').classList.toggle('hidden');

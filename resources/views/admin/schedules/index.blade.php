@@ -15,12 +15,12 @@
             </form>
 
             <div class="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
-                <a href="{{ route('admin.schedules.export', ['month' => $month->format('Y-m'), 'type' => 'pdf']) }}" class="px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 no-loader">
+                <button onclick="handleDownload('{{ route('admin.schedules.export', ['month' => $month->format('Y-m'), 'type' => 'pdf']) }}', 'jadwal-dinas-{{ $month->format('Y-m') }}.pdf')" class="px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 no-loader">
                     <i data-lucide="file-text" class="w-4 h-4 text-red-500"></i> PDF
-                </a>
-                <a href="{{ route('admin.schedules.export', ['month' => $month->format('Y-m'), 'type' => 'excel']) }}" class="px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 no-loader">
+                </button>
+                <button onclick="handleDownload('{{ route('admin.schedules.export', ['month' => $month->format('Y-m'), 'type' => 'excel']) }}', 'jadwal-dinas-{{ $month->format('Y-m') }}.xlsx')" class="px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2 no-loader">
                     <i data-lucide="file-spreadsheet" class="w-4 h-4 text-green-500"></i> EXCEL
-                </a>
+                </button>
             </div>
         </div>
 
@@ -36,8 +36,8 @@
 
     <!-- Schedule Grid -->
     <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden card-3d">
-        <div class="overflow-x-auto custom-scrollbar">
-            <table class="w-full border-collapse">
+        <div class="overflow-x-auto custom-scrollbar" style="width: 100%;">
+            <table class="w-full border-collapse" style="min-width: 1200px;">
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-100">
                         <th class="sticky left-0 z-10 bg-slate-50 px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest min-w-[220px] border-r border-slate-100 text-left">Pegawai & Jabatan</th>
@@ -162,6 +162,17 @@
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Tanggal Mulai Pola</label>
                         <input type="date" name="start_date" required value="{{ $month->format('Y-m-01') }}" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500 transition-all">
                     </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Durasi Penjadwalan (Bulan)</label>
+                    <select name="duration_months" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                        <option value="1">1 Bulan (Hanya Bulan Terpilih)</option>
+                        <option value="2">2 Bulan ke Depan</option>
+                        <option value="3">3 Bulan ke Depan</option>
+                        <option value="6">6 Bulan ke Depan</option>
+                        <option value="12">1 Tahun ke Depan</option>
+                    </select>
                 </div>
 
                 <div class="p-5 bg-indigo-50 rounded-2xl border border-indigo-100">

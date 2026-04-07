@@ -79,7 +79,7 @@
                     
                     
                     @if(!$doc->is_locked)
-                    <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="p-2 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader"><i data-lucide="download" class="w-4 h-4"></i></a>
+                    <button onclick="handleDownload('{{ route('documents.download', $doc->id) }}', '{{ $doc->title }}')" class="p-2 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader"><i data-lucide="download" class="w-4 h-4"></i></button>
                     @else
                     <div class="p-2 text-gray-300 bg-gray-50 rounded-xl cursor-not-allowed border border-gray-100" title="Unduhan dikunci"><i data-lucide="download" class="w-4 h-4 opacity-50"></i></div>
                     @endif
