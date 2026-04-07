@@ -19,6 +19,7 @@ class Employee extends Model
         'phone_number',
         'position',
         'rank',
+        'rank_id',
         'rank_class',
         'employee_type',
         'picket_regu',
@@ -31,6 +32,11 @@ class Employee extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function rank_relation(): BelongsTo
+    {
+        return $this->belongsTo(Rank::class, 'rank_id');
     }
 
     public function squad(): BelongsTo

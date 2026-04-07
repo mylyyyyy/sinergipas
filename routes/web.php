@@ -77,6 +77,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
 
+        // Rank Management
+        Route::resource('/admin/ranks', \App\Http\Controllers\Admin\RankController::class)->names('admin.ranks');
+
         // Position & Work Unit Management
         Route::post('/settings/positions', [SettingController::class, 'storePosition'])->name('settings.positions.store');
         Route::delete('/settings/positions/{position}', [SettingController::class, 'destroyPosition'])->name('settings.positions.destroy');

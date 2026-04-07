@@ -69,16 +69,26 @@
             </div>
 
             <div class="flex flex-wrap gap-4 items-center">
-                <div class="flex bg-white/5 p-2 rounded-[28px] border border-white/10 backdrop-blur-md shadow-inner">
-                    <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3 group">
-                        <i data-lucide="file-up" class="w-5 h-5 text-amber-400 group-hover:-translate-y-1 transition-transform"></i> Impor
-                    </button>
-                    <a href="{{ route('employees.export.excel') }}" class="px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3 group no-loader">
-                        <i data-lucide="download-cloud" class="w-5 h-5 text-emerald-400 group-hover:translate-y-1 transition-transform"></i> Ekspor
-                    </a>
-                    <button type="button" onclick="confirmDestroyAll()" class="px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-red-500/20 text-red-400 transition-all flex items-center gap-3 group">
-                        <i data-lucide="trash-2" class="w-5 h-5 group-hover:scale-110 transition-transform"></i> Kosongkan Data
-                    </button>
+                <div class="flex flex-col gap-2">
+                    <div class="flex bg-white/5 p-2 rounded-[28px] border border-white/10 backdrop-blur-md shadow-inner">
+                        <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3 group">
+                            <i data-lucide="file-up" class="w-5 h-5 text-amber-400 group-hover:-translate-y-1 transition-transform"></i> Impor
+                        </button>
+                        <a href="{{ route('employees.export.excel') }}" class="px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3 group no-loader">
+                            <i data-lucide="download-cloud" class="w-5 h-5 text-emerald-400 group-hover:translate-y-1 transition-transform"></i> Ekspor
+                        </a>
+                        <button type="button" onclick="confirmDestroyAll()" class="px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-red-500/20 text-red-400 transition-all flex items-center gap-3 group">
+                            <i data-lucide="trash-2" class="w-5 h-5 group-hover:scale-110 transition-transform"></i> Kosongkan
+                        </button>
+                    </div>
+                    <div class="flex gap-2 justify-center">
+                        <a href="{{ route('admin.ranks.index') }}" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-[9px] font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-all flex items-center gap-2">
+                            <i data-lucide="shield-check" class="w-3 h-3"></i> Atur Golongan
+                        </a>
+                        <button onclick="sortNames()" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-[9px] font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-all flex items-center gap-2">
+                            <i data-lucide="sort-asc" class="w-3 h-3"></i> Urut A-Z
+                        </button>
+                    </div>
                 </div>
                 <button type="button" onclick="document.getElementById('addModal').classList.remove('hidden')" class="px-10 py-5 rounded-[28px] bg-white text-slate-900 text-[11px] font-black uppercase tracking-[0.15em] hover:bg-blue-600 hover:text-white transition-all shadow-[0_20px_40px_rgba(0,0,0,0.3)] flex items-center gap-4 active:scale-95 group">
                     <div class="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-white/20 transition-colors">
@@ -119,7 +129,7 @@
     <!-- Table Section -->
     <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden card-3d">
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse" id="employeeTable">
                 <thead>
                     <tr class="bg-slate-50/50 border-b border-slate-100">
                         <th class="px-6 py-4 w-10">
@@ -133,7 +143,7 @@
                 </thead>
                 <tbody class="divide-y divide-slate-50">
                     @forelse($employees as $employee)
-                    <tr class="hover:bg-slate-50/50 transition-colors group">
+                    <tr class="hover:bg-slate-50/50 transition-colors group employee-row" data-name="{{ $employee->full_name }}">
                         <td class="px-6 py-4">
                             <input type="checkbox" name="ids[]" value="{{ $employee->id }}" class="emp-checkbox w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-0 cursor-pointer">
                         </td>
@@ -147,7 +157,7 @@
                                     @endif
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $employee->full_name }}</p>
+                                    <p class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate name-field">{{ $employee->full_name }}</p>
                                     <p class="text-[10px] font-mono font-bold text-slate-400 mt-0.5 tracking-tight">NIP. {{ $employee->nip }} | NIK. {{ $employee->nik ?? '-' }}</p>
                                     <p class="text-[9px] font-bold text-green-600 mt-0.5 uppercase">WA: {{ $employee->phone_number ?? '-' }}</p>
                                 </div>
@@ -160,7 +170,7 @@
                         <td class="px-6 py-4 text-center">
                             <div class="flex flex-col items-center">
                                 <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[9px] font-bold border border-slate-200 uppercase mb-1">{{ str_replace('_', ' ', $employee->employee_type) }}</span>
-                                <span class="text-[9px] font-bold text-amber-600 uppercase">Gol. {{ $employee->rank_class ?? '-' }}</span>
+                                <span class="text-[9px] font-bold text-amber-600 uppercase">Gol. {{ $employee->rank_relation->name ?? $employee->rank_class ?? '-' }}</span>
                                 @if($employee->picket_regu)
                                     <span class="text-[8px] font-extrabold text-blue-500 mt-1 uppercase">Regu {{ $employee->picket_regu }}</span>
                                 @endif
@@ -248,10 +258,11 @@
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Golongan</label>
-                        <select name="rank_class" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
-                            <option value="II">Golongan II</option>
-                            <option value="III">Golongan III</option>
-                            <option value="IV">Golongan IV</option>
+                        <select name="rank_id" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                            <option value="">-- Pilih Golongan --</option>
+                            @foreach($ranks as $rank)
+                                <option value="{{ $rank->id }}">{{ $rank->name }} ({{ $rank->description }})</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -351,10 +362,11 @@
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Golongan</label>
-                        <select name="rank_class" id="edit_rank_class" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
-                            <option value="II">Golongan II</option>
-                            <option value="III">Golongan III</option>
-                            <option value="IV">Golongan IV</option>
+                        <select name="rank_id" id="edit_rank_id" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                            <option value="">-- Pilih Golongan --</option>
+                            @foreach($ranks as $rank)
+                                <option value="{{ $rank->id }}">{{ $rank->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -466,6 +478,24 @@
 </form>
 
 <script>
+    let isAsc = true;
+    function sortNames() {
+        const table = document.getElementById('employeeTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('.employee-row'));
+
+        rows.sort((a, b) => {
+            const nameA = a.dataset.name.toLowerCase();
+            const nameB = b.dataset.name.toLowerCase();
+            return isAsc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+        });
+
+        isAsc = !isAsc;
+        
+        // Update icons or visual indicator if needed
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
     // Show Loading on Import Submit
     document.getElementById('importForm').addEventListener('submit', function() {
         document.getElementById('importModal').classList.add('hidden');
@@ -575,7 +605,7 @@
         document.getElementById('edit_nik').value = employee.nik || '';
         document.getElementById('edit_phone_number').value = employee.phone_number || '';
         document.getElementById('edit_email').value = email;
-        document.getElementById('edit_rank_class').value = employee.rank_class || 'II';
+        document.getElementById('edit_rank_id').value = employee.rank_id || '';
         document.getElementById('edit_employee_type').value = employee.employee_type || 'non_regu_jaga';
         document.getElementById('edit_picket_regu').value = employee.picket_regu || '';
         document.getElementById('edit_position_id').value = employee.position_id;
@@ -619,4 +649,3 @@
 </script>
 @endif
 @endsection
-

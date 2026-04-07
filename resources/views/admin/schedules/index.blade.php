@@ -60,7 +60,7 @@
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-xs font-bold text-slate-900 truncate">{{ $emp->full_name }}</p>
-                                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{{ $emp->squad->name ?? 'Staf' }}</p>
+                                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{{ $emp->is_regu ? 'Regu Jaga' : 'Staf' }}</p>
                                 </div>
                             </div>
                         </td>
@@ -70,13 +70,13 @@
                                 $schedule = $schedules->get($emp->id)?->firstWhere('date', $dateStr);
                                 $shiftName = $schedule?->shift?->name;
                                 $colorClass = 'bg-slate-50 text-slate-300';
-                                if($shiftName == 'Pagi') $colorClass = 'bg-blue-100 text-blue-700';
-                                elseif($shiftName == 'Siang') $colorClass = 'bg-amber-100 text-amber-700';
-                                elseif($shiftName == 'Malam') $colorClass = 'bg-indigo-100 text-indigo-700';
-                                elseif($shiftName == 'Kantor') $colorClass = 'bg-green-100 text-green-700';
+                                if($shiftName == 'Pagi') $colorClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                                elseif($shiftName == 'Siang') $colorClass = 'bg-amber-100 text-amber-700 border-amber-200';
+                                elseif($shiftName == 'Malam') $colorClass = 'bg-indigo-100 text-indigo-700 border-indigo-200';
+                                elseif($shiftName == 'Kantor') $colorClass = 'bg-blue-100 text-blue-700 border-blue-200';
                             @endphp
                             <td class="p-1 border-r border-slate-50">
-                                <div class="w-full h-8 rounded-lg {{ $colorClass }} flex items-center justify-center text-[9px] font-bold uppercase transition-transform hover:scale-110 cursor-pointer" 
+                                <div class="w-full h-8 rounded-lg border {{ $colorClass }} flex items-center justify-center text-[9px] font-bold uppercase transition-transform hover:scale-110 cursor-pointer" 
                                      title="{{ $emp->full_name }} - {{ $dateStr }}"
                                      onclick="openManualAssign({{ $emp->id }}, '{{ $emp->full_name }}', '{{ $dateStr }}')">
                                     {{ $shiftName ? substr($shiftName, 0, 1) : '-' }}
@@ -94,20 +94,20 @@
     <div class="flex flex-wrap gap-6 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm card-3d">
         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest w-full border-b border-slate-50 pb-2 mb-2">Keterangan Shift:</p>
         <div class="flex items-center gap-2">
-            <span class="w-4 h-4 rounded bg-blue-100 border border-blue-200"></span>
-            <span class="text-xs font-bold text-slate-600">P = Pagi</span>
+            <span class="w-4 h-4 rounded bg-emerald-100 border border-emerald-200"></span>
+            <span class="text-xs font-bold text-slate-600">P = Pagi (07:30 - 13:00)</span>
         </div>
         <div class="flex items-center gap-2">
             <span class="w-4 h-4 rounded bg-amber-100 border border-amber-200"></span>
-            <span class="text-xs font-bold text-slate-600">S = Siang</span>
+            <span class="text-xs font-bold text-slate-600">S = Siang (13:00 - 19:00)</span>
         </div>
         <div class="flex items-center gap-2">
             <span class="w-4 h-4 rounded bg-indigo-100 border border-indigo-200"></span>
-            <span class="text-xs font-bold text-slate-600">M = Malam</span>
+            <span class="text-xs font-bold text-slate-600">M = Malam (19:00 - 07:30)</span>
         </div>
         <div class="flex items-center gap-2">
-            <span class="w-4 h-4 rounded bg-green-100 border border-green-200"></span>
-            <span class="text-xs font-bold text-slate-600">K = Kantor</span>
+            <span class="w-4 h-4 rounded bg-blue-100 border border-blue-200"></span>
+            <span class="text-xs font-bold text-slate-600">K = Kantor (07:30 - 16:00)</span>
         </div>
     </div>
 </div>
@@ -141,13 +141,13 @@
                         </select>
                     </div>
                     <div class="space-y-1.5">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pola Perulangan</label>
-                        <p class="text-[9px] text-slate-400 italic">Pilih shift berurutan (misal: P-S-M-L)</p>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Tanggal Mulai Pola</label>
+                        <input type="date" name="start_date" required value="{{ $month->format('Y-m-01') }}" class="w-full px-5 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
                     </div>
                 </div>
 
                 <div class="space-y-3">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Urutan Pola (4 Hari)</label>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Urutan Pola Berulang (Misal: P-S-M-L)</label>
                     <div class="grid grid-cols-4 gap-3">
                         @for($i = 0; $i < 4; $i++)
                         <select name="pattern[]" class="w-full px-3 py-3 rounded-xl border border-slate-200 bg-white text-[10px] font-bold outline-none focus:border-blue-500">

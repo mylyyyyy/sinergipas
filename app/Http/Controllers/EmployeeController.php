@@ -20,7 +20,7 @@ class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Employee::with(['user', 'work_unit', 'position_relation']);
+        $query = Employee::with(['user', 'work_unit', 'position_relation', 'rank_relation']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -37,8 +37,9 @@ class EmployeeController extends Controller
         $employees = $query->latest()->paginate(10)->withQueryString();
         $positions = Position::orderBy('name')->get();
         $workUnits = WorkUnit::orderBy('name')->get();
+        $ranks = \App\Models\Rank::orderBy('name')->get();
 
-        return view('employees.index', compact('employees', 'positions', 'workUnits'));
+        return view('employees.index', compact('employees', 'positions', 'workUnits', 'ranks'));
     }
 
     public function store(Request $request)
@@ -49,8 +50,8 @@ class EmployeeController extends Controller
             'email' => 'required|email|unique:users,email',
             'position_id' => 'required|exists:positions,id',
             'work_unit_id' => 'required|exists:work_units,id',
+            'rank_id' => 'nullable|exists:ranks,id',
             'password' => 'required|min:8',
-            'rank_class' => 'nullable|string',
             'employee_type' => 'required|in:regu_jaga,non_regu_jaga',
             'picket_regu' => 'nullable|string',
         ]);
@@ -63,6 +64,7 @@ class EmployeeController extends Controller
         ]);
 
         $position = Position::find($request->position_id);
+        $rank = $request->rank_id ? \App\Models\Rank::find($request->rank_id) : null;
 
         Employee::create([
             'user_id' => $user->id,
@@ -71,7 +73,8 @@ class EmployeeController extends Controller
             'position' => $position->name,
             'position_id' => $request->position_id,
             'work_unit_id' => $request->work_unit_id,
-            'rank_class' => $request->rank_class,
+            'rank_id' => $request->rank_id,
+            'rank_class' => $rank?->name,
             'employee_type' => $request->employee_type,
             'picket_regu' => $request->picket_regu,
         ]);
@@ -94,8 +97,8 @@ class EmployeeController extends Controller
             'email' => 'required|email|unique:users,email,' . $employee->user_id,
             'position_id' => 'required|exists:positions,id',
             'work_unit_id' => 'required|exists:work_units,id',
+            'rank_id' => 'nullable|exists:ranks,id',
             'password' => 'nullable|min:8',
-            'rank_class' => 'nullable|string',
             'employee_type' => 'required|in:regu_jaga,non_regu_jaga',
             'picket_regu' => 'nullable|string',
         ]);
@@ -110,6 +113,7 @@ class EmployeeController extends Controller
         }
 
         $position = Position::find($request->position_id);
+        $rank = $request->rank_id ? \App\Models\Rank::find($request->rank_id) : null;
 
         $employee->update([
             'nip' => $request->nip,
@@ -117,7 +121,8 @@ class EmployeeController extends Controller
             'position' => $position->name,
             'position_id' => $request->position_id,
             'work_unit_id' => $request->work_unit_id,
-            'rank_class' => $request->rank_class,
+            'rank_id' => $request->rank_id,
+            'rank_class' => $rank?->name,
             'employee_type' => $request->employee_type,
             'picket_regu' => $request->picket_regu,
         ]);

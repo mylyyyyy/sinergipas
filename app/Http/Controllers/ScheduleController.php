@@ -57,10 +57,12 @@ class ScheduleController extends Controller
         $request->validate([
             'squad_id' => 'required|exists:squads,id',
             'month' => 'required|string',
+            'start_date' => 'required|date',
             'pattern' => 'required|array',
         ]);
 
         $month = Carbon::parse($request->month);
+        $startDate = Carbon::parse($request->start_date);
         $squad = Squad::find($request->squad_id);
         $employees = Employee::where('squad_id', $request->squad_id)->get();
         $pattern = $request->pattern;
@@ -72,17 +74,25 @@ class ScheduleController extends Controller
 
         foreach ($employees as $employee) {
             for ($day = 1; $day <= $month->daysInMonth; $day++) {
-                $date = $month->copy()->day($day);
-                $patternIndex = ($day - 1) % $patternCount;
-                $shiftId = $pattern[$patternIndex];
+                $currentDate = $month->copy()->day($day);
+                
+                // Calculate pattern index based on diff from start_date
+                $diffDays = $startDate->diffInDays($currentDate, false);
+                
+                // Only generate if currentDate is >= startDate (optional, but usually preferred)
+                // If we want to fill the whole month regardless of start_date being in middle:
+                $index = ($diffDays % $patternCount);
+                if ($index < 0) $index += $patternCount; // Handle negative modulo
+
+                $shiftId = $pattern[$index];
 
                 if ($shiftId) {
                     Schedule::updateOrCreate(
-                        ['employee_id' => $employee->id, 'date' => $date->format('Y-m-d')],
+                        ['employee_id' => $employee->id, 'date' => $currentDate->format('Y-m-d')],
                         ['shift_id' => $shiftId]
                     );
                 } else {
-                    Schedule::where('employee_id', $employee->id)->where('date', $date->format('Y-m-d'))->delete();
+                    Schedule::where('employee_id', $employee->id)->where('date', $currentDate->format('Y-m-d'))->delete();
                 }
             }
         }
