@@ -185,18 +185,24 @@ class AttendanceController extends Controller
     public function export(Request $request)
     {
         set_time_limit(0);
-        ini_set('memory_limit', '1024M'); // Increased for large PDF exports
+        ini_set('memory_limit', '1024M');
 
-        $filter = $request->filter ?? 'monthly';
+        $filter = $request->filter ?? 'monthly'; // daily, weekly, monthly, individual
+        $type = $request->type ?? 'pdf';
         $monthStr = $request->month ?? now()->format('Y-m');
         $date = Carbon::parse($monthStr);
-        $exactDate = $request->filled('exact_date') ? Carbon::parse($request->exact_date) : now();
         
-        $employees = Employee::with(['work_unit', 'squad'])->orderBy('full_name')->get();
+        $query = Employee::with(['work_unit', 'squad'])->orderBy('full_name');
+
+        // Individual Filter
+        if ($request->filled('employee_id')) {
+            $query->where('id', $request->employee_id);
+        }
+        $employees = $query->get();
 
         if ($filter === 'daily') {
+            $exactDate = $request->filled('exact_date') ? Carbon::parse($request->exact_date) : now();
             $attendances = Attendance::whereDate('date', $exactDate)->get()->keyBy('employee_id');
-            // For daily, we map employees to their attendance that day
             $data = $employees->map(function($emp) use ($attendances) {
                 $att = $attendances->get($emp->id);
                 return (object)[
@@ -210,11 +216,48 @@ class AttendanceController extends Controller
             });
             $reportTitle = "LAPORAN ABSENSI HARIAN - " . strtoupper($exactDate->translatedFormat('d F Y'));
             
-            if ($request->type === 'excel') {
-                return $this->exportExcelDaily($data, $reportTitle, "rekap-absensi-harian-{$exactDate->format('Y-m-d')}.xlsx");
+            if ($type === 'excel') {
+                return $this->exportExcelDaily($data, $reportTitle, "absensi-harian-{$exactDate->format('Y-m-d')}.xlsx");
             }
-            $pdf = Pdf::loadView('admin.attendance.pdf-daily', compact('data', 'reportTitle'))->setPaper('a4', 'landscape');
-            return $pdf->download("rekap-absensi-harian-{$exactDate->format('Y-m-d')}.pdf");
+            return Pdf::loadView('admin.attendance.pdf-daily', compact('data', 'reportTitle'))->setPaper('a4', 'landscape')->download("absensi-harian-{$exactDate->format('Y-m-d')}.pdf");
+
+        } elseif ($filter === 'weekly') {
+            $start = Carbon::parse($request->start_date ?? now()->startOfWeek());
+            $end = Carbon::parse($request->end_date ?? now()->endOfWeek());
+            
+            $attendances = Attendance::whereBetween('date', [$start->format('Y-m-d'), $end->format('Y-m-d')])->get()->groupBy('employee_id');
+            $data = $employees->map(function($emp) use ($attendances) {
+                $atts = $attendances->get($emp->id) ?? collect();
+                return (object)[
+                    'employee' => $emp,
+                    'total_present' => $atts->where('status', '!=', 'absent')->count(),
+                    'total_late_minutes' => $atts->sum('late_minutes'),
+                    'total_allowance' => $atts->sum('allowance_amount'),
+                ];
+            });
+            $reportTitle = "REKAPITULASI ABSENSI MINGGUAN (" . $start->format('d/m') . " - " . $end->format('d/m/Y') . ")";
+            
+            if ($type === 'excel') {
+                return $this->exportExcelMonthly($data, $reportTitle, "rekap-mingguan.xlsx");
+            }
+            return Pdf::loadView('admin.attendance.pdf-monthly', compact('data', 'reportTitle'))->setPaper('a4', 'landscape')->download("rekap-mingguan.pdf");
+
+        } elseif ($filter === 'individual') {
+            $emp = $employees->first();
+            if (!$emp) return back()->with('error', 'Pegawai tidak ditemukan.');
+            
+            $logs = Attendance::where('employee_id', $emp->id)
+                ->whereMonth('date', $date->month)
+                ->whereYear('date', $date->year)
+                ->orderBy('date', 'asc')
+                ->get();
+                
+            $reportTitle = "LAPORAN INDIVIDU - " . strtoupper($emp->full_name) . " ({$date->translatedFormat('F Y')})";
+            
+            if ($type === 'excel') {
+                return $this->exportExcelIndividual($emp, $logs, $reportTitle, "laporan-individu-{$emp->nip}.xlsx");
+            }
+            return Pdf::loadView('admin.attendance.pdf-individual', compact('emp', 'logs', 'reportTitle', 'date'))->setPaper('a4', 'portrait')->download("laporan-individu-{$emp->nip}.pdf");
 
         } else {
             // Monthly Recap
@@ -230,12 +273,49 @@ class AttendanceController extends Controller
             });
             $reportTitle = "REKAPITULASI ABSENSI BULANAN - " . strtoupper($date->translatedFormat('F Y'));
 
-            if ($request->type === 'excel') {
-                return $this->exportExcelMonthly($data, $reportTitle, "rekap-absensi-bulanan-{$date->format('Y-m')}.xlsx");
+            if ($type === 'excel') {
+                return $this->exportExcelMonthly($data, $reportTitle, "rekap-bulanan-{$date->format('Y-m')}.xlsx");
             }
-            $pdf = Pdf::loadView('admin.attendance.pdf-monthly', compact('data', 'reportTitle'))->setPaper('a4', 'landscape');
-            return $pdf->download("rekap-absensi-bulanan-{$date->format('Y-m')}.pdf");
+            return Pdf::loadView('admin.attendance.pdf-monthly', compact('data', 'reportTitle'))->setPaper('a4', 'landscape')->download("rekap-bulanan-{$date->format('Y-m')}.pdf");
         }
+    }
+
+    private function exportExcelIndividual($emp, $logs, $title, $filename)
+    {
+        return Excel::download(new class($emp, $logs, $title) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithStyles, \Maatwebsite\Excel\Concerns\WithDrawings, \Maatwebsite\Excel\Concerns\WithCustomStartCell {
+            protected $emp, $logs, $title;
+            public function __construct($e, $l, $t) { $this->emp = $e; $this->logs = $l; $this->title = $t; }
+            public function collection() {
+                return $this->logs->map(fn($log, $i) => [
+                    $i+1, 
+                    Carbon::parse($log->date)->translatedFormat('d F Y'),
+                    $log->check_in ? Carbon::parse($log->check_in)->format('H:i') : '--:--',
+                    $log->check_out && $log->check_out != $log->check_in ? Carbon::parse($log->check_out)->format('H:i') : '--:--',
+                    strtoupper($log->status),
+                    $log->late_minutes . ' Menit',
+                    $log->allowance_amount
+                ]);
+            }
+            public function headings(): array { return ['NO', 'TANGGAL', 'MASUK', 'PULANG', 'STATUS', 'TERLAMBAT', 'UANG MAKAN']; }
+            public function startCell(): string { return 'A7'; }
+            public function drawings() {
+                $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+                $drawing->setPath(public_path('logo1.png'))->setHeight(80)->setCoordinates('A1');
+                return $drawing;
+            }
+            public function styles($sheet) {
+                $sheet->mergeCells('B1:G1'); $sheet->setCellValue('B1', Setting::getValue('kop_line_1'));
+                $sheet->mergeCells('B2:G2'); $sheet->setCellValue('B2', Setting::getValue('kop_line_2'));
+                $sheet->mergeCells('A5:G5'); $sheet->setCellValue('A5', $this->title);
+                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14);
+                $sheet->getStyle('A7:G7')->getFont()->setBold(true);
+                $lastRow = $sheet->getHighestRow();
+                if ($lastRow >= 7) {
+                    $sheet->getStyle("A7:G$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                }
+                return [];
+            }
+        }, $filename);
     }
 
     private function exportExcelDaily($data, $title, $filename)

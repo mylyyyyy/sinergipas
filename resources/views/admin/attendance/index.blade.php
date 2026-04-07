@@ -106,6 +106,7 @@
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Hadir (Hari)</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Terlambat (Total)</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Uang Makan</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
@@ -150,10 +151,15 @@
                                 <p class="text-sm font-bold text-emerald-600">Rp {{ number_format($totalUangMakan, 0, ',', '.') }}</p>
                                 <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Gol. {{ $emp->rank_class ?? '-' }}</p>
                             </td>
+                            <td class="px-6 py-4 text-center">
+                                <a href="{{ route('admin.attendance.export', ['filter' => 'individual', 'employee_id' => $emp->id, 'month' => $monthStr]) }}" class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-600 hover:text-white transition-all no-loader">
+                                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Laporan
+                                </a>
+                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-20 text-center">
+                            <td colspan="6" class="px-6 py-20 text-center">
                                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest italic">Belum ada data untuk periode ini</p>
                             </td>
                         </tr>
@@ -275,32 +281,48 @@
 
 <!-- Export Modal -->
 <div id="exportModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-sm rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200">
-        <h3 class="text-xl font-bold text-slate-900 mb-6">Ekspor Laporan</h3>
+    <div class="bg-white w-full max-w-md rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200">
+        <h3 class="text-2xl font-bold text-slate-900 mb-6 italic">Export Laporan Kehadiran</h3>
         <form action="{{ route('admin.attendance.export') }}" method="GET" class="space-y-6">
             <div class="space-y-4">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Filter Periode</label>
-                    <select name="filter" id="export_filter" onchange="toggleDateInput()" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
-                        <option value="monthly">Rekap Bulanan (Sesuai Bulan Terpilih)</option>
-                        <option value="daily">Laporan Harian (Pilih Tanggal)</option>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Filter Jenis Laporan</label>
+                    <select name="filter" id="export_filter" onchange="updateExportUI()" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                        <option value="monthly">Rekapitulasi Bulanan (Seluruh Pegawai)</option>
+                        <option value="weekly">Rekapitulasi Mingguan (Rentang Tanggal)</option>
+                        <option value="daily">Laporan Harian (Satu Hari)</option>
                     </select>
                 </div>
+
+                <!-- Range Container (Weekly) -->
+                <div id="range_container" class="hidden grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Dari</label>
+                        <input type="date" name="start_date" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Sampai</label>
+                        <input type="date" name="end_date" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <!-- Single Date Container (Daily) -->
                 <div id="date_input_container" class="hidden">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Pilih Tanggal</label>
                     <input type="date" name="exact_date" value="{{ date('Y-m-d') }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
                 </div>
+
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Format File</label>
                     <select name="type" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
-                        <option value="pdf">Dokumen PDF (Resmi)</option>
+                        <option value="pdf">Dokumen PDF Resmi (KOP & Logo)</option>
                         <option value="excel">Microsoft Excel (.xlsx)</option>
                     </select>
                 </div>
                 <input type="hidden" name="month" value="{{ $monthStr }}">
             </div>
             <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg btn-3d">
-                Download Laporan
+                Download Laporan Sekarang
             </button>
             <button type="button" onclick="document.getElementById('exportModal').classList.add('hidden')" class="w-full text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-2">Batal</button>
         </form>
@@ -323,6 +345,15 @@
 </style>
 
 <script>
+    function updateExportUI() {
+        const filter = document.getElementById('export_filter').value;
+        const dateContainer = document.getElementById('date_input_container');
+        const rangeContainer = document.getElementById('range_container');
+        
+        dateContainer.classList.toggle('hidden', filter !== 'daily');
+        rangeContainer.classList.toggle('hidden', filter !== 'weekly');
+    }
+
     function switchTab(tabName) {
         // Toggle contents
         document.getElementById('tab-recap').classList.toggle('hidden', tabName !== 'recap');
@@ -332,28 +363,17 @@
         document.getElementById('btn-recap').classList.toggle('active', tabName === 'recap');
         document.getElementById('btn-logs').classList.toggle('active', tabName === 'logs');
 
-        // Remember tab in URL/LocalStorage if needed (Optional)
+        // Remember tab in URL/LocalStorage
         const url = new URL(window.location);
         url.searchParams.set('tab', tabName);
         window.history.pushState({}, '', url);
     }
 
-    // Auto-switch tab based on URL param
     window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const activeTab = urlParams.get('tab') || 'recap';
         switchTab(activeTab);
     });
-
-    function toggleDateInput() {
-        const filter = document.getElementById('export_filter').value;
-        const container = document.getElementById('date_input_container');
-        if (filter === 'daily') {
-            container.classList.remove('hidden');
-        } else {
-            container.classList.add('hidden');
-        }
-    }
 
     function updateFileName(input) {
         if (input.files && input.files[0]) {

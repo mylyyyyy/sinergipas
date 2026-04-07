@@ -64,47 +64,74 @@ class ScheduleController extends Controller
         $month = Carbon::parse($request->month);
         $startDate = Carbon::parse($request->start_date);
         $squad = Squad::find($request->squad_id);
-        $employees = Employee::where('squad_id', $request->squad_id)->get();
+        
+        // Fetch specific squad for pattern and also handle all staff automatically
+        $reguEmployees = Employee::where('squad_id', $request->squad_id)->get();
+        $staffEmployees = Employee::where('employee_type', 'non_regu_jaga')->get();
+        
+        $officeShift = Shift::where('name', 'like', '%Kantor%')->first();
         $pattern = $request->pattern;
         $patternCount = count($pattern);
 
-        if ($employees->isEmpty()) {
-            return back()->with('error', "Tidak ada pegawai dalam regu yang dipilih.");
+        if ($reguEmployees->isEmpty() && $staffEmployees->isEmpty()) {
+            return back()->with('error', "Tidak ada data pegawai untuk diproses.");
         }
 
-        foreach ($employees as $employee) {
-            for ($day = 1; $day <= $month->daysInMonth; $day++) {
-                $currentDate = $month->copy()->day($day);
-                
-                // Calculate pattern index based on diff from start_date
-                $diffDays = $startDate->diffInDays($currentDate, false);
-                
-                // Only generate if currentDate is >= startDate (optional, but usually preferred)
-                // If we want to fill the whole month regardless of start_date being in middle:
-                $index = ($diffDays % $patternCount);
-                if ($index < 0) $index += $patternCount; // Handle negative modulo
+        DB::beginTransaction();
+        try {
+            // 1. Process Regu Jaga (Pattern Based)
+            foreach ($reguEmployees as $employee) {
+                for ($day = 1; $day <= $month->daysInMonth; $day++) {
+                    $currentDate = $month->copy()->day($day);
+                    $diffDays = $startDate->diffInDays($currentDate, false);
+                    $index = ($diffDays % $patternCount);
+                    if ($index < 0) $index += $patternCount;
 
-                $shiftId = $pattern[$index];
+                    $shiftId = $pattern[$index];
 
-                if ($shiftId) {
-                    Schedule::updateOrCreate(
-                        ['employee_id' => $employee->id, 'date' => $currentDate->format('Y-m-d')],
-                        ['shift_id' => $shiftId]
-                    );
-                } else {
-                    Schedule::where('employee_id', $employee->id)->where('date', $currentDate->format('Y-m-d'))->delete();
+                    if ($shiftId) {
+                        Schedule::updateOrCreate(
+                            ['employee_id' => $employee->id, 'date' => $currentDate->format('Y-m-d')],
+                            ['shift_id' => $shiftId]
+                        );
+                    } else {
+                        Schedule::where('employee_id', $employee->id)->where('date', $currentDate->format('Y-m-d'))->delete();
+                    }
                 }
             }
+
+            // 2. Process Staff (Office Hours: Mon-Fri)
+            if ($officeShift) {
+                foreach ($staffEmployees as $employee) {
+                    for ($day = 1; $day <= $month->daysInMonth; $day++) {
+                        $currentDate = $month->copy()->day($day);
+                        // Monday (1) to Friday (5)
+                        if ($currentDate->isWeekday()) {
+                            Schedule::updateOrCreate(
+                                ['employee_id' => $employee->id, 'date' => $currentDate->format('Y-m-d')],
+                                ['shift_id' => $officeShift->id]
+                            );
+                        } else {
+                            Schedule::where('employee_id', $employee->id)->where('date', $currentDate->format('Y-m-d'))->delete();
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', "Terjadi kesalahan: " . $e->getMessage());
         }
 
         AuditLog::create([
             'user_id' => auth()->id(),
             'activity' => 'generate_roster',
             'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . " men-generate roster otomatis untuk Regu $squad->name bulan " . $month->translatedFormat('F Y')
+            'details' => auth()->user()->name . " men-generate roster otomatis untuk Regu $squad->name dan seluruh Staf bulan " . $month->translatedFormat('F Y')
         ]);
 
-        return back()->with('success', "Roster untuk Regu $squad->name berhasil di-generate.");
+        return back()->with('success', "Roster untuk Regu $squad->name dan jadwal seluruh Staf berhasil di-generate.");
     }
 
     public function export(Request $request)

@@ -29,7 +29,7 @@
                 <i data-lucide="users" class="w-4 h-4"></i> Manajemen Regu
             </a>
             <button onclick="document.getElementById('rosterModal').classList.remove('hidden')" class="flex-1 lg:flex-none px-6 py-3 rounded-xl bg-amber-600 text-white font-bold text-[10px] uppercase tracking-wider hover:bg-amber-700 transition-all shadow-lg btn-3d flex items-center justify-center gap-2">
-                <i data-lucide="wand-2" class="w-4 h-4"></i> Generate Roster Otomatis
+                <i data-lucide="wand-2" class="w-4 h-4"></i> Generate Roster
             </button>
         </div>
     </div>
@@ -40,7 +40,7 @@
             <table class="w-full border-collapse">
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-100">
-                        <th class="sticky left-0 z-10 bg-slate-50 px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest min-w-[200px] border-r border-slate-100">Pegawai</th>
+                        <th class="sticky left-0 z-10 bg-slate-50 px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest min-w-[220px] border-r border-slate-100 text-left">Pegawai & Jabatan</th>
                         @for($d = 1; $d <= $daysInMonth; $d++)
                             @php $currentDate = $month->copy()->day($d); @endphp
                             <th class="px-3 py-4 text-center min-w-[45px] {{ $currentDate->isWeekend() ? 'bg-red-50 text-red-500' : 'text-slate-400' }}">
@@ -55,12 +55,12 @@
                     <tr class="hover:bg-slate-50/50 transition-colors">
                         <td class="sticky left-0 z-10 bg-white px-6 py-4 border-r border-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400 shrink-0">
+                                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-black shrink-0 border border-blue-100 uppercase">
                                     {{ substr($emp->full_name, 0, 1) }}
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-xs font-bold text-slate-900 truncate">{{ $emp->full_name }}</p>
-                                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{{ $emp->is_regu ? 'Regu Jaga' : 'Staf' }}</p>
+                                    <p class="text-[9px] font-medium text-blue-500 truncate leading-tight mt-0.5">{{ $emp->position }}</p>
                                 </div>
                             </div>
                         </td>
@@ -69,15 +69,16 @@
                                 $dateStr = $month->copy()->day($d)->format('Y-m-d');
                                 $schedule = $schedules->get($emp->id)?->firstWhere('date', $dateStr);
                                 $shiftName = $schedule?->shift?->name;
-                                $colorClass = 'bg-slate-50 text-slate-300';
-                                if($shiftName == 'Pagi') $colorClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
-                                elseif($shiftName == 'Siang') $colorClass = 'bg-amber-100 text-amber-700 border-amber-200';
-                                elseif($shiftName == 'Malam') $colorClass = 'bg-indigo-100 text-indigo-700 border-indigo-200';
-                                elseif($shiftName == 'Kantor') $colorClass = 'bg-blue-100 text-blue-700 border-blue-200';
+                                
+                                $colorClass = 'bg-slate-50 text-slate-300 border-transparent';
+                                if($shiftName == 'Pagi') $colorClass = 'bg-emerald-500 text-white border-emerald-600 shadow-sm shadow-emerald-200';
+                                elseif($shiftName == 'Siang') $colorClass = 'bg-amber-500 text-white border-amber-600 shadow-sm shadow-amber-200';
+                                elseif($shiftName == 'Malam') $colorClass = 'bg-slate-800 text-white border-slate-900 shadow-sm shadow-slate-400';
+                                elseif($shiftName == 'Kantor') $colorClass = 'bg-blue-500 text-white border-blue-600 shadow-sm shadow-blue-200';
                             @endphp
                             <td class="p-1 border-r border-slate-50">
-                                <div class="w-full h-8 rounded-lg border {{ $colorClass }} flex items-center justify-center text-[9px] font-bold uppercase transition-transform hover:scale-110 cursor-pointer" 
-                                     title="{{ $emp->full_name }} - {{ $dateStr }}"
+                                <div class="w-full h-8 rounded-lg border {{ $colorClass }} flex items-center justify-center text-[10px] font-black transition-all hover:scale-110 cursor-pointer" 
+                                     title="{{ $emp->full_name }} - {{ $dateStr }} ({{ $shiftName ?? 'Libur' }})"
                                      onclick="openManualAssign({{ $emp->id }}, '{{ $emp->full_name }}', '{{ $dateStr }}')">
                                     {{ $shiftName ? substr($shiftName, 0, 1) : '-' }}
                                 </div>
@@ -91,23 +92,39 @@
     </div>
 
     <!-- Legend -->
-    <div class="flex flex-wrap gap-6 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm card-3d">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest w-full border-b border-slate-50 pb-2 mb-2">Keterangan Shift:</p>
-        <div class="flex items-center gap-2">
-            <span class="w-4 h-4 rounded bg-emerald-100 border border-emerald-200"></span>
-            <span class="text-xs font-bold text-slate-600">P = Pagi (07:30 - 13:00)</span>
-        </div>
-        <div class="flex items-center gap-2">
-            <span class="w-4 h-4 rounded bg-amber-100 border border-amber-200"></span>
-            <span class="text-xs font-bold text-slate-600">S = Siang (13:00 - 19:00)</span>
-        </div>
-        <div class="flex items-center gap-2">
-            <span class="w-4 h-4 rounded bg-indigo-100 border border-indigo-200"></span>
-            <span class="text-xs font-bold text-slate-600">M = Malam (19:00 - 07:30)</span>
-        </div>
-        <div class="flex items-center gap-2">
-            <span class="w-4 h-4 rounded bg-blue-100 border border-blue-200"></span>
-            <span class="text-xs font-bold text-slate-600">K = Kantor (07:30 - 16:00)</span>
+    <div class="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm card-3d">
+        <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+            <i data-lucide="info" class="w-4 h-4"></i> Keterangan Kode Shift & Jam Dinas
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+                <span class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-emerald-200">P</span>
+                <div>
+                    <p class="text-xs font-bold text-slate-900">Dinas Pagi</p>
+                    <p class="text-[10px] font-medium text-emerald-600">07:30 - 13:00 WIB</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-amber-50 border border-amber-100">
+                <span class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-amber-200">S</span>
+                <div>
+                    <p class="text-xs font-bold text-slate-900">Dinas Siang</p>
+                    <p class="text-[10px] font-medium text-amber-600">13:00 - 19:00 WIB</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-100 border border-slate-200">
+                <span class="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-slate-300">M</span>
+                <div>
+                    <p class="text-xs font-bold text-slate-900">Dinas Malam</p>
+                    <p class="text-[10px] font-medium text-slate-500">19:00 - 07:30 WIB</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-blue-50 border border-blue-100">
+                <span class="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-blue-200">K</span>
+                <div>
+                    <p class="text-xs font-bold text-slate-900">Jam Kantor</p>
+                    <p class="text-[10px] font-medium text-blue-600">07:30 - 16:00 WIB</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -119,8 +136,8 @@
         <div class="relative z-10">
             <div class="flex justify-between items-center mb-8">
                 <div>
-                    <h3 class="text-2xl font-bold text-slate-900 tracking-tight">Generate Roster Otomatis</h3>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Penjadwalan Regu Jaga</p>
+                    <h3 class="text-2xl font-bold text-slate-900 tracking-tight italic">Auto-Generate Roster</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Sinkronisasi Jadwal Regu & Staf</p>
                 </div>
                 <button onclick="document.getElementById('rosterModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -133,8 +150,9 @@
                 
                 <div class="grid grid-cols-2 gap-6">
                     <div class="space-y-1.5">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pilih Regu</label>
-                        <select name="squad_id" required class="w-full px-5 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pilih Regu / Kelompok</label>
+                        <select name="squad_id" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                            <option value="">-- Pilih Regu --</option>
                             @foreach($squads as $squad)
                                 <option value="{{ $squad->id }}">{{ $squad->name }} ({{ $squad->employees_count ?? $squad->employees->count() }} Anggota)</option>
                             @endforeach
@@ -142,15 +160,25 @@
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Tanggal Mulai Pola</label>
-                        <input type="date" name="start_date" required value="{{ $month->format('Y-m-01') }}" class="w-full px-5 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                        <input type="date" name="start_date" required value="{{ $month->format('Y-m-01') }}" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500 transition-all">
                     </div>
                 </div>
 
+                <div class="p-5 bg-indigo-50 rounded-2xl border border-indigo-100">
+                    <p class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <i data-lucide="alert-circle" class="w-4 h-4"></i> Info Penjadwalan:
+                    </p>
+                    <ul class="text-[10px] font-medium text-indigo-500 space-y-1.5 list-disc pl-4">
+                        <li><b>Regu Jaga:</b> Akan mengikuti urutan pola shift yang ditentukan di bawah.</li>
+                        <li><b>Staf / Non-Regu:</b> Otomatis mengikuti pola jam kantor (Senin-Jumat).</li>
+                    </ul>
+                </div>
+
                 <div class="space-y-3">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Urutan Pola Berulang (Misal: P-S-M-L)</label>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Urutan Pola Berulang (Shift Jaga)</label>
                     <div class="grid grid-cols-4 gap-3">
                         @for($i = 0; $i < 4; $i++)
-                        <select name="pattern[]" class="w-full px-3 py-3 rounded-xl border border-slate-200 bg-white text-[10px] font-bold outline-none focus:border-blue-500">
+                        <select name="pattern[]" class="w-full px-3 py-3.5 rounded-xl border border-slate-200 bg-white text-xs font-black outline-none focus:border-blue-500">
                             <option value="">LIBUR</option>
                             @foreach($shifts as $s)
                                 <option value="{{ $s->id }}" {{ $i == $loop->index ? 'selected' : '' }}>{{ strtoupper($s->name) }}</option>
@@ -161,7 +189,7 @@
                 </div>
 
                 <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d mt-4">
-                    Proses Generate Jadwal
+                    Eksekusi Penjadwalan
                 </button>
             </form>
         </div>
@@ -171,7 +199,7 @@
 <!-- Manual Assign Modal -->
 <div id="manualModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
     <div class="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl animate-in zoom-in duration-200">
-        <h3 class="text-xl font-bold text-slate-900 mb-2">Ubah Jadwal</h3>
+        <h3 class="text-xl font-bold text-slate-900 mb-2">Penyesuaian Jadwal</h3>
         <p id="manual_info" class="text-xs text-slate-500 font-medium mb-6"></p>
         
         <form id="manualForm" class="space-y-6">
@@ -179,8 +207,8 @@
             <input type="hidden" id="manual_emp_id">
             <input type="hidden" id="manual_date">
             <div class="space-y-1.5">
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pilih Shift</label>
-                <select id="manual_shift_id" class="w-full px-5 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pilih Jenis Shift</label>
+                <select id="manual_shift_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
                     <option value="">LIBUR / KOSONG</option>
                     @foreach($shifts as $s)
                         <option value="{{ $s->id }}">{{ strtoupper($s->name) }}</option>
