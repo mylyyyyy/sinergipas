@@ -180,6 +180,7 @@ class EmployeeController extends Controller
 
     public function importExcel(Request $request)
     {
+        set_time_limit(0);
         $request->validate(['file' => 'required|mimes:xlsx,xls,csv']);
         
         try {

@@ -6,100 +6,130 @@ use App\Models\Employee;
 use App\Models\User;
 use App\Models\Position;
 use App\Models\WorkUnit;
+use App\Models\Squad;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithBatchInserts;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Concerns\ToCollection;
 
-class EmployeesImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChunkReading
+class EmployeesImport implements ToCollection
 {
-    public function model(array $row)
+    public function collection(Collection $rows)
     {
-        // New Format Mapping based on user request:
-        // Nama Lengkap, Jabatan, Unit Kerja, Email, NIK, No. WhatsApp, Gol, regu/nonregu, [Optional NIP]
-        
-        $nama = $row['nama_lengkap'] ?? null;
-        $jabatanName = $row['jabatan'] ?? null;
-        $unitName = $row['unit_kerja'] ?? null;
-        $email = $row['email'] ?? null;
-        $nik = $row['nik'] ?? null;
-        $wa = $row['no_whatsapp'] ?? $row['whatsapp'] ?? null;
-        $rankClass = $row['gol'] ?? $row['golongan'] ?? null;
-        $typeRaw = $row['regunonregu'] ?? $row['tipe'] ?? null;
-        $nip = $row['nip'] ?? $nik; // Fallback NIP to NIK if not provided
+        $positions = Position::all()->pluck('id', 'name')->toArray();
+        $workUnits = WorkUnit::all()->pluck('id', 'name')->toArray();
+        $squads = Squad::all()->pluck('id', 'name')->toArray();
 
-        if (empty($nip) || empty($email)) return null;
+        DB::beginTransaction();
+        try {
+            foreach ($rows as $index => $row) {
+                // Skip header
+                if ($index === 0 && (str_contains(strtolower($row[0]), 'nip') || str_contains(strtolower($row[1]), 'nama'))) {
+                    continue;
+                }
 
-        // Auto-detect Employee Type based on Position
-        $employeeType = 'non_regu_jaga';
-        $picketRegu = $row['regu'] ?? null;
+                // 1. Ambil NIP dan bersihkan secara paksa (Hapus spasi, titik, atau format scientific)
+                $nipRaw = trim((string)($row[0] ?? ''));
+                if (empty($nipRaw)) continue;
+                
+                // Konversi scientific notation ke string jika perlu (misal 1.98E+17)
+                if (str_contains(strtoupper($nipRaw), 'E+')) {
+                    $nip = number_format((float)$nipRaw, 0, '', '');
+                } else {
+                    $nip = preg_replace('/[^0-9]/', '', $nipRaw); // Hanya ambil angka
+                }
 
-        $jagaKeywords = ['JAGA', 'RUMAH TAHANAN', 'PENGAMANAN', 'KOMANDAN'];
-        foreach ($jagaKeywords as $key) {
-            if (str_contains(strtoupper($jabatanName), $key)) {
-                $employeeType = 'regu_jaga';
-                break;
+                $nama = trim((string)($row[1] ?? ''));
+                $jabatanName = trim((string)($row[2] ?? ''));
+                $unitName = trim((string)($row[3] ?? ''));
+                $email = trim((string)($row[4] ?? ''));
+                $nik = trim((string)($row[5] ?? ''));
+                $wa = trim((string)($row[6] ?? ''));
+                $rankClass = trim((string)($row[7] ?? ''));
+                $reguName = trim((string)($row[8] ?? ''));
+
+                if (empty($nip) || empty($email)) continue;
+
+                // Resolve Master Data
+                $positionId = $this->resolveId($jabatanName, $positions, Position::class);
+                $workUnitId = $this->resolveId($unitName, $workUnits, WorkUnit::class);
+                $squadId = null;
+                
+                if (!empty($reguName) && !in_array(strtolower($reguName), ['staf', 'staff', '-', ''])) {
+                    $squadId = $this->resolveId($reguName, $squads, Squad::class);
+                }
+
+                $employeeType = ($squadId || str_contains(strtoupper($jabatanName), 'JAGA') || str_contains(strtoupper($jabatanName), 'PENGAMANAN')) 
+                                ? 'regu_jaga' : 'non_regu_jaga';
+
+                // 2. Cari Pegawai - Gunakan WHERE LIKE untuk antisipasi spasi di DB
+                $employee = Employee::where('nip', $nip)->first();
+
+                if ($employee) {
+                    // REPLACE: Update data lama
+                    if ($employee->user) {
+                        $employee->user->update([
+                            'name' => $nama,
+                            'email' => $email,
+                        ]);
+                    }
+
+                    $employee->update([
+                        'nik' => $nik,
+                        'full_name' => $nama,
+                        'phone_number' => $wa,
+                        'position' => $jabatanName,
+                        'position_id' => $positionId,
+                        'work_unit_id' => $workUnitId,
+                        'rank_class' => $rankClass,
+                        'employee_type' => $employeeType,
+                        'squad_id' => $squadId,
+                        'picket_regu' => $reguName
+                    ]);
+                } else {
+                    // CREATE: Jika benar-benar baru
+                    $user = User::create([
+                        'name' => $nama,
+                        'email' => $email,
+                        'password' => Hash::make($nip),
+                        'role' => 'pegawai'
+                    ]);
+
+                    Employee::create([
+                        'user_id' => $user->id,
+                        'nip' => $nip,
+                        'nik' => $nik,
+                        'full_name' => $nama,
+                        'phone_number' => $wa,
+                        'position' => $jabatanName,
+                        'position_id' => $positionId,
+                        'work_unit_id' => $workUnitId,
+                        'rank_class' => $rankClass,
+                        'employee_type' => $employeeType,
+                        'squad_id' => $squadId,
+                        'picket_regu' => $reguName
+                    ]);
+                }
             }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
-
-        // Override if explicitly mentioned in Excel
-        if ($typeRaw) {
-            if (str_contains(strtolower($typeRaw), 'regu')) $employeeType = 'regu_jaga';
-            if (str_contains(strtolower($typeRaw), 'non')) $employeeType = 'non_regu_jaga';
-        }
-
-        // Resolve Position ID
-        $positionId = null;
-        if ($jabatanName) {
-            $position = Position::firstOrCreate(
-                ['name' => $jabatanName],
-                ['slug' => Str::slug($jabatanName)]
-            );
-            $positionId = $position->id;
-        }
-
-        // Resolve Work Unit ID
-        $workUnitId = null;
-        if ($unitName) {
-            $unit = WorkUnit::firstOrCreate(
-                ['name' => $unitName],
-                ['slug' => Str::slug($unitName)]
-            );
-            $workUnitId = $unit->id;
-        }
-
-        // 1. User Account
-        $user = User::updateOrCreate(
-            ['email' => $email],
-            [
-                'name' => $nama ?? 'Pegawai Baru',
-                'password' => Hash::make($nip), // Default password is NIP
-                'role' => 'pegawai'
-            ]
-        );
-
-        // 2. Employee Profile
-        Employee::updateOrCreate(
-            ['nip' => (string)$nip],
-            [
-                'user_id' => $user->id,
-                'nik' => (string)$nik,
-                'full_name' => $nama,
-                'phone_number' => $wa,
-                'position' => $jabatanName,
-                'position_id' => $positionId,
-                'work_unit_id' => $workUnitId,
-                'rank_class' => $rankClass,
-                'employee_type' => $employeeType,
-                'picket_regu' => $picketRegu,
-            ]
-        );
-
-        return null; 
     }
 
-    public function batchSize(): int { return 50; }
-    public function chunkSize(): int { return 50; }
+    private function resolveId($name, &$cache, $modelClass)
+    {
+        if (empty($name)) return null;
+        if (isset($cache[$name])) return $cache[$name];
+
+        $record = $modelClass::firstOrCreate(
+            ['name' => $name],
+            ['slug' => Str::slug($name)]
+        );
+
+        $cache[$name] = $record->id;
+        return $record->id;
+    }
 }

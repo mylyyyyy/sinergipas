@@ -4,28 +4,58 @@
 @section('header-title', 'Database Pegawai')
 
 @section('content')
+<!-- Custom Loading Overlay for Import -->
+<div id="importLoading" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-md">
+    <div class="bg-white rounded-[32px] p-10 shadow-2xl max-w-sm w-full text-center animate-in zoom-in duration-300">
+        <div class="relative w-24 h-24 mx-auto mb-6">
+            <div class="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <i data-lucide="user-cog" class="w-10 h-10 text-blue-600 animate-pulse"></i>
+            </div>
+        </div>
+        <h3 class="text-xl font-bold text-slate-900 mb-2">Sinkronisasi Pegawai</h3>
+        <p class="text-sm text-slate-500 font-medium leading-relaxed">Mohon tunggu, sistem sedang memproses database kepegawaian Anda secara instan...</p>
+    </div>
+</div>
+
 <div class="space-y-8 page-fade">
     <!-- Hero Section -->
-    <div class="relative overflow-hidden rounded-3xl bg-slate-900 px-8 py-10 text-white shadow-xl card-3d">
-        <div class="absolute -left-10 top-8 h-44 w-44 rounded-full bg-blue-500/10 blur-3xl"></div>
-        <div class="absolute right-0 top-0 h-64 w-64 rounded-full bg-amber-500/5 blur-3xl"></div>
+    <div class="relative overflow-hidden rounded-[40px] bg-slate-900 px-10 py-12 text-white shadow-2xl card-3d mb-10">
+        <div class="absolute -left-10 top-8 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl"></div>
+        <div class="absolute right-0 top-0 h-80 w-80 rounded-full bg-amber-500/5 blur-3xl"></div>
         
-        <div class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-                <h2 class="text-3xl font-bold tracking-tight">Manajemen Pegawai</h2>
-                <p class="mt-2 text-slate-400 font-medium max-w-xl">Kelola informasi profil, akses, dan unit kerja seluruh pegawai Lapas Jombang secara terpusat.</p>
+        <div class="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div class="space-y-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/50">
+                        <i data-lucide="users" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <h2 class="text-4xl font-black tracking-tight italic">Manajemen <span class="text-blue-500">Pegawai</span></h2>
+                </div>
+                <p class="text-slate-400 font-medium max-w-2xl leading-relaxed">
+                    Pusat kendali database kepegawaian. Kelola profil, akses sistem, dan penempatan unit kerja seluruh petugas Lapas Jombang secara terintegrasi.
+                </p>
+                <div class="flex items-center gap-2">
+                    <span class="px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
+                        {{ $employees->total() }} Personel Terdaftar
+                    </span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-700"></span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Update: {{ date('d/m/Y') }}</span>
+                </div>
             </div>
-            <div class="flex flex-wrap gap-3">
-                <div class="flex bg-white/5 p-1 rounded-2xl border border-white/10 backdrop-blur-sm">
-                    <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2">
-                        <i data-lucide="file-up" class="w-4 h-4 text-amber-400"></i> Impor Excel
+
+            <div class="flex flex-wrap gap-4 items-center">
+                <div class="flex bg-white/5 p-1.5 rounded-[22px] border border-white/10 backdrop-blur-md">
+                    <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 group">
+                        <i data-lucide="file-up" class="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform"></i> Impor Data
                     </button>
-                    <a href="{{ route('employees.export.excel') }}" class="px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 no-loader">
-                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-green-400"></i> Ekspor
+                    <a href="{{ route('employees.export.excel') }}" class="px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 group no-loader">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-green-400 group-hover:scale-110 transition-transform"></i> Ekspor
                     </a>
                 </div>
-                <button type="button" onclick="document.getElementById('addModal').classList.remove('hidden')" class="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-900/20 btn-3d">
-                    <i data-lucide="user-plus" class="w-4 h-4"></i> Registrasi Baru
+                <button type="button" onclick="document.getElementById('addModal').classList.remove('hidden')" class="px-8 py-4 rounded-[22px] bg-white text-slate-900 text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all shadow-xl flex items-center gap-3 active:scale-95 group">
+                    <i data-lucide="user-plus" class="w-5 h-5 text-blue-600 group-hover:text-white"></i> Registrasi Baru
                 </button>
             </div>
         </div>
@@ -372,19 +402,19 @@
                 <i data-lucide="help-circle" class="w-4 h-4"></i> Struktur File Excel
             </h4>
             <div class="space-y-3 relative z-10">
-                <p class="text-[11px] font-medium text-slate-300">Gunakan format kolom berikut pada baris pertama:</p>
-                <div class="bg-white/5 p-3 rounded-xl border border-white/10 font-mono text-[10px] text-amber-200 text-center select-all">
-                    nama_lengkap, jabatan, unit_kerja, email, nik, no_whatsapp, gol, regu
+                <p class="text-[11px] font-medium text-slate-300">Gunakan format kolom berikut secara berurutan:</p>
+                <div class="bg-white/5 p-3 rounded-xl border border-white/10 font-mono text-[9px] text-amber-200 text-center select-all leading-relaxed">
+                    NIP, Nama Lengkap, Jabatan, Unit Kerja, Email, NIK, No. WhatsApp, Golongan, Regu
                 </div>
                 <ul class="text-[9px] text-slate-400 space-y-1 pl-4 list-disc">
-                    <li>NIP akan otomatis mengambil dari NIK jika tidak ada.</li>
-                    <li>Unit & Jabatan harus sesuai data master.</li>
-                    <li>Password default diatur sama dengan NIK.</li>
+                    <li>Jabatan & Unit otomatis tersinkron ke Master Data.</li>
+                    <li>Jika 'Regu' diisi selain 'Staf', otomatis menjadi Regu Jaga.</li>
+                    <li>Sistem akan melakukan Update data jika NIP sudah terdaftar.</li>
                 </ul>
             </div>
         </div>
 
-        <form action="{{ route('employees.import.excel') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <form id="importForm" action="{{ route('employees.import.excel') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             <div class="p-8 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 text-center group hover:bg-white hover:border-blue-400 transition-all cursor-pointer relative">
                 <input type="file" name="file" required class="absolute inset-0 opacity-0 cursor-pointer" onchange="updateFileName(this)">
@@ -403,6 +433,12 @@
 </form>
 
 <script>
+    // Show Loading on Import Submit
+    document.getElementById('importForm').addEventListener('submit', function() {
+        document.getElementById('importModal').classList.add('hidden');
+        document.getElementById('importLoading').classList.remove('hidden');
+        document.getElementById('importLoading').classList.add('flex');
+    });
     function toggleRegu(select, mode) {
         const container = document.getElementById(`regu_container_${mode}`);
         if (select.value === 'regu_jaga') {
@@ -508,7 +544,10 @@
 
 @if(session('success'))
 <script>
-    Swal.fire({ icon: 'success', title: 'Berhasil', text: "{{ session('success') }}", confirmButtonColor: '#0F172A', customClass: { popup: 'rounded-2xl' } });
+    window.addEventListener('DOMContentLoaded', () => {
+        Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", confirmButtonColor: '#0F172A', customClass: { popup: 'rounded-2xl' } });
+    });
 </script>
 @endif
 @endsection
+
