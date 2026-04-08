@@ -60,13 +60,11 @@ class ScheduleController extends Controller
             'month' => 'required|string',
             'start_date' => 'required|date',
             'pattern' => 'required|array',
-            'duration_months' => 'nullable|integer|min:1|max:12'
         ]);
 
         $baseMonth = Carbon::parse($request->month);
         $startDate = Carbon::parse($request->start_date);
         $squad = Squad::find($request->squad_id);
-        $duration = $request->duration_months ?? 1;
         
         $reguEmployees = Employee::where('squad_id', $request->squad_id)->get();
         $staffEmployees = Employee::where('employee_type', 'non_regu_jaga')->get();
@@ -80,61 +78,67 @@ class ScheduleController extends Controller
         }
 
         $upsertData = [];
+        $deleteConditions = []; // Array of [employee_id, date]
         $now = now();
 
         DB::beginTransaction();
         try {
-            for ($m = 0; $m < $duration; $m++) {
-                $currentMonth = $baseMonth->copy()->addMonths($m);
+            $currentMonth = $baseMonth;
 
-                // 1. Process Regu Jaga
-                foreach ($reguEmployees as $employee) {
+            // 1. Process Regu Jaga
+            foreach ($reguEmployees as $employee) {
+                for ($day = 1; $day <= $currentMonth->daysInMonth; $day++) {
+                    $dateObj = $currentMonth->copy()->day($day);
+                    $diffDays = $startDate->diffInDays($dateObj, false);
+                    
+                    $index = ($diffDays % $patternCount);
+                    if ($index < 0) $index += $patternCount;
+
+                    $shiftId = $pattern[$index];
+
+                    if ($shiftId) {
+                        $upsertData[] = [
+                            'employee_id' => $employee->id,
+                            'date' => $dateObj->format('Y-m-d'),
+                            'shift_id' => $shiftId,
+                            'created_at' => $now,
+                            'updated_at' => $now
+                        ];
+                    } else {
+                        $deleteConditions[] = ['employee_id' => $employee->id, 'date' => $dateObj->format('Y-m-d')];
+                    }
+                }
+            }
+
+            // 2. Process Staff
+            if ($officeShift) {
+                foreach ($staffEmployees as $employee) {
                     for ($day = 1; $day <= $currentMonth->daysInMonth; $day++) {
                         $dateObj = $currentMonth->copy()->day($day);
-                        $diffDays = $startDate->diffInDays($dateObj, false);
-                        
-                        $index = ($diffDays % $patternCount);
-                        if ($index < 0) $index += $patternCount;
-
-                        $shiftId = $pattern[$index];
-
-                        if ($shiftId) {
+                        if ($dateObj->isWeekday()) {
                             $upsertData[] = [
                                 'employee_id' => $employee->id,
                                 'date' => $dateObj->format('Y-m-d'),
-                                'shift_id' => $shiftId,
+                                'shift_id' => $officeShift->id,
                                 'created_at' => $now,
                                 'updated_at' => $now
                             ];
                         } else {
-                            Schedule::where('employee_id', $employee->id)
-                                    ->where('date', $dateObj->format('Y-m-d'))
-                                    ->delete();
+                            $deleteConditions[] = ['employee_id' => $employee->id, 'date' => $dateObj->format('Y-m-d')];
                         }
                     }
                 }
+            }
 
-                // 2. Process Staff
-                if ($officeShift) {
-                    foreach ($staffEmployees as $employee) {
-                        for ($day = 1; $day <= $currentMonth->daysInMonth; $day++) {
-                            $dateObj = $currentMonth->copy()->day($day);
-                            if ($dateObj->isWeekday()) {
-                                $upsertData[] = [
-                                    'employee_id' => $employee->id,
-                                    'date' => $dateObj->format('Y-m-d'),
-                                    'shift_id' => $officeShift->id,
-                                    'created_at' => $now,
-                                    'updated_at' => $now
-                                ];
-                            } else {
-                                Schedule::where('employee_id', $employee->id)
-                                        ->where('date', $dateObj->format('Y-m-d'))
-                                        ->delete();
-                            }
-                        }
-                    }
-                }
+            // Perform Bulk Deletions if any
+            if (!empty($deleteConditions)) {
+                // To keep it simple and safe, we can group by employee or just delete in a specific month range
+                $empIds = array_unique(array_column($deleteConditions, 'employee_id'));
+                Schedule::whereIn('employee_id', $empIds)
+                        ->whereMonth('date', $currentMonth->month)
+                        ->whereYear('date', $currentMonth->year)
+                        ->whereNotIn('date', array_column($upsertData, 'date')) // Only delete if not being updated
+                        ->delete();
             }
 
             // Perform Bulk Upsert in chunks
@@ -155,10 +159,10 @@ class ScheduleController extends Controller
             'user_id' => auth()->id(),
             'activity' => 'generate_roster',
             'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . " men-generate roster otomatis ($duration bulan) untuk Regu $squad->name dan Staf mulai " . $baseMonth->translatedFormat('F Y')
+            'details' => auth()->user()->name . " men-generate roster otomatis untuk Regu $squad->name dan Staf pada bulan " . $baseMonth->translatedFormat('F Y')
         ]);
 
-        return back()->with('success', "Roster ($duration bulan) berhasil di-generate secara instan.");
+        return back()->with('success', "Roster berhasil di-generate secara instan.");
     }
 
     public function reset(Request $request)

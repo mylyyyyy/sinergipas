@@ -245,17 +245,6 @@
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Durasi Penjadwalan</label>
-                    <select name="duration_months" class="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-black text-slate-700 focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer shadow-sm">
-                        <option value="1">Hanya 1 Bulan (Bulan Terpilih)</option>
-                        <option value="2">2 Bulan Sekaligus</option>
-                        <option value="3">3 Bulan Sekaligus</option>
-                        <option value="6">6 Bulan Sekaligus</option>
-                        <option value="12">1 Tahun Sekaligus</option>
-                    </select>
-                </div>
-
                 <div class="space-y-4">
                     <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Urutan Pola Berulang (Shift Jaga)</label>
                     <div class="grid grid-cols-4 gap-3">
