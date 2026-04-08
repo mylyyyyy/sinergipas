@@ -113,6 +113,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{squad}', [SquadController::class, 'destroy'])->name('destroy');
             Route::post('/{squad}/add-member', [SquadController::class, 'addMember'])->name('add-member');
             Route::post('/{squad}/remove-member', [SquadController::class, 'removeMember'])->name('remove-member');
+            Route::post('/{squad}/remove-members-bulk', [SquadController::class, 'removeMembersBulk'])->name('remove-members-bulk');
         });
 
         Route::prefix('admin/shifts')->name('admin.shifts.')->group(function () {
@@ -126,6 +127,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [ScheduleController::class, 'index'])->name('index');
             Route::post('/', [ScheduleController::class, 'store'])->name('store');
             Route::post('/generate', [ScheduleController::class, 'generateRoster'])->name('generate');
+            Route::delete('/reset', [ScheduleController::class, 'reset'])->name('reset');
             Route::get('/export', [ScheduleController::class, 'export'])->name('export');
         });
     });

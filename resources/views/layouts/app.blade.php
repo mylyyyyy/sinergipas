@@ -269,7 +269,7 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="relative min-h-screen flex-1 lg:ml-64 bg-slate-50">
+        <main class="relative min-h-screen flex-1 min-w-0 lg:ml-64 bg-slate-50">
             @php 
                 $activeBanner = \App\Models\Announcement::active()->where('type', 'banner')->latest()->first();
                 $bannerBg = \App\Models\Setting::getValue('running_text_bg', '#0F172A');

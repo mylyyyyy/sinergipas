@@ -12,13 +12,23 @@ class SquadController extends Controller
 {
     public function index()
     {
-        $squads = Squad::withCount('employees')->get();
+        $filterFunc = function($q) {
+            $q->where(function($sq) {
+                $sq->where('position', 'like', '%Petugas Jaga%')
+                  ->orWhere('position', 'like', '%Anggota Jaga%')
+                  ->orWhere('position', 'like', '%Komandan Jaga%')
+                  ->orWhere('position', 'like', '%PETUGAS JAGA%')
+                  ->orWhere('position', 'like', '%ANGGOTA JAGA%')
+                  ->orWhere('position', 'like', '%KOMANDAN JAGA%');
+            });
+        };
+
+        $squads = Squad::with(['employees' => $filterFunc])
+            ->withCount(['employees' => $filterFunc])
+            ->get();
+
         $unassignedEmployees = Employee::whereNull('squad_id')
-            ->where(function($q) {
-                $q->where('employee_type', 'regu_jaga')
-                  ->orWhere('position', 'like', '%JAGA%')
-                  ->orWhere('position', 'like', '%PENJAGA%');
-            })
+            ->where($filterFunc)
             ->orderBy('full_name')
             ->get();
             
@@ -137,5 +147,26 @@ class SquadController extends Controller
         ]);
 
         return back()->with('success', 'Anggota berhasil dikeluarkan dari regu.');
+    }
+
+    public function removeMembersBulk(Request $request, Squad $squad)
+    {
+        $request->validate([
+            'employee_ids' => 'required|array',
+            'employee_ids.*' => 'exists:employees,id'
+        ]);
+
+        Employee::whereIn('id', $request->employee_ids)
+            ->where('squad_id', $squad->id)
+            ->update(['squad_id' => null]);
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'bulk_remove_squad_members',
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . " mengeluarkan " . count($request->employee_ids) . " anggota dari regu: " . $squad->name
+        ]);
+
+        return back()->with('success', 'Anggota terpilih berhasil dikeluarkan dari regu.');
     }
 }

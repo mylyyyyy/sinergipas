@@ -140,6 +140,25 @@ class ScheduleController extends Controller
         return back()->with('success', "Roster ($duration bulan) berhasil di-generate.");
     }
 
+    public function reset(Request $request)
+    {
+        $request->validate(['month' => 'required|string']);
+        $date = Carbon::parse($request->month);
+
+        Schedule::whereMonth('date', $date->month)
+            ->whereYear('date', $date->year)
+            ->delete();
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'reset_schedule',
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . " mereset seluruh jadwal bulan " . $date->translatedFormat('F Y')
+        ]);
+
+        return back()->with('success', "Seluruh jadwal bulan " . $date->translatedFormat('F Y') . " telah dibersihkan.");
+    }
+
     public function export(Request $request)
     {
         set_time_limit(0); // Prevent timeout for large exports

@@ -7,24 +7,34 @@
 <style>
     /* Force scrollbar visibility and style */
     .schedule-container::-webkit-scrollbar {
-        height: 8px !important;
+        height: 10px !important;
         display: block !important;
     }
     .schedule-container::-webkit-scrollbar-track {
-        background: #f1f5f9 !important;
+        background: #f8fafc !important;
         border-radius: 10px !important;
+        border: 1px solid #e2e8f0;
     }
     .schedule-container::-webkit-scrollbar-thumb {
         background: #334155 !important;
         border-radius: 10px !important;
+        border: 2px solid #f8fafc;
     }
     .schedule-container::-webkit-scrollbar-thumb:hover {
         background: #0f172a !important;
     }
-    /* Firefox */
-    .schedule-container {
-        scrollbar-width: auto !important;
-        scrollbar-color: #334155 #f1f5f9 !important;
+    
+    /* Ensure the container behaves correctly */
+    .schedule-wrapper {
+        width: 100%;
+        max-width: 100%;
+        position: relative;
+    }
+
+    /* Modal Height Fix */
+    .modal-scrollable {
+        max-height: 85vh;
+        overflow-y: auto;
     }
 </style>
 
@@ -67,6 +77,9 @@
         </div>
 
         <div class="flex flex-wrap gap-3 w-full lg:w-auto">
+            <button onclick="confirmResetJadwal()" class="flex-1 lg:flex-none px-6 py-3.5 rounded-2xl bg-red-50 text-red-600 border border-red-100 font-bold text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-3 group">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset Jadwal
+            </button>
             <a href="{{ route('admin.squads.index') }}" class="flex-1 lg:flex-none px-6 py-3.5 rounded-2xl bg-white border border-slate-200 text-slate-600 font-bold text-[10px] uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all flex items-center justify-center gap-3 group">
                 <i data-lucide="users" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> Manajemen Regu
             </a>
@@ -77,12 +90,12 @@
     </div>
 
     <!-- Schedule Grid -->
-    <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm card-3d">
-        <div class="overflow-x-auto schedule-container rounded-[40px]">
-            <table class="w-full border-collapse" style="min-width: 1600px;">
+    <div class="schedule-wrapper bg-white rounded-[40px] border border-slate-200 shadow-sm card-3d">
+        <div class="overflow-x-auto schedule-container rounded-[40px] w-full">
+            <table class="w-full border-collapse" style="min-width: 1800px;">
                 <thead>
                     <tr class="bg-slate-50/80 border-b border-slate-100">
-                        <th class="sticky left-0 z-20 bg-slate-50 px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] min-w-[280px] border-r border-slate-100 text-left shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+                        <th class="sticky left-0 z-20 bg-slate-50 px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] min-w-[280px] border-r border-slate-100 text-left shadow-[4px_0_10px_-2px_rgba(0,0,0,0.1)]">
                             <div class="flex items-center gap-2">
                                 <i data-lucide="user-cog" class="w-4 h-4"></i>
                                 Nama Personel
@@ -100,7 +113,7 @@
                 <tbody class="divide-y divide-slate-50">
                     @foreach($employees as $emp)
                     <tr class="hover:bg-slate-50/50 transition-colors group">
-                        <td class="sticky left-0 z-10 bg-white px-8 py-5 border-r border-slate-100 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.05)] group-hover:bg-slate-50 transition-colors">
+                        <td class="sticky left-0 z-10 bg-white px-8 py-5 border-r border-slate-100 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)] group-hover:bg-slate-50 transition-colors">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-500 flex items-center justify-center text-xs font-black shrink-0 border border-white shadow-sm group-hover:from-blue-500 group-hover:to-indigo-600 group-hover:text-white transition-all duration-500">
                                     {{ substr($emp->full_name, 0, 1) }}
@@ -126,13 +139,13 @@
                                 $indicator = '-';
                                 
                                 if($shiftName == 'Pagi') {
-                                    $colorClass = 'bg-emerald-500 text-white border-emerald-600 shadow-md shadow-emerald-200';
+                                    $colorClass = 'bg-emerald-500 text-white border-emerald-600 shadow-md shadow-emerald-200';  
                                     $indicator = 'P';
                                 } elseif($shiftName == 'Siang') {
                                     $colorClass = 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-200';
                                     $indicator = 'S';
                                 } elseif($shiftName == 'Malam') {
-                                    $colorClass = 'bg-slate-800 text-white border-slate-900 shadow-md shadow-slate-400';
+                                    $colorClass = 'bg-slate-800 text-white border-slate-900 shadow-md shadow-slate-400';        
                                     $indicator = 'M';
                                 } elseif($shiftName == 'Kantor') {
                                     $colorClass = 'bg-blue-500 text-white border-blue-600 shadow-md shadow-blue-200';
@@ -192,9 +205,14 @@
     </div>
 </div>
 
+<form id="resetScheduleForm" action="{{ route('admin.schedules.reset') }}" method="POST" class="hidden no-loader">
+    @csrf @method('DELETE')
+    <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
+</form>
+
 <!-- Roster Generator Modal -->
 <div id="rosterModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-xl rounded-[40px] p-10 shadow-2xl animate-in zoom-in duration-200 relative overflow-hidden">
+    <div class="bg-white w-full max-w-xl rounded-[40px] p-10 shadow-2xl animate-in zoom-in duration-200 relative overflow-hidden modal-scrollable">
         <div class="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-center mb-8 border-b border-slate-100 pb-6">
@@ -264,9 +282,12 @@
                     </p>
                 </div>
 
-                <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-[24px] font-black text-sm uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-2xl btn-3d">
-                    Eksekusi Penjadwalan
-                </button>
+                <div class="flex gap-4">
+                    <button type="button" onclick="document.getElementById('rosterModal').classList.add('hidden')" class="flex-1 py-5 bg-slate-100 text-slate-500 rounded-[24px] font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all">Batal</button>
+                    <button type="submit" class="flex-[2] bg-slate-900 text-white py-5 rounded-[24px] font-black text-sm uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-2xl btn-3d">
+                        Eksekusi
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -353,6 +374,23 @@
         } catch (error) {
             console.error(error);
         }
+    }
+
+    function confirmResetJadwal() {
+        Swal.fire({
+            title: 'Bersihkan Jadwal?',
+            text: "Seluruh data jadwal pada bulan ini akan dihapus permanen.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#EF4444',
+            confirmButtonText: 'Ya, Bersihkan!',
+            cancelButtonText: 'Batal',
+            customClass: { popup: 'rounded-[32px]' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('resetScheduleForm').submit();
+            }
+        });
     }
 
     // Roster Generation Loading
