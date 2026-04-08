@@ -25,6 +25,7 @@ class AttendanceController extends Controller
 
         // Fetch employees for Summary Tab
         $employees = Employee::with(['work_unit', 'squad'])
+            ->whereHas('user') // Ensure associated user exists
             ->when($search, function($q) use ($search) {
                 $q->where('full_name', 'like', "%$search%")
                   ->orWhere('nip', 'like', "%$search%");
@@ -35,8 +36,9 @@ class AttendanceController extends Controller
             ->orderBy('full_name')
             ->paginate(50)->withQueryString();
 
-        // Fetch detailed logs for Log Tab
-        $attendanceLogs = Attendance::with('employee')
+        // Fetch detailed logs for Log Tab - Only for existing employees
+        $attendanceLogs = Attendance::whereHas('employee')
+            ->with('employee')
             ->whereMonth('date', $date->month)
             ->whereYear('date', $date->year)
             ->when($search, function($q) use ($search) {
@@ -49,9 +51,9 @@ class AttendanceController extends Controller
             ->orderBy('check_in', 'asc')
             ->paginate(50, ['*'], 'log_page')->withQueryString();
 
-        // Optimized Summary Calculation (Real-time sync with Ranks)
+        // Optimized Summary Calculation - Strict join to prevent orphan counts
         $summary = DB::table('attendances')
-            ->leftJoin('employees', 'attendances.employee_id', '=', 'employees.id')
+            ->join('employees', 'attendances.employee_id', '=', 'employees.id')
             ->leftJoin('ranks', 'employees.rank_id', '=', 'ranks.id')
             ->whereMonth('attendances.date', $date->month)
             ->whereYear('attendances.date', $date->year)

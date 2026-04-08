@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Schedule extends Model
 {
-    protected $fillable = ['employee_id', 'shift_id', 'date'];
+    protected $fillable = ['employee_id', 'shift_id', 'date', 'schedule_type_id'];
 
     public function employee(): BelongsTo
     {
@@ -17,5 +17,10 @@ class Schedule extends Model
     public function shift(): BelongsTo
     {
         return $this->belongsTo(Shift::class);
+    }
+
+    public function scheduleType(): BelongsTo
+    {
+        return $this->belongsTo(ScheduleType::class);
     }
 }

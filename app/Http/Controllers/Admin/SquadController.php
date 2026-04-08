@@ -12,27 +12,17 @@ class SquadController extends Controller
 {
     public function index()
     {
-        $filterFunc = function($q) {
-            $q->where(function($sq) {
-                $sq->where('position', 'like', '%Petugas Jaga%')
-                  ->orWhere('position', 'like', '%Anggota Jaga%')
-                  ->orWhere('position', 'like', '%Komandan Jaga%')
-                  ->orWhere('position', 'like', '%PETUGAS JAGA%')
-                  ->orWhere('position', 'like', '%ANGGOTA JAGA%')
-                  ->orWhere('position', 'like', '%KOMANDAN JAGA%');
-            });
-        };
-
-        $squads = Squad::with(['employees' => $filterFunc])
-            ->withCount(['employees' => $filterFunc])
+        $squads = Squad::with(['employees', 'scheduleType'])
+            ->withCount(['employees'])
             ->get();
 
         $unassignedEmployees = Employee::whereNull('squad_id')
-            ->where($filterFunc)
             ->orderBy('full_name')
             ->get();
             
-        return view('admin.squads.index', compact('squads', 'unassignedEmployees'));
+        $scheduleTypes = \App\Models\ScheduleType::where('uses_squads', true)->orderBy('sort_order')->get();
+            
+        return view('admin.squads.index', compact('squads', 'unassignedEmployees', 'scheduleTypes'));
     }
 
     public function store(Request $request)
@@ -40,6 +30,7 @@ class SquadController extends Controller
         $request->validate([
             'name' => 'required|string|unique:squads,name|max:255',
             'description' => 'nullable|string|max:500',
+            'schedule_type_id' => 'required|exists:schedule_types,id',
         ]);
 
         $squad = Squad::create($request->all());
@@ -59,6 +50,7 @@ class SquadController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:squads,name,' . $squad->id,
             'description' => 'nullable|string|max:500',
+            'schedule_type_id' => 'required|exists:schedule_types,id',
         ]);
 
         $squad->update($request->all());

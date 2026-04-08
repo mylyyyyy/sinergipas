@@ -10,10 +10,15 @@ class Squad extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['name', 'description', 'schedule_type_id'];
 
     public function employees(): HasMany
     {
         return $this->hasMany(Employee::class);
+    }
+
+    public function scheduleType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ScheduleType::class);
     }
 }

@@ -5,33 +5,45 @@
 
 @section('content')
 <style>
-    /* Force scrollbar visibility and style */
-    .schedule-container::-webkit-scrollbar {
-        height: 10px !important;
-        display: block !important;
-    }
-    .schedule-container::-webkit-scrollbar-track {
-        background: #f8fafc !important;
-        border-radius: 10px !important;
-        border: 1px solid #e2e8f0;
-    }
-    .schedule-container::-webkit-scrollbar-thumb {
-        background: #334155 !important;
-        border-radius: 10px !important;
-        border: 2px solid #f8fafc;
-    }
-    .schedule-container::-webkit-scrollbar-thumb:hover {
-        background: #0f172a !important;
-    }
-    
-    /* Ensure the container behaves correctly */
-    .schedule-wrapper {
-        width: 100%;
-        max-width: 100%;
+    /* Dual Stickiness Logic */
+    .schedule-container {
+        max-height: 70vh; /* Fixed height for vertical scroll */
         position: relative;
     }
+    
+    .schedule-container thead th {
+        position: sticky;
+        top: 0;
+        z-index: 30; /* Higher than sticky left */
+        background-color: #f8fafc; /* bg-slate-50 */
+    }
 
-    /* Modal Height Fix */
+    /* Column name has higher z-index when at top-left corner */
+    .schedule-container thead th.sticky-left {
+        z-index: 40;
+        left: 0;
+    }
+
+    .sticky-left {
+        position: sticky;
+        left: 0;
+        z-index: 20;
+        background-color: white;
+        box-shadow: 4px 0 10px -4px rgba(0,0,0,0.1);
+    }
+
+    /* Weekend highlighting */
+    .weekend-col {
+        background-color: rgba(254, 226, 226, 0.4) !important; /* bg-red-50/40 */
+    }
+    
+    /* Today highlighting */
+    .today-col {
+        background-color: rgba(239, 246, 255, 0.8) !important; /* bg-blue-50/80 */
+        border-left: 2px solid #3b82f6 !important;
+        border-right: 2px solid #3b82f6 !important;
+    }
+
     .modal-scrollable {
         max-height: 85vh;
         overflow-y: auto;
@@ -58,6 +70,7 @@
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm card-3d">
         <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto">
             <form action="{{ route('admin.schedules.index') }}" method="GET" class="w-full lg:w-auto flex items-center gap-3">
+                <input type="hidden" name="type" value="{{ $activeType->id }}">
                 <div class="relative group">
                     <i data-lucide="calendar" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
                     <input type="month" name="month" value="{{ $month->format('Y-m') }}" onchange="this.form.submit()" class="pl-11 pr-4 py-2.5 rounded-2xl text-sm font-bold text-slate-700 outline-none border border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 transition-all">
@@ -66,26 +79,45 @@
 
             <div class="h-8 w-px bg-slate-100 hidden md:block"></div>
 
+            <!-- Quick Search Input -->
+            <div class="relative flex-1 lg:w-64">
+                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                <input type="text" id="gridSearch" placeholder="Cari nama personel..." class="w-full pl-11 pr-4 py-2.5 rounded-2xl text-sm font-bold text-slate-700 outline-none border border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 transition-all" onkeyup="filterGrid(this.value)">
+            </div>
+
             <div class="flex bg-slate-50 p-1 rounded-2xl border border-slate-100">
-                <button onclick="handleDownload('{{ route('admin.schedules.export', ['month' => $month->format('Y-m'), 'type' => 'pdf']) }}', 'jadwal-dinas-{{ $month->format('Y-m') }}.pdf')" class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-red-600 transition-all flex items-center gap-2 group">
+                <button onclick="handleDownload('{{ route('admin.schedules.export', ['month' => $month->format('Y-m'), 'export_type' => 'pdf', 'type' => $activeType->id]) }}', 'jadwal-{{ strtolower(str_replace(' ', '-', $activeType->name)) }}-{{ $month->format('Y-m') }}.pdf')" class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-red-600 transition-all flex items-center gap-2 group">
                     <i data-lucide="file-text" class="w-4 h-4 text-slate-400 group-hover:text-red-500 transition-colors"></i> PDF
                 </button>
-                <button onclick="handleDownload('{{ route('admin.schedules.export', ['month' => $month->format('Y-m'), 'type' => 'excel']) }}', 'jadwal-dinas-{{ $month->format('Y-m') }}.xlsx')" class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-green-600 transition-all flex items-center gap-2 group">
-                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-slate-400 group-hover:text-green-500 transition-colors"></i> EXCEL
+                <div class="w-px h-4 bg-slate-200 self-center mx-1"></div>
+                <button onclick="handleDownload('{{ route('admin.schedules.export', ['month' => $month->format('Y-m'), 'export_type' => 'excel', 'type' => $activeType->id]) }}', 'jadwal-{{ strtolower(str_replace(' ', '-', $activeType->name)) }}-{{ $month->format('Y-m') }}.xlsx')" class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-emerald-600 transition-all flex items-center gap-2 group">
+                    <i data-lucide="sheet" class="w-4 h-4 text-slate-400 group-hover:text-emerald-500 transition-colors"></i> Excel
                 </button>
             </div>
         </div>
 
         <div class="flex flex-wrap gap-3 w-full lg:w-auto">
-            <button onclick="confirmResetJadwal()" class="flex-1 lg:flex-none px-6 py-3.5 rounded-2xl bg-red-50 text-red-600 border border-red-100 font-bold text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-3 group">
-                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset Jadwal
-            </button>
-            <a href="{{ route('admin.squads.index') }}" class="flex-1 lg:flex-none px-6 py-3.5 rounded-2xl bg-white border border-slate-200 text-slate-600 font-bold text-[10px] uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all flex items-center justify-center gap-3 group">
-                <i data-lucide="users" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> Manajemen Regu
+            <a href="{{ route('admin.squads.index') }}" class="flex-1 lg:flex-none px-6 py-3.5 rounded-2xl bg-white text-slate-900 border border-slate-200 font-bold text-[10px] uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all flex items-center justify-center gap-3 card-3d">
+                <i data-lucide="users" class="w-4 h-4"></i> Kelola Regu
             </a>
-            <button onclick="document.getElementById('rosterModal').classList.remove('hidden')" class="flex-1 lg:flex-none px-8 py-3.5 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d flex items-center justify-center gap-3">
-                <i data-lucide="wand-2" class="w-4 h-4 text-amber-400"></i> Generate Roster
+            <button onclick="confirmResetJadwal()" class="flex-1 lg:flex-none px-6 py-3.5 rounded-2xl bg-red-50 text-red-600 border border-red-100 font-bold text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-3">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset
             </button>
+            <button onclick="document.getElementById('rosterModal').classList.remove('hidden')" class="flex-1 lg:flex-none px-8 py-3.5 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d flex items-center justify-center gap-3">
+                <i data-lucide="wand-2" class="w-4 h-4 text-amber-400"></i> Auto-Generate
+            </button>
+        </div>
+    </div>
+
+    <!-- Tipe Jadwal Tabs -->
+    <div class="overflow-x-auto custom-scrollbar pb-2">
+        <div class="flex gap-2 min-w-max">
+            @foreach($scheduleTypes as $type)
+                <a href="{{ route('admin.schedules.index', ['type' => $type->id, 'month' => $month->format('Y-m')]) }}" 
+                   class="px-5 py-3 rounded-2xl text-xs font-bold transition-all border {{ $activeType->id == $type->id ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-200' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-900 card-3d' }}">
+                    {{ $type->name }}
+                </a>
+            @endforeach
         </div>
     </div>
 
@@ -112,53 +144,70 @@
                 </thead>
                 <tbody class="divide-y divide-slate-50">
                     @foreach($employees as $emp)
-                    <tr class="hover:bg-slate-50/50 transition-colors group">
-                        <td class="sticky left-0 z-10 bg-white px-8 py-5 border-r border-slate-100 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)] group-hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-50/50 transition-colors group schedule-row" data-name="{{ strtolower($emp->full_name) }}">
+                        <td class="sticky-left group-hover:bg-slate-50 transition-colors px-8 py-5 border-r border-slate-100">
                             <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-500 flex items-center justify-center text-xs font-black shrink-0 border border-white shadow-sm group-hover:from-blue-500 group-hover:to-indigo-600 group-hover:text-white transition-all duration-500">
+                                <div class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-black shrink-0 border border-white shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
                                     {{ substr($emp->full_name, 0, 1) }}
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $emp->full_name }}</p>
+                                    <p class="text-[11px] font-black text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $emp->full_name }}</p>
                                     <div class="flex items-center gap-2 mt-1">
-                                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[120px]">{{ $emp->position }}</span>
-                                        @if($emp->squad)
-                                            <span class="px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 text-[8px] font-black uppercase border border-indigo-100">Regu {{ $emp->squad->name }}</span>
-                                        @endif
+                                        <span class="text-[8px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded uppercase">{{ $emp->rank_relation->name ?? $emp->rank_class ?? '-' }}</span>
+                                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[80px]">{{ $emp->role_in_squad_label ?? $emp->position }}</span>
                                     </div>
                                 </div>
                             </div>
                         </td>
                         @for($d = 1; $d <= $daysInMonth; $d++)
-                            @php 
-                                $dateStr = $month->copy()->day($d)->format('Y-m-d');
-                                $schedule = $schedules->get($emp->id)?->firstWhere('date', $dateStr);
-                                $shiftName = $schedule?->shift?->name;
-                                
-                                $colorClass = 'bg-slate-50 text-slate-300 border-slate-100';
-                                $indicator = '-';
-                                
-                                if($shiftName == 'Pagi') {
-                                    $colorClass = 'bg-emerald-500 text-white border-emerald-600 shadow-md shadow-emerald-200';  
-                                    $indicator = 'P';
-                                } elseif($shiftName == 'Siang') {
-                                    $colorClass = 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-200';
-                                    $indicator = 'S';
-                                } elseif($shiftName == 'Malam') {
-                                    $colorClass = 'bg-slate-800 text-white border-slate-900 shadow-md shadow-slate-400';        
-                                    $indicator = 'M';
-                                } elseif($shiftName == 'Kantor') {
-                                    $colorClass = 'bg-blue-500 text-white border-blue-600 shadow-md shadow-blue-200';
-                                    $indicator = 'K';
-                                }
-                            @endphp
-                            <td class="p-1.5 border-r border-slate-50">
-                                <div class="w-full h-10 rounded-xl border {{ $colorClass }} flex items-center justify-center text-xs font-black transition-all cursor-pointer select-none hover:scale-110" 
-                                     title="{{ $emp->full_name }} - {{ $dateStr }} ({{ $shiftName ?? 'Libur' }})"
-                                     onclick="openManualAssign({{ $emp->id }}, '{{ $emp->full_name }}', '{{ $dateStr }}', '{{ $schedule?->shift_id }}')">
-                                    {{ $indicator }}
-                                </div>
-                            </td>
+                                @php 
+                                    $currentDate = $month->copy()->day($d);
+                                    $dateStr = $currentDate->format('Y-m-d');
+                                    $isToday = $dateStr == date('Y-m-d');
+                                    $isWeekend = $currentDate->isWeekend();
+                                    
+                                    $daySchedules = $schedules->get($emp->id)?->where('date', $dateStr) ?? collect();
+                                    $indicators = [];
+                                    
+                                    if ($daySchedules->isEmpty()) {
+                                        $indicators[] = ['label' => '-', 'class' => 'bg-slate-50 text-slate-300 border-slate-100'];
+                                    } else {
+                                        foreach ($daySchedules as $schedule) {
+                                            $sName = $schedule->shift->name;
+                                            $sLabel = '-';
+                                            $sClass = 'bg-slate-50 text-slate-300 border-slate-100';
+                                            
+                                            if (str_contains($sName, 'Pagi')) {
+                                                $sClass = 'bg-emerald-500 text-white border-emerald-600 shadow-md shadow-emerald-200';
+                                                $sLabel = 'P';
+                                            } elseif (str_contains($sName, 'Siang')) {
+                                                $sClass = 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-200';
+                                                $sLabel = 'S';
+                                            } elseif (str_contains($sName, 'Malam')) {
+                                                $sClass = 'bg-slate-800 text-white border-slate-900 shadow-md shadow-slate-400';
+                                                $sLabel = 'M';
+                                            } elseif (str_contains($sName, 'Kantor') || str_contains($sName, 'Staf') || str_contains($sName, 'Dinas')) {
+                                                $sClass = 'bg-blue-500 text-white border-blue-600 shadow-md shadow-blue-200';
+                                                $sLabel = 'K';
+                                            } elseif (str_contains($sName, 'Orientasi')) {
+                                                $sClass = 'bg-indigo-500 text-white border-indigo-600 shadow-md shadow-indigo-200';
+                                                $sLabel = 'O';
+                                            }
+                                            $indicators[] = ['label' => $sLabel, 'class' => $sClass, 'id' => $schedule->shift_id];
+                                        }
+                                    }
+                                @endphp
+                                <td class="p-1 border-r border-slate-50 {{ $isToday ? 'today-col' : '' }} {{ $isWeekend ? 'weekend-col' : '' }}">
+                                    <div class="flex flex-col gap-0.5">
+                                        @foreach($indicators as $ind)
+                                            <div class="w-full h-8 rounded-lg border {{ $ind['class'] }} flex items-center justify-center text-[10px] font-black transition-all cursor-pointer select-none hover:scale-110" 
+                                                 title="{{ $emp->full_name }} - {{ $dateStr }}"
+                                                 onclick="openManualAssign({{ $emp->id }}, '{{ $emp->full_name }}', '{{ $dateStr }}', '{{ $ind['id'] ?? '' }}')">
+                                                {{ $ind['label'] }}
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </td>
                         @endfor
                     </tr>
                     @endforeach
@@ -168,37 +217,44 @@
     </div>
 
     <!-- Legend -->
-    <div class="bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm card-3d">
+    <div class="bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm card-3d mt-8">
         <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
             <i data-lucide="info" class="w-5 h-5 text-blue-500"></i> Informasi Kode Shift & Jam Dinas
         </h4>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div class="flex items-center gap-5 p-5 rounded-3xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-emerald-200 transition-all">
-                <span class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-black text-lg shadow-xl shadow-emerald-200 group-hover:scale-110 transition-transform">P</span>
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-6">
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-emerald-200 transition-all">
+                <span class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-base shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform">P</span>
                 <div>
-                    <p class="text-sm font-black text-slate-900 uppercase tracking-tight">Dinas Pagi</p>
-                    <p class="text-[11px] font-bold text-emerald-600 mt-0.5">07:30 - 13:00 WIB</p>
+                    <p class="text-[11px] font-black text-slate-900 uppercase tracking-tight">Dinas Pagi</p>
+                    <p class="text-[9px] font-bold text-emerald-600 mt-0.5">06:00 - 13:00</p>
                 </div>
             </div>
-            <div class="flex items-center gap-5 p-5 rounded-3xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-amber-200 transition-all">
-                <span class="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black text-lg shadow-xl shadow-amber-200 group-hover:scale-110 transition-transform">S</span>
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-amber-200 transition-all">
+                <span class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-base shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform">S</span>
                 <div>
-                    <p class="text-sm font-black text-slate-900 uppercase tracking-tight">Dinas Siang</p>
-                    <p class="text-[11px] font-bold text-amber-600 mt-0.5">13:00 - 19:00 WIB</p>
+                    <p class="text-[11px] font-black text-slate-900 uppercase tracking-tight">Dinas Siang</p>
+                    <p class="text-[9px] font-bold text-amber-600 mt-0.5">13:00 - 20:00</p>
                 </div>
             </div>
-            <div class="flex items-center gap-5 p-5 rounded-3xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-slate-400 transition-all">
-                <span class="w-12 h-12 rounded-2xl bg-slate-800 text-white flex items-center justify-center font-black text-lg shadow-xl shadow-slate-300 group-hover:scale-110 transition-transform">M</span>
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-slate-400 transition-all">
+                <span class="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center font-black text-base shadow-lg shadow-slate-300 group-hover:scale-110 transition-transform">M</span>
                 <div>
-                    <p class="text-sm font-black text-slate-900 uppercase tracking-tight">Dinas Malam</p>
-                    <p class="text-[11px] font-bold text-slate-500 mt-0.5">19:00 - 07:30 WIB</p>
+                    <p class="text-[11px] font-black text-slate-900 uppercase tracking-tight">Dinas Malam</p>
+                    <p class="text-[9px] font-bold text-slate-500 mt-0.5">20:00 - 06:00</p>
                 </div>
             </div>
-            <div class="flex items-center gap-5 p-5 rounded-3xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-blue-200 transition-all">
-                <span class="w-12 h-12 rounded-2xl bg-blue-500 text-white flex items-center justify-center font-black text-lg shadow-xl shadow-blue-200 group-hover:scale-110 transition-transform">K</span>
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-blue-200 transition-all">
+                <span class="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center font-black text-base shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform">K</span>
                 <div>
-                    <p class="text-sm font-black text-slate-900 uppercase tracking-tight">Jam Kantor</p>
-                    <p class="text-[11px] font-bold text-blue-600 mt-0.5">07:30 - 16:00 WIB</p>
+                    <p class="text-[11px] font-black text-slate-900 uppercase tracking-tight">Kantor/Staf</p>
+                    <p class="text-[9px] font-bold text-blue-600 mt-0.5">07:30 - 14:30</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-indigo-200 transition-all">
+                <span class="w-10 h-10 rounded-xl bg-indigo-500 text-white flex items-center justify-center font-black text-base shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform">O</span>
+                <div>
+                    <p class="text-[11px] font-black text-slate-900 uppercase tracking-tight">Orientasi</p>
+                    <p class="text-[9px] font-bold text-indigo-600 mt-0.5">06:30 - 16:00</p>
                 </div>
             </div>
         </div>
@@ -208,10 +264,11 @@
 <form id="resetScheduleForm" action="{{ route('admin.schedules.reset') }}" method="POST" class="hidden no-loader">
     @csrf @method('DELETE')
     <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
+    <input type="hidden" name="schedule_type_id" value="{{ $activeType->id }}">
 </form>
 
 <!-- Roster Generator Modal -->
-<div id="rosterModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+<div id="rosterModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-[100] p-6 backdrop-blur-sm">
     <div class="bg-white w-full max-w-xl rounded-[40px] p-10 shadow-2xl animate-in zoom-in duration-200 relative overflow-hidden modal-scrollable">
         <div class="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
         <div class="relative z-10">
@@ -233,10 +290,14 @@
                     <div class="space-y-2">
                         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Pilih Regu / Kelompok</label>
                         <select name="squad_id" required class="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-black text-slate-700 focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer shadow-sm">
-                            <option value="">-- Pilih Regu --</option>
-                            @foreach($squads as $squad)
-                                <option value="{{ $squad->id }}">{{ $squad->name }} ({{ $squad->employees_count ?? $squad->employees->count() }} Anggota)</option>
-                            @endforeach
+                            <option value="">-- Pilih Kelompok / Regu --</option>
+                            @if($activeType->uses_squads)
+                                @foreach($squads as $squad)
+                                    <option value="{{ $squad->id }}">{{ $squad->name }} ({{ $squad->employees_count ?? $squad->employees->count() }} Anggota)</option>
+                                @endforeach
+                            @else
+                                <option value="staff" disabled>Tipe jadwal ini tidak menggunakan regu, akan meng-generate untuk staf langsung.</option>
+                            @endif
                         </select>
                     </div>
                     <div class="space-y-2">
@@ -355,7 +416,12 @@
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({ employee_id: empId, shift_id: currentSelectedShiftId, date: date })
+                body: JSON.stringify({ 
+                    employee_id: empId, 
+                    shift_id: currentSelectedShiftId, 
+                    date: date,
+                    schedule_type_id: '{{ $activeType->id }}'
+                })
             });
             if (response.ok) {
                 location.reload();

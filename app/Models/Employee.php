@@ -28,6 +28,8 @@ class Employee extends Model
         'position_id',
         'work_unit_id',
         'squad_id',
+        'category_id',
+        'role_in_squad',
     ];
 
     public function user(): BelongsTo
@@ -53,6 +55,11 @@ class Employee extends Model
     public function work_unit(): BelongsTo
     {
         return $this->belongsTo(WorkUnit::class, 'work_unit_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 
     public function schedules(): HasMany
@@ -88,9 +95,17 @@ class Employee extends Model
         return str_contains($pos, 'JAGA') || str_contains($pos, 'PENJAGA') || $this->squad_id != null;
     }
 
-    public function getCategoryLabelAttribute()
+    public function getEmployeeTypeLabelAttribute()
     {
-        return $this->is_regu ? 'Petugas Jaga' : 'Staf';
+        return $this->employee_type === 'regu_jaga' ? 'Regu Jaga' : 'Staf Kantor';
+    }
+
+    public function getRoleInSquadLabelAttribute()
+    {
+        if ($this->role_in_squad) {
+            return ucwords(str_replace('_', ' ', $this->role_in_squad));
+        }
+        return 'Anggota';
     }
 
     public function getWhatsAppLinkAttribute()

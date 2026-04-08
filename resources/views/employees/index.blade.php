@@ -5,7 +5,7 @@
 
 @section('content')
 <!-- Custom Loading Overlay for Import -->
-<div id="importLoading" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-md">
+<div id="importLoading" class="fixed inset-0 z-100 hidden items-center justify-center bg-slate-900/60 backdrop-blur-md">
     <div class="bg-white rounded-[32px] p-10 shadow-2xl max-w-sm w-full text-center animate-in zoom-in duration-300">
         <div class="relative w-24 h-24 mx-auto mb-6">
             <div class="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
@@ -30,13 +30,13 @@
                 <div class="flex items-center gap-5">
                     <div class="relative">
                         <div class="absolute inset-0 bg-blue-600 blur-xl opacity-40 animate-pulse"></div>
-                        <div class="relative w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl transform -rotate-3 transition-transform duration-500">
+                        <div class="relative w-14 h-14 bg-linear-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl transform -rotate-3 transition-transform duration-500">
                             <i data-lucide="users-round" class="w-7 h-7 text-white"></i>
                         </div>
                     </div>
                     <div>
                         <h2 class="text-4xl font-black tracking-tight italic leading-none">
-                            Data <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">Pegawai</span>
+                            Data <span class="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-indigo-300">Pegawai</span>
                         </h2>
                         <p class="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400/80 mt-1">Human Resources Engine</p>
                     </div>
@@ -105,11 +105,20 @@
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau NIP..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-transparent bg-slate-50 text-sm font-semibold outline-none focus:bg-white focus:border-blue-500 transition-all">
             </form>
             
-            <form action="{{ route('employees.index') }}" method="GET" class="w-full lg:w-64">
+            <form action="{{ route('employees.index') }}" method="GET" class="w-full lg:w-48">
                 <select name="work_unit_id" onchange="this.form.submit()" class="w-full px-4 py-2.5 rounded-xl border border-transparent bg-slate-50 text-sm font-semibold text-slate-700 outline-none focus:bg-white focus:border-blue-500 appearance-none cursor-pointer">
-                    <option value="">Seluruh Unit Kerja</option>
+                    <option value="">Seluruh Unit</option>
                     @foreach($workUnits as $unit)
                         <option value="{{ $unit->id }}" {{ request('work_unit_id') == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
+                    @endforeach
+                </select>
+            </form>
+
+            <form action="{{ route('employees.index') }}" method="GET" class="w-full lg:w-48">
+                <select name="category_id" onchange="this.form.submit()" class="w-full px-4 py-2.5 rounded-xl border border-transparent bg-slate-50 text-sm font-semibold text-slate-700 outline-none focus:bg-white focus:border-blue-500 appearance-none cursor-pointer">
+                    <option value="">Seluruh Kategori</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                     @endforeach
                 </select>
             </form>
@@ -153,9 +162,15 @@
                                         <i data-lucide="user" class="w-6 h-6 opacity-30"></i>
                                     @endif
                                 </div>
-                                <div class="min-w-0">
                                     <p class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate name-field">{{ $employee->full_name }}</p>
-                                    <p class="text-[10px] font-mono font-bold text-slate-400 mt-0.5 tracking-tight">NIP. {{ $employee->nip }} | NIK. {{ $employee->nik ?? '-' }}</p>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <p class="text-[10px] font-mono font-bold text-slate-400 tracking-tight">NIP. {{ $employee->nip }}</p>
+                                        @if($employee->category)
+                                            <span class="px-1.5 py-0.5 bg-{{ $employee->category->color }}-50 text-{{ $employee->category->color }}-600 border border-{{ $employee->category->color }}-100 text-[8px] font-black uppercase rounded-md tracking-tighter">
+                                                {{ $employee->category->name }}
+                                            </span>
+                                        @endif
+                                    </div>
                                     <p class="text-[9px] font-bold text-green-600 mt-0.5 uppercase">WA: {{ $employee->phone_number ?? '-' }}</p>
                                 </div>
                             </div>
@@ -178,7 +193,7 @@
                                 <a href="{{ route('employees.show', $employee->id) }}" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all btn-3d bg-white shadow-sm flex items-center justify-center" title="Detail & Riwayat">
                                     <i data-lucide="eye" class="w-4 h-4"></i>
                                 </a>
-                                <button onclick="openEditModal({{ json_encode($employee) }}, '{{ $employee->user->email }}')" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-all btn-3d bg-white shadow-sm flex items-center justify-center" title="Edit Profil">
+                                <button onclick='openEditModal(@json($employee), "{{ $employee->user->email }}")' class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-all btn-3d bg-white shadow-sm flex items-center justify-center" title="Edit Profil">
                                     <i data-lucide="pencil" class="w-4 h-4"></i>
                                 </button>
                                 <button type="button" onclick="confirmDelete({{ $employee->id }})" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all btn-3d bg-white shadow-sm flex items-center justify-center">
@@ -251,12 +266,14 @@
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
                         <input type="email" name="email" required placeholder="pegawai@sinergipas.id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
                     </div>
+                        </select>
+                    </div>
                     <div class="space-y-1.5">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Golongan</label>
-                        <select name="rank_id" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
-                            <option value="">-- Pilih Golongan --</option>
-                            @foreach($ranks as $rank)
-                                <option value="{{ $rank->id }}">{{ $rank->name }} ({{ $rank->description }})</option>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Kategori Pegawai</label>
+                        <select name="category_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                            <option value="">-- Tanpa Kategori --</option>
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -279,6 +296,11 @@
                             <option value="D">Regu D</option>
                         </select>
                     </div>
+                </div>
+                <!-- Role In Squad Add -->
+                <div class="space-y-1.5" id="role_container_add">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Peran dalam Regu (Opsional)</label>
+                    <input type="text" name="role_in_squad" placeholder="Contoh: Karupam, Wakarupam, Anggota..." class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1.5">
@@ -355,12 +377,14 @@
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
                         <input type="email" name="email" id="edit_email" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
                     </div>
+                        </select>
+                    </div>
                     <div class="space-y-1.5">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Golongan</label>
-                        <select name="rank_id" id="edit_rank_id" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
-                            <option value="">-- Pilih Golongan --</option>
-                            @foreach($ranks as $rank)
-                                <option value="{{ $rank->id }}">{{ $rank->name }}</option>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Kategori Pegawai</label>
+                        <select name="category_id" id="edit_category_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                            <option value="">-- Tanpa Kategori --</option>
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -383,6 +407,11 @@
                             <option value="D">Regu D</option>
                         </select>
                     </div>
+                </div>
+                <!-- Role In Squad Edit -->
+                <div class="space-y-1.5" id="role_container_edit">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Peran dalam Regu (Opsional)</label>
+                    <input type="text" name="role_in_squad" id="edit_role_in_squad" placeholder="Contoh: Karupam, Wakarupam, Anggota..." class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1.5">
@@ -421,11 +450,11 @@
 </div>
 
 <!-- Import Modal -->
-<div id="importModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+<div id="rosterModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
     <div class="bg-white w-full max-w-md rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200">
         <div class="flex justify-between items-center mb-8">
             <h3 class="text-xl font-bold text-slate-900">Import Batch Pegawai</h3>
-            <button onclick="document.getElementById('importModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500">
+            <button onclick="document.getElementById('rosterModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
@@ -499,10 +528,13 @@
     });
     function toggleRegu(select, mode) {
         const container = document.getElementById(`regu_container_${mode}`);
+        const roleContainer = document.getElementById(`role_container_${mode}`);
         if (select.value === 'regu_jaga') {
             container.classList.remove('hidden');
+            if(roleContainer) roleContainer.classList.remove('hidden');
         } else {
             container.classList.add('hidden');
+            if(roleContainer) roleContainer.classList.add('hidden');
         }
     }
 
@@ -603,8 +635,10 @@
         document.getElementById('edit_rank_id').value = employee.rank_id || '';
         document.getElementById('edit_employee_type').value = employee.employee_type || 'non_regu_jaga';
         document.getElementById('edit_picket_regu').value = employee.picket_regu || '';
+        document.getElementById('edit_role_in_squad').value = employee.role_in_squad || '';
         document.getElementById('edit_position_id').value = employee.position_id;
         document.getElementById('edit_work_unit_id').value = employee.work_unit_id;
+        document.getElementById('edit_category_id').value = employee.category_id || '';
         
         toggleRegu(document.getElementById('edit_employee_type'), 'edit');
         

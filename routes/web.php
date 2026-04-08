@@ -105,6 +105,16 @@ Route::middleware('auth')->group(function () {
             Route::get('/export', [AttendanceController::class, 'export'])->name('export');
         });
 
+        Route::prefix('admin/categories')->name('admin.categories.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\CategoryController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Admin\CategoryController::class, 'store'])->name('store');
+            Route::put('/{category}', [\App\Http\Controllers\Admin\CategoryController::class, 'update'])->name('update');
+            Route::delete('/{category}', [\App\Http\Controllers\Admin\CategoryController::class, 'destroy'])->name('destroy');
+            Route::post('/{category}/add-member', [\App\Http\Controllers\Admin\CategoryController::class, 'addMember'])->name('add-member');
+            Route::post('/{category}/remove-member', [\App\Http\Controllers\Admin\CategoryController::class, 'removeMember'])->name('remove-member');
+            Route::post('/{category}/remove-members-bulk', [\App\Http\Controllers\Admin\CategoryController::class, 'removeMembersBulk'])->name('remove-members-bulk');
+        });
+
         Route::prefix('admin/squads')->name('admin.squads.')->group(function () {
             Route::get('/', [SquadController::class, 'index'])->name('index');
             Route::post('/', [SquadController::class, 'store'])->name('store');
@@ -130,5 +140,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('/reset', [ScheduleController::class, 'reset'])->name('reset');
             Route::get('/export', [ScheduleController::class, 'export'])->name('export');
         });
+
+        Route::resource('admin/schedule-types', \App\Http\Controllers\Admin\ScheduleTypeController::class)->names('admin.schedule-types');
     });
 });

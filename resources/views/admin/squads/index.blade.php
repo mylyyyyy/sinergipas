@@ -53,7 +53,8 @@
                     <i data-lucide="users" class="w-10 h-10"></i>
                 </div>
                 <h3 class="text-xl font-black text-slate-900 italic tracking-tight">{{ $squad->name }}</h3>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{{ $squad->description ?? 'Grup Penjagaan' }}</p>
+                <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1">{{ $squad->scheduleType?->name ?? 'Tipe Tidak Valid' }}</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{{ $squad->description ?? '-' }}</p>
             </div>
             
             <div class="flex items-center justify-between pt-6 border-t border-slate-50">
@@ -92,6 +93,15 @@
                 <input type="text" name="name" required placeholder="Contoh: Regu A" class="w-full px-5 py-3 rounded-2xl border border-slate-200 text-sm font-bold focus:border-blue-500 bg-slate-50 outline-none">
             </div>
             <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Tipe Jadwal</label>
+                <select name="schedule_type_id" required class="w-full px-5 py-3 rounded-2xl border border-slate-200 text-sm font-bold focus:border-blue-500 bg-slate-50 outline-none">
+                    <option value="">Pilih Tipe</option>
+                    @foreach($scheduleTypes as $type)
+                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Deskripsi</label>
                 <textarea name="description" rows="3" placeholder="Opsional..." class="w-full px-5 py-3 rounded-2xl border border-slate-200 text-sm font-bold focus:border-blue-500 bg-slate-50 outline-none"></textarea>
             </div>
@@ -112,6 +122,14 @@
             <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Nama Regu</label>
                 <input type="text" name="name" id="edit_name" required class="w-full px-5 py-3 rounded-2xl border border-slate-200 text-sm font-bold focus:border-blue-500 bg-slate-50 outline-none">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Tipe Jadwal</label>
+                <select name="schedule_type_id" id="edit_schedule_type_id" required class="w-full px-5 py-3 rounded-2xl border border-slate-200 text-sm font-bold focus:border-blue-500 bg-slate-50 outline-none">
+                    @foreach($scheduleTypes as $type)
+                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                    @endforeach
+                </select>
             </div>
             <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Deskripsi</label>
@@ -241,6 +259,7 @@
     function openEditModal(squad) {
         document.getElementById('edit_name').value = squad.name;
         document.getElementById('edit_description').value = squad.description;
+        document.getElementById('edit_schedule_type_id').value = squad.schedule_type_id;
         document.getElementById('editForm').action = `/admin/squads/${squad.id}`;
         document.getElementById('editModal').classList.remove('hidden');
     }

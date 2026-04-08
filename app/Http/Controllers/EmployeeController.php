@@ -21,7 +21,7 @@ class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Employee::with(['user', 'work_unit', 'position_relation', 'rank_relation']);
+        $query = Employee::with(['user', 'work_unit', 'position_relation', 'rank_relation', 'category']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -35,12 +35,17 @@ class EmployeeController extends Controller
             $query->where('work_unit_id', $request->work_unit_id);
         }
 
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
         $employees = $query->orderBy('full_name')->get();
         $positions = Position::orderBy('name')->get();
         $workUnits = WorkUnit::orderBy('name')->get();
         $ranks = Rank::orderBy('name')->get();
+        $categories = \App\Models\Category::orderBy('name')->get();
 
-        return view('employees.index', compact('employees', 'positions', 'workUnits', 'ranks'));
+        return view('employees.index', compact('employees', 'positions', 'workUnits', 'ranks', 'categories'));
     }
 
     public function show(Employee $employee)
@@ -60,8 +65,10 @@ class EmployeeController extends Controller
             'position_id' => 'required|exists:positions,id',
             'work_unit_id' => 'required|exists:work_units,id',
             'rank_id' => 'nullable|exists:ranks,id',
+            'category_id' => 'nullable|exists:categories,id',
             'password' => 'required|min:8',
             'picket_regu' => 'nullable|string',
+            'role_in_squad' => 'nullable|string',
         ]);
 
         $user = User::create([
@@ -88,8 +95,10 @@ class EmployeeController extends Controller
             'work_unit_id' => $request->work_unit_id,
             'rank_id' => $request->rank_id,
             'rank_class' => $rank?->name,
+            'category_id' => $request->category_id,
             'employee_type' => $employeeType,
             'picket_regu' => $request->picket_regu,
+            'role_in_squad' => $request->role_in_squad,
         ]);
 
         AuditLog::create([
@@ -114,8 +123,10 @@ class EmployeeController extends Controller
             'position_id' => 'required|exists:positions,id',
             'work_unit_id' => 'required|exists:work_units,id',
             'rank_id' => 'nullable|exists:ranks,id',
+            'category_id' => 'nullable|exists:categories,id',
             'password' => 'nullable|min:8',
             'picket_regu' => 'nullable|string',
+            'role_in_squad' => 'nullable|string',
         ]);
 
         $oldValues = $employee->toArray();
@@ -145,8 +156,10 @@ class EmployeeController extends Controller
             'work_unit_id' => $request->work_unit_id,
             'rank_id' => $request->rank_id,
             'rank_class' => $rank?->name,
+            'category_id' => $request->category_id,
             'employee_type' => $employeeType,
             'picket_regu' => $request->picket_regu,
+            'role_in_squad' => $request->role_in_squad,
         ]);
 
         // Real-time Sync: Update attendance for this employee in the current month if rank changed
@@ -183,25 +196,32 @@ class EmployeeController extends Controller
 
     public function destroy(Employee $employee)
     {
-        $name = $employee->full_name;
-        $user = $employee->user;
-        
-        if ($employee->getRawOriginal('photo')) {
-            Storage::disk('public')->delete($employee->getRawOriginal('photo'));
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            $name = $employee->full_name;
+            $user = $employee->user;
+            
+            if ($employee->getRawOriginal('photo')) {
+                Storage::disk('public')->delete($employee->getRawOriginal('photo'));
+            }
+
+            AuditLog::create([
+                'user_id' => auth()->id(),
+                'activity' => 'delete_employee',
+                'ip_address' => request()->ip(),
+                'details' => auth()->user()->name . ' menghapus data pegawai: ' . $name,
+                'old_values' => $employee->toArray()
+            ]);
+
+            $employee->delete();
+            if ($user) $user->delete();
+
+            \Illuminate\Support\Facades\DB::commit();
+            return back()->with('success', 'Data pegawai berhasil dihapus.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return back()->with('error', 'Gagal menghapus pegawai: ' . $e->getMessage());
         }
-
-        AuditLog::create([
-            'user_id' => auth()->id(),
-            'activity' => 'delete_employee',
-            'ip_address' => request()->ip(),
-            'details' => auth()->user()->name . ' menghapus data pegawai: ' . $name,
-            'old_values' => $employee->toArray()
-        ]);
-
-        $employee->delete();
-        if ($user) $user->delete();
-
-        return back()->with('success', 'Data pegawai berhasil dihapus.');
     }
 
     public function bulkDestroy(Request $request)
@@ -209,25 +229,32 @@ class EmployeeController extends Controller
         $ids = $request->ids;
         if (!$ids) return back()->with('error', 'Pilih data yang ingin dihapus.');
 
-        $employees = Employee::whereIn('id', $ids)->get();
-        foreach ($employees as $emp) {
-            if ($emp->getRawOriginal('photo')) {
-                Storage::disk('public')->delete($emp->getRawOriginal('photo'));
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            $employees = Employee::whereIn('id', $ids)->get();
+            foreach ($employees as $emp) {
+                if ($emp->getRawOriginal('photo')) {
+                    Storage::disk('public')->delete($emp->getRawOriginal('photo'));
+                }
+                
+                AuditLog::create([
+                    'user_id' => auth()->id(),
+                    'activity' => 'delete_employee',
+                    'ip_address' => $request->ip(),
+                    'details' => auth()->user()->name . ' menghapus data pegawai: ' . $emp->full_name,
+                    'old_values' => $emp->toArray()
+                ]);
+
+                if ($emp->user) $emp->user->delete();
+                $emp->delete();
             }
-            
-            AuditLog::create([
-                'user_id' => auth()->id(),
-                'activity' => 'delete_employee',
-                'ip_address' => $request->ip(),
-                'details' => auth()->user()->name . ' menghapus data pegawai: ' . $emp->full_name,
-                'old_values' => $emp->toArray()
-            ]);
 
-            if ($emp->user) $emp->user->delete();
-            $emp->delete();
+            \Illuminate\Support\Facades\DB::commit();
+            return back()->with('success', count($ids) . ' data pegawai berhasil dihapus.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return back()->with('error', 'Gagal menghapus data masal: ' . $e->getMessage());
         }
-
-        return back()->with('success', count($ids) . ' data pegawai berhasil dihapus.');
     }
 
     public function destroyAll(Request $request)

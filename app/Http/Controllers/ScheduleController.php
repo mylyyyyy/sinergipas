@@ -8,8 +8,10 @@ use App\Models\Schedule;
 use App\Models\AuditLog;
 use App\Models\Setting;
 use App\Models\Squad;
+use App\Models\ScheduleType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
@@ -18,19 +20,44 @@ class ScheduleController extends Controller
 {
     public function index(Request $request)
     {
-        $employees = Employee::with(['work_unit', 'squad'])->orderBy('full_name')->get();
+        $scheduleTypes = ScheduleType::where('is_active', true)->orderBy('sort_order')->get();
+        if ($scheduleTypes->isEmpty()) {
+            return back()->with('error', 'Silakan setup Schedule Types terlebih dahulu via Seeder.');
+        }
+
+        $activeTypeId = $request->input('type', $scheduleTypes->first()->id);
+        $activeType = $scheduleTypes->firstWhere('id', $activeTypeId);
+
+        $employeesQuery = Employee::with(['work_unit', 'squad'])
+            ->whereHas('user') // Safety check: only active employees
+            ->orderBy('full_name');
+
+        if ($activeType->uses_squads) {
+            $employeesQuery->whereHas('squad', function($q) use ($activeTypeId) {
+                $q->where('schedule_type_id', $activeTypeId);
+            });
+            $squads = Squad::where('schedule_type_id', $activeTypeId)->get();
+        } else {
+            // For staffing / non-squad types
+            $employeesQuery->whereDoesntHave('squad');
+            $squads = collect();
+        }
+
+        $employees = $employeesQuery->get();
         $shifts = Shift::all();
-        $squads = Squad::all();
         
         $month = $request->filled('month') ? Carbon::parse($request->month) : now();
         $daysInMonth = $month->daysInMonth;
         
         $schedules = Schedule::whereMonth('date', $month->month)
             ->whereYear('date', $month->year)
+            ->where('schedule_type_id', $activeTypeId)
             ->get()
             ->groupBy('employee_id');
 
-        return view('admin.schedules.index', compact('employees', 'shifts', 'month', 'daysInMonth', 'schedules', 'squads'));
+        return view('admin.schedules.index', compact(
+            'employees', 'shifts', 'month', 'daysInMonth', 'schedules', 'squads', 'scheduleTypes', 'activeType'
+        ));
     }
 
     public function store(Request $request)
@@ -39,13 +66,21 @@ class ScheduleController extends Controller
             'employee_id' => 'required|exists:employees,id',
             'shift_id' => 'nullable|exists:shifts,id',
             'date' => 'required|date',
+            'schedule_type_id' => 'required|exists:schedule_types,id',
         ]);
 
         if (!$request->shift_id) {
-            Schedule::where('employee_id', $request->employee_id)->where('date', $request->date)->delete();
+            Schedule::where('employee_id', $request->employee_id)
+                ->where('date', $request->date)
+                ->where('schedule_type_id', $request->schedule_type_id)
+                ->delete();
         } else {
             Schedule::updateOrCreate(
-                ['employee_id' => $request->employee_id, 'date' => $request->date],
+                [
+                    'employee_id' => $request->employee_id, 
+                    'date' => $request->date,
+                    'schedule_type_id' => $request->schedule_type_id
+                ],
                 ['shift_id' => $request->shift_id]
             );
         }
@@ -94,37 +129,51 @@ class ScheduleController extends Controller
                     $index = ($diffDays % $patternCount);
                     if ($index < 0) $index += $patternCount;
 
-                    $shiftId = $pattern[$index];
-
-                    if ($shiftId) {
-                        $upsertData[] = [
-                            'employee_id' => $employee->id,
-                            'date' => $dateObj->format('Y-m-d'),
-                            'shift_id' => $shiftId,
-                            'created_at' => $now,
-                            'updated_at' => $now
-                        ];
+                    $shiftIdString = $pattern[$index];
+                    
+                    if ($shiftIdString) {
+                        // Handle multiple shifts in one day (e.g. "P-M" split by hyphen)
+                        $shiftIds = explode('-', $shiftIdString);
+                        
+                        foreach ($shiftIds as $sId) {
+                            if (empty($sId)) continue;
+                            
+                            $upsertData[] = [
+                                'employee_id' => $employee->id,
+                                'date' => $dateObj->format('Y-m-d'),
+                                'shift_id' => $sId,
+                                'schedule_type_id' => $squad->schedule_type_id,
+                                'created_at' => $now,
+                                'updated_at' => $now
+                            ];
+                        }
                     } else {
-                        $deleteConditions[] = ['employee_id' => $employee->id, 'date' => $dateObj->format('Y-m-d')];
+                        $deleteConditions[] = ['employee_id' => $employee->id, 'date' => $dateObj->format('Y-m-d'), 'schedule_type_id' => $squad->schedule_type_id];
                     }
                 }
             }
 
-            // 2. Process Staff
-            if ($officeShift) {
+            // 2. Process Staff / Pegawai Lainnya (Automated Office Hours)
+            $staffType = \App\Models\ScheduleType::where('code', 'staff')->first();
+            $staffTypeId = $staffType ? $staffType->id : null;
+            $officeShift = Shift::where('name', 'like', '%Dinas Pagi%')
+                               ->orWhere('name', 'like', '%Kantor%')
+                               ->first();
+
+            if ($officeShift && $staffTypeId) {
                 foreach ($staffEmployees as $employee) {
                     for ($day = 1; $day <= $currentMonth->daysInMonth; $day++) {
                         $dateObj = $currentMonth->copy()->day($day);
+                        // Office hours apply Mon-Fri
                         if ($dateObj->isWeekday()) {
                             $upsertData[] = [
                                 'employee_id' => $employee->id,
                                 'date' => $dateObj->format('Y-m-d'),
                                 'shift_id' => $officeShift->id,
+                                'schedule_type_id' => $staffTypeId,
                                 'created_at' => $now,
                                 'updated_at' => $now
                             ];
-                        } else {
-                            $deleteConditions[] = ['employee_id' => $employee->id, 'date' => $dateObj->format('Y-m-d')];
                         }
                     }
                 }
@@ -132,8 +181,8 @@ class ScheduleController extends Controller
 
             // Perform Bulk Deletions if any
             if (!empty($deleteConditions)) {
-                // To keep it simple and safe, we can group by employee or just delete in a specific month range
                 $empIds = array_unique(array_column($deleteConditions, 'employee_id'));
+                // Use the type id from the first condition or assume they are grouped if needed
                 Schedule::whereIn('employee_id', $empIds)
                         ->whereMonth('date', $currentMonth->month)
                         ->whereYear('date', $currentMonth->year)
@@ -145,7 +194,7 @@ class ScheduleController extends Controller
             if (!empty($upsertData)) {
                 $chunks = array_chunk($upsertData, 500);
                 foreach ($chunks as $chunk) {
-                    Schedule::upsert($chunk, ['employee_id', 'date'], ['shift_id', 'updated_at']);
+                    Schedule::upsert($chunk, ['employee_id', 'date', 'schedule_type_id'], ['shift_id', 'updated_at']);
                 }
             }
 
@@ -156,10 +205,10 @@ class ScheduleController extends Controller
         }
 
         AuditLog::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'activity' => 'generate_roster',
             'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . " men-generate roster otomatis untuk Regu $squad->name dan Staf pada bulan " . $baseMonth->translatedFormat('F Y')
+            'details' => Auth::user()->name . " men-generate roster otomatis untuk Regu $squad->name dan Staf pada bulan " . $baseMonth->translatedFormat('F Y')
         ]);
 
         return back()->with('success', "Roster berhasil di-generate secara instan.");
@@ -167,21 +216,27 @@ class ScheduleController extends Controller
 
     public function reset(Request $request)
     {
-        $request->validate(['month' => 'required|string']);
+        $request->validate([
+            'month' => 'required|string',
+            'schedule_type_id' => 'required|exists:schedule_types,id',
+        ]);
         $date = Carbon::parse($request->month);
+        $typeId = $request->schedule_type_id;
+        $type = ScheduleType::find($typeId);
 
         Schedule::whereMonth('date', $date->month)
             ->whereYear('date', $date->year)
+            ->where('schedule_type_id', $typeId)
             ->delete();
 
         AuditLog::create([
             'user_id' => auth()->id(),
             'activity' => 'reset_schedule',
             'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . " mereset seluruh jadwal bulan " . $date->translatedFormat('F Y')
+            'details' => auth()->user()->name . " mereset jadwal '{$type->name}' bulan " . $date->translatedFormat('F Y')
         ]);
 
-        return back()->with('success', "Seluruh jadwal bulan " . $date->translatedFormat('F Y') . " telah dibersihkan.");
+        return back()->with('success', "Jadwal '{$type->name}' bulan " . $date->translatedFormat('F Y') . " telah dibersihkan.");
     }
 
     public function export(Request $request)

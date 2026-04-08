@@ -200,6 +200,11 @@
                     <span class="text-sm font-semibold">Data Pegawai</span>
                 </a>
 
+                <a href="{{ route('admin.categories.index') }}" class="sidebar-item {{ request()->routeIs('admin.categories.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
+                    <i data-lucide="tag" class="w-5 h-5"></i>
+                    <span class="text-sm font-semibold">Kategori Pegawai</span>
+                </a>
+
                 <a href="{{ route('admin.ranks.index') }}" class="sidebar-item {{ request()->routeIs('admin.ranks.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
                     <i data-lucide="shield-check" class="w-5 h-5"></i>
                     <span class="text-sm font-semibold">Golongan</span>
@@ -213,6 +218,16 @@
                 <a href="{{ route('admin.schedules.index') }}" class="sidebar-item {{ request()->routeIs('admin.schedules.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
                     <i data-lucide="calendar-days" class="w-5 h-5"></i>
                     <span class="text-sm font-semibold">Jadwal Shift</span>
+                </a>
+
+                <a href="{{ route('admin.schedule-types.index') }}" class="sidebar-item {{ request()->routeIs('admin.schedule-types.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                    <span class="text-sm font-semibold">Master Tipe Piket</span>
+                </a>
+
+                <a href="{{ route('admin.squads.index') }}" class="sidebar-item {{ request()->routeIs('admin.squads.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
+                    <i data-lucide="users-round" class="w-5 h-5"></i>
+                    <span class="text-sm font-semibold">Manajemen Regu</span>
                 </a>
                 @endif
 

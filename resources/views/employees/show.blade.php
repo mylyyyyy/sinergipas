@@ -36,9 +36,17 @@
                     <h3 class="text-xl font-black text-slate-900 italic leading-tight">{{ $employee->full_name }}</h3>
                     <p class="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em] mt-1">NIP. {{ $employee->nip }}</p>
                     
-                    <div class="mt-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-500">
-                        <span class="h-1.5 w-1.5 rounded-full {{ $employee->employee_type === 'regu_jaga' ? 'bg-indigo-500' : 'bg-emerald-500' }}"></span>
-                        {{ $employee->category_label }}
+                    <div class="mt-6 flex flex-wrap justify-center gap-2">
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-500">
+                            <span class="h-1.5 w-1.5 rounded-full {{ $employee->employee_type === 'regu_jaga' ? 'bg-indigo-500' : 'bg-emerald-500' }}"></span>
+                            {{ $employee->employee_type_label }}
+                        </div>
+                        @if($employee->category)
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-{{ $employee->category->color }}-50 border border-{{ $employee->category->color }}-100 text-[9px] font-black uppercase tracking-widest text-{{ $employee->category->color }}-600">
+                            <i data-lucide="tag" class="w-2.5 h-2.5"></i>
+                            {{ $employee->category->name }}
+                        </div>
+                        @endif
                     </div>
                 </div>
                 <div class="border-t border-slate-50 p-8 space-y-4">
@@ -54,6 +62,12 @@
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Unit Kerja</span>
                         <span class="text-xs font-black text-slate-700 uppercase">{{ $employee->work_unit->name ?? '-' }}</span>
                     </div>
+                    @if($employee->category)
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kategori</span>
+                        <span class="text-xs font-black text-indigo-600 uppercase">{{ $employee->category->name }}</span>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
