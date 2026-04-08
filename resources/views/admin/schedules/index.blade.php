@@ -51,7 +51,7 @@
 </style>
 
 <!-- Custom Loading Overlay for Roster Generation -->
-<div id="rosterLoading" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-md">
+<div id="rosterLoading" class="fixed inset-0 z-100 hidden items-center justify-center bg-slate-900/60 backdrop-blur-md">
     <div class="bg-white rounded-[32px] p-10 shadow-2xl max-w-sm w-full text-center animate-in zoom-in duration-300">
         <div class="relative w-24 h-24 mx-auto mb-6">
             <div class="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
@@ -285,18 +285,17 @@
             <form id="rosterForm" action="{{ route('admin.schedules.generate') }}" method="POST" class="space-y-8">
                 @csrf
                 <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
+                <input type="hidden" name="schedule_type_id" value="{{ $activeType->id }}">
                 
                 <div class="grid grid-cols-2 gap-6">
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Pilih Regu / Kelompok</label>
-                        <select name="squad_id" required class="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-black text-slate-700 focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer shadow-sm">
-                            <option value="">-- Pilih Kelompok / Regu --</option>
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Pilih Regu / Kelompok (Opsional)</label>
+                        <select name="squad_id" class="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-black text-slate-700 focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer shadow-sm">
+                            <option value="">-- Semua Pegawai Tipe Ini --</option>
                             @if($activeType->uses_squads)
                                 @foreach($squads as $squad)
                                     <option value="{{ $squad->id }}">{{ $squad->name }} ({{ $squad->employees_count ?? $squad->employees->count() }} Anggota)</option>
                                 @endforeach
-                            @else
-                                <option value="staff" disabled>Tipe jadwal ini tidak menggunakan regu, akan meng-generate untuk staf langsung.</option>
                             @endif
                         </select>
                     </div>
@@ -306,8 +305,21 @@
                     </div>
                 </div>
 
+                @if(!empty($activeType->pattern))
+                <div class="p-5 bg-emerald-50 rounded-3xl border border-emerald-100 flex gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-emerald-900 uppercase tracking-widest">Pola Terdeteksi</p>
+                        <p class="text-[10px] font-bold text-emerald-600 leading-relaxed mt-1">
+                            Tipe ini menggunakan pola: <span class="font-black underline">{{ implode(' - ', $activeType->pattern) }}</span>. Generator akan mengikuti pola ini secara otomatis.
+                        </p>
+                    </div>
+                </div>
+                @else
                 <div class="space-y-4">
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Urutan Pola Berulang (Shift Jaga)</label>
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Kustom Urutan Pola (Shift Jaga)</label>
                     <div class="grid grid-cols-4 gap-3">
                         @for($i = 0; $i < 4; $i++)
                         <div class="space-y-1.5">
@@ -315,13 +327,14 @@
                             <select name="pattern[]" class="w-full px-3 py-4 rounded-xl border border-slate-200 bg-white text-xs font-black outline-none focus:border-blue-500 shadow-sm text-center">
                                 <option value="">OFF</option>
                                 @foreach($shifts as $s)
-                                    <option value="{{ $s->id }}" {{ $i == $loop->index ? 'selected' : '' }}>{{ substr(strtoupper($s->name), 0, 1) }}</option>
+                                    <option value="{{ $s->id }}">{{ substr(strtoupper($s->name), 0, 1) }}</option>
                                 @endforeach
                             </select>
                         </div>
                         @endfor
                     </div>
                 </div>
+                @endif
 
                 <div class="p-5 bg-blue-50 rounded-3xl border border-blue-100 flex gap-4">
                     <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm">

@@ -91,86 +91,73 @@ class ScheduleController extends Controller
     public function generateRoster(Request $request)
     {
         $request->validate([
-            'squad_id' => 'required|exists:squads,id',
+            'schedule_type_id' => 'required|exists:schedule_types,id',
             'month' => 'required|string',
             'start_date' => 'required|date',
-            'pattern' => 'required|array',
+            'squad_id' => 'nullable|exists:squads,id',
+            'pattern' => 'nullable|array',
         ]);
 
         $baseMonth = Carbon::parse($request->month);
         $startDate = Carbon::parse($request->start_date);
-        $squad = Squad::find($request->squad_id);
+        $type = ScheduleType::find($request->schedule_type_id);
         
-        $reguEmployees = Employee::where('squad_id', $request->squad_id)->get();
-        $staffEmployees = Employee::where('employee_type', 'non_regu_jaga')->get();
+        // Use pattern from request or from type model
+        $pattern = $request->pattern ?: $type->pattern;
         
-        $officeShift = Shift::where('name', 'like', '%Kantor%')->first();
-        $pattern = array_values($request->pattern); // Reset keys
+        if (empty($pattern)) {
+            return back()->with('error', "Pola (pattern) tidak ditemukan untuk tipe ini. Silakan atur di Master Tipe Piket.");
+        }
+
+        $pattern = array_values($pattern); 
         $patternCount = count($pattern);
 
-        if ($reguEmployees->isEmpty() && $staffEmployees->isEmpty()) {
+        // Fetch employees
+        if ($request->squad_id) {
+            $employees = Employee::where('squad_id', $request->squad_id)->get();
+            $squad = Squad::find($request->squad_id);
+            $logTag = "Regu " . $squad->name;
+        } else {
+            // If No Squad but for a specific type (e.g. CPNS Ramadan)
+            $employees = Employee::whereHas('user') // Or specific criteria
+                        ->whereDoesntHave('squad')
+                        ->get();
+            $logTag = $type->name;
+        }
+
+        if ($employees->isEmpty()) {
             return back()->with('error', "Tidak ada data pegawai untuk diproses.");
         }
 
         $upsertData = [];
-        $deleteConditions = []; // Array of [employee_id, date]
         $now = now();
 
         DB::beginTransaction();
         try {
-            $currentMonth = $baseMonth;
-
-            // 1. Process Regu Jaga
-            foreach ($reguEmployees as $employee) {
-                for ($day = 1; $day <= $currentMonth->daysInMonth; $day++) {
-                    $dateObj = $currentMonth->copy()->day($day);
+            foreach ($employees as $employee) {
+                // Different offset for each employee could be added here if needed
+                // For now, we use a simple start_date diff
+                for ($day = 1; $day <= $baseMonth->daysInMonth; $day++) {
+                    $dateObj = $baseMonth->copy()->day($day);
                     $diffDays = $startDate->diffInDays($dateObj, false);
                     
                     $index = ($diffDays % $patternCount);
                     if ($index < 0) $index += $patternCount;
 
-                    $shiftIdString = $pattern[$index];
+                    $shiftToken = $pattern[$index];
                     
-                    if ($shiftIdString) {
-                        // Handle multiple shifts in one day (e.g. "P-M" split by hyphen)
-                        $shiftIds = explode('-', $shiftIdString);
-                        
-                        foreach ($shiftIds as $sId) {
-                            if (empty($sId)) continue;
-                            
+                    if ($shiftToken && $shiftToken !== 'I') {
+                        // Find shift by ID or Code/Name
+                        $shift = is_numeric($shiftToken) 
+                            ? Shift::find($shiftToken) 
+                            : Shift::where('name', 'like', "%($shiftToken)%")->first();
+
+                        if ($shift) {
                             $upsertData[] = [
                                 'employee_id' => $employee->id,
                                 'date' => $dateObj->format('Y-m-d'),
-                                'shift_id' => $sId,
-                                'schedule_type_id' => $squad->schedule_type_id,
-                                'created_at' => $now,
-                                'updated_at' => $now
-                            ];
-                        }
-                    } else {
-                        $deleteConditions[] = ['employee_id' => $employee->id, 'date' => $dateObj->format('Y-m-d'), 'schedule_type_id' => $squad->schedule_type_id];
-                    }
-                }
-            }
-
-            // 2. Process Staff / Pegawai Lainnya (Automated Office Hours)
-            $staffType = \App\Models\ScheduleType::where('code', 'staff')->first();
-            $staffTypeId = $staffType ? $staffType->id : null;
-            $officeShift = Shift::where('name', 'like', '%Dinas Pagi%')
-                               ->orWhere('name', 'like', '%Kantor%')
-                               ->first();
-
-            if ($officeShift && $staffTypeId) {
-                foreach ($staffEmployees as $employee) {
-                    for ($day = 1; $day <= $currentMonth->daysInMonth; $day++) {
-                        $dateObj = $currentMonth->copy()->day($day);
-                        // Office hours apply Mon-Fri
-                        if ($dateObj->isWeekday()) {
-                            $upsertData[] = [
-                                'employee_id' => $employee->id,
-                                'date' => $dateObj->format('Y-m-d'),
-                                'shift_id' => $officeShift->id,
-                                'schedule_type_id' => $staffTypeId,
+                                'shift_id' => $shift->id,
+                                'schedule_type_id' => $type->id,
                                 'created_at' => $now,
                                 'updated_at' => $now
                             ];
@@ -179,18 +166,6 @@ class ScheduleController extends Controller
                 }
             }
 
-            // Perform Bulk Deletions if any
-            if (!empty($deleteConditions)) {
-                $empIds = array_unique(array_column($deleteConditions, 'employee_id'));
-                // Use the type id from the first condition or assume they are grouped if needed
-                Schedule::whereIn('employee_id', $empIds)
-                        ->whereMonth('date', $currentMonth->month)
-                        ->whereYear('date', $currentMonth->year)
-                        ->whereNotIn('date', array_column($upsertData, 'date')) // Only delete if not being updated
-                        ->delete();
-            }
-
-            // Perform Bulk Upsert in chunks
             if (!empty($upsertData)) {
                 $chunks = array_chunk($upsertData, 500);
                 foreach ($chunks as $chunk) {
@@ -208,10 +183,10 @@ class ScheduleController extends Controller
             'user_id' => Auth::id(),
             'activity' => 'generate_roster',
             'ip_address' => $request->ip(),
-            'details' => Auth::user()->name . " men-generate roster otomatis untuk Regu $squad->name dan Staf pada bulan " . $baseMonth->translatedFormat('F Y')
+            'details' => Auth::user()->name . " men-generate roster otomatis untuk $logTag pada bulan " . $baseMonth->translatedFormat('F Y')
         ]);
 
-        return back()->with('success', "Roster berhasil di-generate secara instan.");
+        return back()->with('success', "Roster berhasil di-generate secara otomatis.");
     }
 
     public function reset(Request $request)
