@@ -114,7 +114,8 @@
                         @php
                             $totalHadir = $emp->attendances->where('status', '!=', 'absent')->count();
                             $totalTelat = $emp->attendances->sum('late_minutes');
-                            $totalUangMakan = $emp->attendances->sum('allowance_amount');
+                            $currentRate = $emp->rank_relation->meal_allowance ?? 0;
+                            $totalUangMakan = $totalHadir * $currentRate;
                         @endphp
                         <tr class="hover:bg-slate-50/50 transition-colors group">
                             <td class="px-6 py-4">

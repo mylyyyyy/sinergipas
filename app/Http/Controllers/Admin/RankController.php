@@ -45,6 +45,17 @@ class RankController extends Controller
 
         $rank->update($request->all());
 
+        // Real-time Sync: Update all attendance records for employees with this rank in the current month
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+        
+        \App\Models\Attendance::whereMonth('date', $currentMonth)
+            ->whereYear('date', $currentYear)
+            ->whereHas('employee', function($q) use ($rank) {
+                $q->where('rank_id', $rank->id);
+            })
+            ->update(['allowance_amount' => $rank->meal_allowance]);
+
         AuditLog::create([
             'user_id' => auth()->id(),
             'activity' => 'update_rank',

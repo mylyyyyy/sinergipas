@@ -49,14 +49,16 @@ class AttendanceController extends Controller
             ->orderBy('check_in', 'asc')
             ->paginate(50, ['*'], 'log_page')->withQueryString();
 
-        // Optimized Summary Calculation
+        // Optimized Summary Calculation (Real-time sync with Ranks)
         $summary = DB::table('attendances')
-            ->whereMonth('date', $date->month)
-            ->whereYear('date', $date->year)
+            ->leftJoin('employees', 'attendances.employee_id', '=', 'employees.id')
+            ->leftJoin('ranks', 'employees.rank_id', '=', 'ranks.id')
+            ->whereMonth('attendances.date', $date->month)
+            ->whereYear('attendances.date', $date->year)
             ->selectRaw('
-                COUNT(CASE WHEN status = "present" THEN 1 END) as total_present,
-                COUNT(CASE WHEN late_minutes > 0 THEN 1 END) as total_late,
-                SUM(allowance_amount) as total_allowance
+                COUNT(CASE WHEN attendances.status != "absent" THEN 1 END) as total_present,
+                COUNT(CASE WHEN attendances.late_minutes > 0 THEN 1 END) as total_late,
+                SUM(COALESCE(ranks.meal_allowance, attendances.allowance_amount, 0)) as total_allowance
             ')->first();
 
         return view('admin.attendance.index', compact('employees', 'attendanceLogs', 'summary', 'monthStr', 'date'));
@@ -172,12 +174,17 @@ class AttendanceController extends Controller
             }
         }
 
-        // Meal Allowance
-        $class = strtoupper((string)$employee->rank_class);
+        // Meal Allowance from Rank Model
         $rate = 0;
-        if (str_contains($class, 'IV')) $rate = Setting::getValue('meal_allowance_iv', 41000);
-        elseif (str_contains($class, 'III')) $rate = Setting::getValue('meal_allowance_iii', 37000);
-        elseif (str_contains($class, 'II')) $rate = Setting::getValue('meal_allowance_ii', 35000);
+        if ($employee->rank_relation) {
+            $rate = $employee->rank_relation->meal_allowance;
+        } else {
+            // Fallback to old string-based mapping if rank_relation is not set
+            $class = strtoupper((string)$employee->rank_class);
+            if (str_contains($class, 'IV')) $rate = Setting::getValue('meal_allowance_iv', 41000);
+            elseif (str_contains($class, 'III')) $rate = Setting::getValue('meal_allowance_iii', 37000);
+            elseif (str_contains($class, 'II')) $rate = Setting::getValue('meal_allowance_ii', 35000);
+        }
         
         $attendance->allowance_amount = $rate;
     }
@@ -205,13 +212,14 @@ class AttendanceController extends Controller
             $attendances = Attendance::whereDate('date', $exactDate)->get()->keyBy('employee_id');
             $data = $employees->map(function($emp) use ($attendances) {
                 $att = $attendances->get($emp->id);
+                $currentRate = $emp->rank_relation->meal_allowance ?? 0;
                 return (object)[
                     'employee' => $emp,
                     'check_in' => $att ? $att->check_in : null,
                     'check_out' => $att ? $att->check_out : null,
                     'status' => $att ? $att->status : 'absent',
                     'late_minutes' => $att ? $att->late_minutes : 0,
-                    'allowance_amount' => $att ? $att->allowance_amount : 0,
+                    'allowance_amount' => $att ? $currentRate : 0, // Dynamic
                 ];
             });
             $reportTitle = "LAPORAN ABSENSI HARIAN - " . strtoupper($exactDate->translatedFormat('d F Y'));
@@ -228,11 +236,13 @@ class AttendanceController extends Controller
             $attendances = Attendance::whereBetween('date', [$start->format('Y-m-d'), $end->format('Y-m-d')])->get()->groupBy('employee_id');
             $data = $employees->map(function($emp) use ($attendances) {
                 $atts = $attendances->get($emp->id) ?? collect();
+                $currentRate = $emp->rank_relation->meal_allowance ?? 0;
+                $presentCount = $atts->where('status', '!=', 'absent')->count();
                 return (object)[
                     'employee' => $emp,
-                    'total_present' => $atts->where('status', '!=', 'absent')->count(),
+                    'total_present' => $presentCount,
                     'total_late_minutes' => $atts->sum('late_minutes'),
-                    'total_allowance' => $atts->sum('allowance_amount'),
+                    'total_allowance' => $presentCount * $currentRate, // Dynamic
                 ];
             });
             $reportTitle = "REKAPITULASI ABSENSI MINGGUAN (" . $start->format('d/m') . " - " . $end->format('d/m/Y') . ")";
@@ -252,6 +262,12 @@ class AttendanceController extends Controller
                 ->orderBy('date', 'asc')
                 ->get();
                 
+            $currentRate = $emp->rank_relation->meal_allowance ?? 0;
+            $logs = $logs->map(function($log) use ($currentRate) {
+                $log->allowance_amount = $log->status !== 'absent' ? $currentRate : 0;
+                return $log;
+            });
+
             $reportTitle = "LAPORAN INDIVIDU - " . strtoupper($emp->full_name) . " ({$date->translatedFormat('F Y')})";
             
             if ($type === 'excel') {
@@ -264,11 +280,13 @@ class AttendanceController extends Controller
             $attendances = Attendance::whereMonth('date', $date->month)->whereYear('date', $date->year)->get()->groupBy('employee_id');
             $data = $employees->map(function($emp) use ($attendances) {
                 $atts = $attendances->get($emp->id) ?? collect();
+                $currentRate = $emp->rank_relation->meal_allowance ?? 0;
+                $presentCount = $atts->where('status', '!=', 'absent')->count();
                 return (object)[
                     'employee' => $emp,
-                    'total_present' => $atts->where('status', '!=', 'absent')->count(),
+                    'total_present' => $presentCount,
                     'total_late_minutes' => $atts->sum('late_minutes'),
-                    'total_allowance' => $atts->sum('allowance_amount'),
+                    'total_allowance' => $presentCount * $currentRate, // Dynamic
                 ];
             });
             $reportTitle = "REKAPITULASI ABSENSI BULANAN - " . strtoupper($date->translatedFormat('F Y'));

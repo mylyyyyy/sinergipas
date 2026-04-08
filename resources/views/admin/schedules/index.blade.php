@@ -4,6 +4,30 @@
 @section('header-title', 'Roster & Penjadwalan')
 
 @section('content')
+<style>
+    /* Force scrollbar visibility and style */
+    .schedule-container::-webkit-scrollbar {
+        height: 8px !important;
+        display: block !important;
+    }
+    .schedule-container::-webkit-scrollbar-track {
+        background: #f1f5f9 !important;
+        border-radius: 10px !important;
+    }
+    .schedule-container::-webkit-scrollbar-thumb {
+        background: #334155 !important;
+        border-radius: 10px !important;
+    }
+    .schedule-container::-webkit-scrollbar-thumb:hover {
+        background: #0f172a !important;
+    }
+    /* Firefox */
+    .schedule-container {
+        scrollbar-width: auto !important;
+        scrollbar-color: #334155 #f1f5f9 !important;
+    }
+</style>
+
 <!-- Custom Loading Overlay for Roster Generation -->
 <div id="rosterLoading" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-md">
     <div class="bg-white rounded-[32px] p-10 shadow-2xl max-w-sm w-full text-center animate-in zoom-in duration-300">
@@ -53,12 +77,12 @@
     </div>
 
     <!-- Schedule Grid -->
-    <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden card-3d">
-        <div class="overflow-x-auto custom-scrollbar" style="width: 100%;">
-            <table class="w-full border-collapse" style="min-width: 1400px;">
+    <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm card-3d">
+        <div class="overflow-x-auto schedule-container rounded-[40px]">
+            <table class="w-full border-collapse" style="min-width: 1600px;">
                 <thead>
                     <tr class="bg-slate-50/80 border-b border-slate-100">
-                        <th class="sticky left-0 z-10 bg-slate-50 px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] min-w-[280px] border-r border-slate-100 text-left">
+                        <th class="sticky left-0 z-20 bg-slate-50 px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] min-w-[280px] border-r border-slate-100 text-left shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                             <div class="flex items-center gap-2">
                                 <i data-lucide="user-cog" class="w-4 h-4"></i>
                                 Nama Personel
@@ -66,7 +90,7 @@
                         </th>
                         @for($d = 1; $d <= $daysInMonth; $d++)
                             @php $currentDate = $month->copy()->day($d); @endphp
-                            <th class="px-2 py-4 text-center min-w-[48px] {{ $currentDate->isWeekend() ? 'bg-red-50/50 text-red-500' : 'text-slate-400' }} border-r border-slate-50/50">
+                            <th class="px-2 py-4 text-center min-w-[50px] {{ $currentDate->isWeekend() ? 'bg-red-50 text-red-500' : 'text-slate-400' }} border-r border-slate-50/50">
                                 <p class="text-[8px] font-black uppercase tracking-tighter">{{ $currentDate->translatedFormat('D') }}</p>
                                 <p class="text-sm font-black mt-0.5">{{ $d }}</p>
                             </th>
@@ -84,7 +108,7 @@
                                 <div class="min-w-0">
                                     <p class="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $emp->full_name }}</p>
                                     <div class="flex items-center gap-2 mt-1">
-                                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">{{ $emp->position }}</span>
+                                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[120px]">{{ $emp->position }}</span>
                                         @if($emp->squad)
                                             <span class="px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 text-[8px] font-black uppercase border border-indigo-100">Regu {{ $emp->squad->name }}</span>
                                         @endif
@@ -98,25 +122,25 @@
                                 $schedule = $schedules->get($emp->id)?->firstWhere('date', $dateStr);
                                 $shiftName = $schedule?->shift?->name;
                                 
-                                $colorClass = 'bg-slate-50/50 text-slate-300 border-slate-100/50';
+                                $colorClass = 'bg-slate-50 text-slate-300 border-slate-100';
                                 $indicator = '-';
                                 
                                 if($shiftName == 'Pagi') {
-                                    $colorClass = 'bg-emerald-500 text-white border-emerald-600 shadow-md shadow-emerald-200 hover:rotate-6';
+                                    $colorClass = 'bg-emerald-500 text-white border-emerald-600 shadow-md shadow-emerald-200';
                                     $indicator = 'P';
                                 } elseif($shiftName == 'Siang') {
-                                    $colorClass = 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-200 hover:rotate-6';
+                                    $colorClass = 'bg-amber-500 text-white border-amber-600 shadow-md shadow-amber-200';
                                     $indicator = 'S';
                                 } elseif($shiftName == 'Malam') {
-                                    $colorClass = 'bg-slate-800 text-white border-slate-900 shadow-md shadow-slate-400 hover:rotate-6';
+                                    $colorClass = 'bg-slate-800 text-white border-slate-900 shadow-md shadow-slate-400';
                                     $indicator = 'M';
                                 } elseif($shiftName == 'Kantor') {
-                                    $colorClass = 'bg-blue-500 text-white border-blue-600 shadow-md shadow-blue-200 hover:rotate-6';
+                                    $colorClass = 'bg-blue-500 text-white border-blue-600 shadow-md shadow-blue-200';
                                     $indicator = 'K';
                                 }
                             @endphp
-                            <td class="p-1.5 border-r border-slate-50/50">
-                                <div class="w-full h-10 rounded-xl border {{ $colorClass }} flex items-center justify-center text-xs font-black transition-all cursor-pointer select-none" 
+                            <td class="p-1.5 border-r border-slate-50">
+                                <div class="w-full h-10 rounded-xl border {{ $colorClass }} flex items-center justify-center text-xs font-black transition-all cursor-pointer select-none hover:scale-110" 
                                      title="{{ $emp->full_name }} - {{ $dateStr }} ({{ $shiftName ?? 'Libur' }})"
                                      onclick="openManualAssign({{ $emp->id }}, '{{ $emp->full_name }}', '{{ $dateStr }}', '{{ $schedule?->shift_id }}')">
                                     {{ $indicator }}

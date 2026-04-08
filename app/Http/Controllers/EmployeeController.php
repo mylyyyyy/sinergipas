@@ -149,6 +149,14 @@ class EmployeeController extends Controller
             'picket_regu' => $request->picket_regu,
         ]);
 
+        // Real-time Sync: Update attendance for this employee in the current month if rank changed
+        if ($rank) {
+            \App\Models\Attendance::where('employee_id', $employee->id)
+                ->whereMonth('date', now()->month)
+                ->whereYear('date', now()->year)
+                ->update(['allowance_amount' => $rank->meal_allowance]);
+        }
+
         $newValues = $employee->fresh()->toArray();
         
         // Only log if something changed
