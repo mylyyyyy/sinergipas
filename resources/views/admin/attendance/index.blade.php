@@ -78,6 +78,9 @@
             <a href="{{ route('admin.shifts.index') }}" class="px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-[10px] uppercase tracking-wider hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm">
                 <i data-lucide="clock" class="w-4 h-4 text-blue-500"></i> Master Shift
             </a>
+            <button type="button" onclick="document.getElementById('manualModal').classList.remove('hidden')" class="px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold text-[10px] uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-lg btn-3d flex items-center justify-center gap-2">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-white"></i> Input Pengecualian
+            </button>
             <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-[10px] uppercase tracking-wider hover:bg-blue-600 transition-all shadow-lg btn-3d flex items-center justify-center gap-2">
                 <i data-lucide="upload-cloud" class="w-4 h-4 text-amber-400"></i> Import Fingerprint
             </button>
@@ -367,6 +370,65 @@
         background-color: rgba(255, 255, 255, 0.5);
     }
 </style>
+
+    <!-- Manual Attendance Modal -->
+    <div id="manualModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+        <div class="bg-white rounded-[40px] shadow-2xl w-full max-w-lg overflow-hidden card-3d">
+            <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                    <h3 class="text-xl font-black text-slate-900 uppercase tracking-tight italic">Input Pengecualian</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Input absensi manual (Cuti, Sakit, DL, dll)</p>
+                </div>
+                <button onclick="document.getElementById('manualModal').classList.add('hidden')" class="w-10 h-10 rounded-2xl hover:bg-slate-100 flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+                </button>
+            </div>
+
+            <form action="{{ route('admin.attendance.store-manual') }}" method="POST" class="p-8 space-y-6">
+                @csrf
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Pilih Pegawai</label>
+                    <select name="employee_id" required class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-bold text-sm text-slate-700">
+                        <option value="">-- Pilih Pegawai --</option>
+                        @foreach($employees as $emp)
+                            <option value="{{ $emp->id }}">{{ $emp->full_name }} ({{ $emp->nip }})</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Tanggal</label>
+                        <input type="date" name="date" required value="{{ date('Y-m-d') }}" class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-bold text-sm text-slate-700">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Status</label>
+                        <select name="status" required class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-bold text-sm text-slate-700">
+                            <option value="present">Hadir (Kantor)</option>
+                            <option value="picket">Hadir (Piket)</option>
+                            <option value="on_leave">Cuti / Izin</option>
+                            <option value="absent">Tanpa Keterangan</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Jam Masuk</label>
+                        <input type="time" name="check_in" class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-bold text-sm text-slate-700">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Jam Keluar</label>
+                        <input type="time" name="check_out" class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-bold text-sm text-slate-700">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d">
+                    Simpan Absensi
+                </button>
+            </form>
+        </div>
+    </div>
 
 <script>
     function openIndividualExportModal(id, name) {

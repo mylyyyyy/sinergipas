@@ -103,6 +103,7 @@ Route::middleware('auth')->group(function () {
         Route::prefix('admin/attendance')->name('admin.attendance.')->group(function () {
             Route::get('/', [AttendanceController::class, 'index'])->name('index');
             Route::post('/import', [AttendanceController::class, 'import'])->name('import');
+            Route::post('/store-manual', [AttendanceController::class, 'storeManual'])->name('store-manual');
             Route::get('/export', [AttendanceController::class, 'export'])->name('export');
         });
 
@@ -137,8 +138,10 @@ Route::middleware('auth')->group(function () {
         Route::prefix('admin/schedules')->name('admin.schedules.')->group(function () {
             Route::get('/', [ScheduleController::class, 'index'])->name('index');
             Route::post('/', [ScheduleController::class, 'store'])->name('store');
+            Route::post('/individual', [ScheduleController::class, 'storeIndividual'])->name('store-individual');
             Route::post('/generate', [ScheduleController::class, 'generateRoster'])->name('generate');
             Route::delete('/reset', [ScheduleController::class, 'reset'])->name('reset');
+            Route::delete('/bulk-delete', [ScheduleController::class, 'bulkDelete'])->name('bulk-delete');
             Route::get('/export', [ScheduleController::class, 'export'])->name('export');
         });
     });

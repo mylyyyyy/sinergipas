@@ -12,17 +12,21 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+use App\Models\Employee;
+use App\Models\Schedule;
+
 class ScheduleController extends Controller
 {
     public function index(Request $request)
     {
-        // Get shifts (Pagi, Siang, Malam)
-        $shifts = Shift::whereIn('name', ['Pagi', 'Siang', 'Malam'])->orderBy('id')->get();
+        // Get shifts (Pagi, Siang, Malam, Kantor)
+        $shifts = Shift::orderBy('id')->get();
         if ($shifts->isEmpty()) {
             return back()->with('error', 'Silakan inisialisasi data Shift terlebih dahulu.');
         }
 
         $squads = Squad::orderBy('name')->get();
+        $employees = Employee::orderBy('full_name')->get();
         
         $monthStr = $request->input('month', now()->format('Y-m'));
         $month = Carbon::parse($monthStr);
@@ -37,8 +41,14 @@ class ScheduleController extends Controller
                 return $item->date . '_' . $item->shift_id;
             });
 
+        // Get all individual schedules for this month
+        $individualSchedules = Schedule::with('employee', 'shift')
+            ->whereMonth('date', $month->month)
+            ->whereYear('date', $month->year)
+            ->get();
+
         return view('admin.schedules.index', compact(
-            'shifts', 'month', 'daysInMonth', 'schedules', 'squads', 'monthStr'
+            'shifts', 'month', 'daysInMonth', 'schedules', 'squads', 'employees', 'monthStr', 'individualSchedules'
         ));
     }
 
@@ -65,6 +75,61 @@ class ScheduleController extends Controller
         }
 
         return response()->json(['success' => true]);
+    }
+
+    public function storeIndividual(Request $request)
+    {
+        $request->validate([
+            'employee_id' => 'required|exists:employees,id',
+            'shift_id' => 'required|exists:shifts,id',
+            'date' => 'required|date',
+        ]);
+
+        Schedule::updateOrCreate(
+            [
+                'employee_id' => $request->employee_id,
+                'date' => $request->date
+            ],
+            ['shift_id' => $request->shift_id]
+        );
+
+        return back()->with('success', 'Jadwal individu berhasil disimpan.');
+    }
+
+    public function reset(Request $request)
+    {
+        $request->validate(['month' => 'required']);
+        $date = Carbon::parse($request->month);
+        
+        SquadSchedule::whereMonth('date', $date->month)->whereYear('date', $date->year)->delete();
+        Schedule::whereMonth('date', $date->month)->whereYear('date', $date->year)->delete();
+
+        return back()->with('success', 'Jadwal bulan ini berhasil dikosongkan.');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'ids' => 'nullable|array',
+            'ids.*' => 'exists:schedules,id',
+            'month' => 'nullable|string',
+            'all' => 'nullable|boolean'
+        ]);
+
+        if ($request->all && $request->month) {
+            $date = Carbon::parse($request->month);
+            Schedule::whereMonth('date', $date->month)
+                ->whereYear('date', $date->year)
+                ->delete();
+            return back()->with('success', 'Semua jadwal khusus bulan ini berhasil dihapus.');
+        }
+
+        if ($request->ids) {
+            Schedule::whereIn('id', $request->ids)->delete();
+            return back()->with('success', count($request->ids) . ' jadwal berhasil dihapus.');
+        }
+
+        return back()->with('error', 'Tidak ada jadwal yang dipilih.');
     }
 
     public function export(Request $request)

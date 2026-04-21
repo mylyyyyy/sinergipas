@@ -68,145 +68,221 @@ class AttendanceController extends Controller
 
     public function import(Request $request)
     {
-        set_time_limit(0); // Prevent timeout for large data processing
-        ini_set('memory_limit', '512M');
+        set_time_limit(0);
+        ini_set('memory_limit', '1024M');
         $request->validate(['file' => 'required']);
 
         try {
             $file = $request->file('file');
             $path = $file->getRealPath();
-
-            $inputFileType = IOFactory::identify($path);
-            $reader = IOFactory::createReader($inputFileType);
-            if ($inputFileType === 'Html') $reader->setReadDataOnly(true);
-            
-            $spreadsheet = $reader->load($path);
+            $spreadsheet = IOFactory::load($path);
             $data = $spreadsheet->getActiveSheet()->toArray();
 
             if (count($data) < 2) return back()->with('error', 'File terbaca namun kosong.');
 
-            $importedCount = 0;
-            $employees = Employee::all()->keyBy('nip');
+            $scansByNip = [];
+            $allDates = [];
             
-            $groupedData = [];
-
+            // 1. Pre-collect NIPs and Dates to narrow down queries
             foreach ($data as $index => $row) {
-                if ($index === 0 || !isset($row[4]) || !is_numeric($row[4])) {
-                    if (isset($row[4]) && strtolower((string)$row[4]) === 'nip') continue;
-                    if ($index < 5) continue;
-                }
-
+                if ($index === 0 || !isset($row[4]) || !is_numeric($row[4])) continue;
                 $nip = trim((string)$row[4]);
-                if (empty($nip) || !isset($employees[$nip])) continue;
-
-                try {
-                    $date = Carbon::parse($row[1])->format('Y-m-d');
-                    $time = Carbon::parse($row[2])->format('H:i:s');
-                    $key = $nip . '_' . $date;
-
-                    if (!isset($groupedData[$key])) {
-                        $groupedData[$key] = ['emp' => $employees[$nip], 'date' => $date, 'times' => []];
-                    }
-                    $groupedData[$key]['times'][] = $time;
-                } catch (\Exception $e) { continue; }
+                $scansByNip[$nip][] = $row[1] . ' ' . $row[2];
+                $allDates[] = $row[1];
             }
 
-            $upsertData = [];
-            $employees = Employee::with('rank_relation')->get()->keyBy('nip');
-            $officeLateThreshold = Setting::getValue('office_late_threshold', '07:30');
+            if (empty($scansByNip)) return back()->with('error', 'Tidak ada data NIP valid ditemukan.');
+
+            $allDates = array_unique($allDates);
+            $minDate = min($allDates);
+            $maxDate = max($allDates);
+            $nips = array_keys($scansByNip);
+
+            // 2. Pre-fetch ALL required data (Bulk Loading)
+            $employees = Employee::with(['rank_relation', 'squad'])
+                ->whereIn('nip', $nips)
+                ->get()
+                ->keyBy('nip');
+
+            $empIds = $employees->pluck('id')->toArray();
+            $squadIds = $employees->pluck('squad_id')->filter()->unique()->toArray();
+
+            // Fetch all schedules for the date range
+            $allIndividualSchedules = \App\Models\Schedule::with('shift')
+                ->whereIn('employee_id', $empIds)
+                ->whereBetween('date', [$minDate, $maxDate])
+                ->get()
+                ->groupBy(fn($s) => $s->employee_id . '_' . $s->date);
+
+            $allSquadSchedules = \App\Models\SquadSchedule::with('shift')
+                ->whereIn('squad_id', $squadIds)
+                ->whereBetween('date', [$minDate, $maxDate])
+                ->get()
+                ->groupBy(fn($s) => $s->squad_id . '_' . $s->date);
+
+            $lateThreshold = Setting::getValue('office_late_threshold', '07:30');
             $now = now();
+            $upsertData = [];
+            $importedCount = 0;
 
-            foreach ($groupedData as $entry) {
-                $emp = $entry['emp'];
-                $date = $entry['date'];
-                $times = $entry['times'];
+            // 3. Process data in memory
+            foreach ($employees as $nip => $emp) {
+                if (!isset($scansByNip[$nip])) continue;
 
-                $minTime = min($times);
-                $maxTime = max($times);
+                $scans = collect($scansByNip[$nip])->map(fn($s) => Carbon::parse($s))->sort();
+                $empDates = $scans->groupBy(fn($s) => $s->format('Y-m-d'));
+                $usedScans = collect();
 
-                // Prepare Data for Upsert
-                $tempAttendance = new \App\Models\Attendance([
-                    'employee_id' => $emp->id,
-                    'date' => $date,
-                    'check_in' => $minTime,
-                    'check_out' => $maxTime,
-                ]);
+                foreach ($empDates as $date => $dayScans) {
+                    $checkIn = $dayScans->min();
+                    $checkOut = $dayScans->max();
+                    if ($checkIn == $checkOut) $checkOut = null;
 
-                $this->calculateAttendanceMetrics($tempAttendance, $emp);
+                    // Find Schedule in pre-fetched collection
+                    $sched = $allIndividualSchedules->get($emp->id . '_' . $date)?->first();
+                    if (!$sched && $emp->squad_id) {
+                        $sched = $allSquadSchedules->get($emp->squad_id . '_' . $date)?->first();
+                    }
 
-                $upsertData[] = [
-                    'employee_id' => $emp->id,
-                    'date' => $date,
-                    'check_in' => $minTime,
-                    'check_out' => $maxTime,
-                    'status' => $tempAttendance->status,
-                    'late_minutes' => $tempAttendance->late_minutes,
-                    'allowance_amount' => $tempAttendance->allowance_amount,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
-                $importedCount++;
+                    // Metrics Calculation (Inline to avoid repeated queries)
+                    $startTime = null;
+                    $isPicket = false;
+
+                    if ($sched && $sched->shift) {
+                        $startTime = Carbon::parse($date . ' ' . $sched->shift->start_time);
+                        $isPicket = true;
+                    } else {
+                        $startTime = Carbon::parse($date . ' ' . $lateThreshold);
+                    }
+
+                    $lateMinutes = 0;
+                    $status = 'present';
+
+                    if ($checkIn) {
+                        if ($checkIn->gt($startTime->copy()->addMinutes(1))) {
+                            $lateMinutes = $checkIn->diffInMinutes($startTime);
+                            $status = 'late';
+                        } else {
+                            $status = $isPicket ? 'picket' : 'present';
+                        }
+                    } else {
+                        $status = 'absent';
+                    }
+
+                    $rate = $emp->rank_relation->meal_allowance ?? 0;
+
+                    $upsertData[] = [
+                        'employee_id' => $emp->id,
+                        'date' => $date,
+                        'check_in' => $checkIn->format('H:i:s'),
+                        'check_out' => $checkOut ? $checkOut->format('H:i:s') : null,
+                        'status' => $status,
+                        'late_minutes' => $lateMinutes,
+                        'allowance_amount' => $rate,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                    $importedCount++;
+                }
             }
 
+            // 4. Final Upsert in Chunks
             if (!empty($upsertData)) {
-                $chunks = array_chunk($upsertData, 500);
-                foreach ($chunks as $chunk) {
+                foreach (array_chunk($upsertData, 500) as $chunk) {
                     Attendance::upsert($chunk, ['employee_id', 'date'], ['check_in', 'check_out', 'status', 'late_minutes', 'allowance_amount', 'updated_at']);
                 }
             }
 
-            return back()->with('success', "Berhasil memproses $importedCount data absensi.");
+            return back()->with('success', "Berhasil memproses $importedCount data absensi secara instan.");
 
         } catch (\Exception $e) {
-            DB::rollBack();
             return back()->with('error', 'Gagal: ' . $e->getMessage());
         }
     }
 
     private function calculateAttendanceMetrics($attendance, $employee)
     {
-        $schedule = Schedule::where('employee_id', $employee->id)->where('date', $attendance->date)->first();
-        $pos = strtoupper((string)$employee->position);
-        
-        // Identify Regu Staff
-        $isRegu = str_contains($pos, 'JAGA') || str_contains($pos, 'PENJAGA') || $employee->squad_id != null;
-        
-        $shift = null;
-        $startTime = null;
+        // Set default values to prevent Integrity Constraint Violation
+        $attendance->late_minutes = 0;
+        $attendance->status = 'absent';
 
-        if ($schedule) {
-            $shift = $schedule->shift;
-            if ($shift) $startTime = Carbon::parse($shift->start_time);
-        } elseif (!$isRegu) {
-            // Non-Regu uses Admin Setting or Default 07:30
-            $threshold = Setting::getValue('office_late_threshold', '07:30');
-            $startTime = Carbon::parse($threshold);
+        // 1. Get Schedule for this specific date
+        $schedule = \App\Models\Schedule::where('employee_id', $employee->id)->where('date', $attendance->date)->first();
+        
+        // If no individual schedule, check squad schedule
+        if (!$schedule && $employee->squad_id) {
+            $schedule = \App\Models\SquadSchedule::where('squad_id', $employee->squad_id)->where('date', $attendance->date)->first();
         }
 
-        if ($startTime) {
-            $checkIn = Carbon::parse($attendance->check_in);
-            if ($checkIn->gt($startTime)) {
+        $startTime = null;
+        $isPicket = false;
+
+        if ($schedule && $schedule->shift) {
+            $startTime = Carbon::parse($attendance->date . ' ' . $schedule->shift->start_time);
+            $isPicket = true; // Any scheduled shift is treated as picket for staff, or normal for regu
+        } else {
+            // Default Office Hours for Staff (07:30 or 08:00)
+            $threshold = Setting::getValue('office_late_threshold', '07:30');
+            $startTime = Carbon::parse($attendance->date . ' ' . $threshold);
+        }
+
+        if ($attendance->check_in) {
+            $checkIn = Carbon::parse($attendance->date . ' ' . $attendance->check_in);
+            
+            // Late calculation
+            if ($checkIn->gt($startTime->copy()->addMinutes(1))) { // 1 min tolerance
                 $attendance->late_minutes = $checkIn->diffInMinutes($startTime);
                 $attendance->status = 'late';
             } else {
                 $attendance->late_minutes = 0;
-                $attendance->status = 'present';
+                $attendance->status = $isPicket ? 'picket' : 'present';
             }
+        } else {
+            $attendance->status = 'absent';
         }
 
         // Meal Allowance from Rank Model
         $rate = 0;
         if ($employee->rank_relation) {
             $rate = $employee->rank_relation->meal_allowance;
-        } else {
-            // Fallback to old string-based mapping if rank_relation is not set
-            $class = strtoupper((string)$employee->rank_class);
-            if (str_contains($class, 'IV')) $rate = Setting::getValue('meal_allowance_iv', 41000);
-            elseif (str_contains($class, 'III')) $rate = Setting::getValue('meal_allowance_iii', 37000);
-            elseif (str_contains($class, 'II')) $rate = Setting::getValue('meal_allowance_ii', 35000);
         }
         
         $attendance->allowance_amount = $rate;
+    }
+
+    public function storeManual(Request $request)
+    {
+        $request->validate([
+            'employee_id' => 'required|exists:employees,id',
+            'date' => 'required|date',
+            'check_in' => 'nullable',
+            'check_out' => 'nullable',
+            'status' => 'required|in:present,absent,late,on_leave,picket',
+        ]);
+
+        $employee = Employee::with('rank_relation')->find($request->employee_id);
+        
+        $attendance = Attendance::updateOrCreate(
+            ['employee_id' => $request->employee_id, 'date' => $request->date],
+            [
+                'check_in' => $request->check_in,
+                'check_out' => $request->check_out,
+                'status' => $request->status,
+                'late_minutes' => 0, // Reset late minutes for manual entry
+            ]
+        );
+
+        $this->calculateAttendanceMetrics($attendance, $employee);
+        $attendance->save();
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'manual_attendance',
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . " menginput absensi manual untuk " . $employee->full_name . " tanggal " . $request->date
+        ]);
+
+        return back()->with('success', 'Absensi manual berhasil disimpan.');
     }
 
     public function export(Request $request)
