@@ -19,28 +19,39 @@ class AttendanceController extends Controller
 {
     public function index(Request $request)
     {
-        $monthStr = $request->filled('month') ? $request->month : now()->format('Y-m');
-        $date = Carbon::parse($monthStr);
         $search = $request->search;
+        $monthStr = $request->month ?? now()->format('Y-m');
+        
+        // Default range
+        $startDate = $request->start_date ?? now()->startOfMonth()->format('Y-m-d');
+        $endDate = $request->end_date ?? now()->endOfMonth()->format('Y-m-d');
 
-        // Fetch employees for Summary Tab
+        // If month is provided and no specific start_date is given, override with month range
+        if ($request->filled('month') && !$request->filled('start_date')) {
+            $startDate = Carbon::parse($request->month)->startOfMonth()->format('Y-m-d');
+            $endDate = Carbon::parse($request->month)->endOfMonth()->format('Y-m-d');
+        }
+
+        // Fetch employees for Summary Tab (Paginated)
         $employees = Employee::with(['work_unit', 'squad'])
-            ->whereHas('user') // Ensure associated user exists
+            ->whereHas('user')
             ->when($search, function($q) use ($search) {
                 $q->where('full_name', 'like', "%$search%")
                   ->orWhere('nip', 'like', "%$search%");
             })
-            ->with(['attendances' => function($q) use ($date) {
-                $q->whereMonth('date', $date->month)->whereYear('date', $date->year);
+            ->with(['attendances' => function($q) use ($startDate, $endDate) {
+                $q->whereBetween('date', [$startDate, $endDate]);
             }])
             ->orderBy('full_name')
             ->paginate(50)->withQueryString();
 
-        // Fetch detailed logs for Log Tab - Only for existing employees
+        // Fetch all employees for manual input modal
+        $allEmployees = Employee::whereHas('user')->orderBy('full_name')->get();
+
+        // Fetch detailed logs for Log Tab
         $attendanceLogs = Attendance::whereHas('employee')
             ->with('employee')
-            ->whereMonth('date', $date->month)
-            ->whereYear('date', $date->year)
+            ->whereBetween('date', [$startDate, $endDate])
             ->when($search, function($q) use ($search) {
                 $q->whereHas('employee', function($eq) use ($search) {
                     $eq->where('full_name', 'like', "%$search%")
@@ -51,19 +62,21 @@ class AttendanceController extends Controller
             ->orderBy('check_in', 'asc')
             ->paginate(50, ['*'], 'log_page')->withQueryString();
 
-        // Optimized Summary Calculation - Strict join to prevent orphan counts
+        // Optimized Summary Calculation
         $summary = DB::table('attendances')
             ->join('employees', 'attendances.employee_id', '=', 'employees.id')
             ->leftJoin('ranks', 'employees.rank_id', '=', 'ranks.id')
-            ->whereMonth('attendances.date', $date->month)
-            ->whereYear('attendances.date', $date->year)
+            ->whereBetween('attendances.date', [$startDate, $endDate])
             ->selectRaw('
                 COUNT(CASE WHEN attendances.status != "absent" THEN 1 END) as total_present,
                 COUNT(CASE WHEN attendances.late_minutes > 0 THEN 1 END) as total_late,
                 SUM(COALESCE(ranks.meal_allowance, attendances.allowance_amount, 0)) as total_allowance
             ')->first();
 
-        return view('admin.attendance.index', compact('employees', 'attendanceLogs', 'summary', 'monthStr', 'date'));
+        // Pass range title for UI
+        $rangeTitle = Carbon::parse($startDate)->translatedFormat('d M') . ' - ' . Carbon::parse($endDate)->translatedFormat('d M Y');
+
+        return view('admin.attendance.index', compact('employees', 'allEmployees', 'attendanceLogs', 'summary', 'startDate', 'endDate', 'rangeTitle', 'monthStr'));
     }
 
     public function import(Request $request)
@@ -83,7 +96,7 @@ class AttendanceController extends Controller
             $scansByNip = [];
             $allDates = [];
             
-            // 1. Pre-collect NIPs and Dates to narrow down queries
+            // 1. Pre-collect NIPs and Dates
             foreach ($data as $index => $row) {
                 if ($index === 0 || !isset($row[4]) || !is_numeric($row[4])) continue;
                 $nip = trim((string)$row[4]);
@@ -98,7 +111,7 @@ class AttendanceController extends Controller
             $maxDate = max($allDates);
             $nips = array_keys($scansByNip);
 
-            // 2. Pre-fetch ALL required data (Bulk Loading)
+            // 2. Bulk Loading
             $employees = Employee::with(['rank_relation', 'squad'])
                 ->whereIn('nip', $nips)
                 ->get()
@@ -107,7 +120,6 @@ class AttendanceController extends Controller
             $empIds = $employees->pluck('id')->toArray();
             $squadIds = $employees->pluck('squad_id')->filter()->unique()->toArray();
 
-            // Fetch all schedules for the date range
             $allIndividualSchedules = \App\Models\Schedule::with('shift')
                 ->whereIn('employee_id', $empIds)
                 ->whereBetween('date', [$minDate, $maxDate])
@@ -125,26 +137,23 @@ class AttendanceController extends Controller
             $upsertData = [];
             $importedCount = 0;
 
-            // 3. Process data in memory
+            // 3. Process data
             foreach ($employees as $nip => $emp) {
                 if (!isset($scansByNip[$nip])) continue;
 
                 $scans = collect($scansByNip[$nip])->map(fn($s) => Carbon::parse($s))->sort();
                 $empDates = $scans->groupBy(fn($s) => $s->format('Y-m-d'));
-                $usedScans = collect();
 
                 foreach ($empDates as $date => $dayScans) {
                     $checkIn = $dayScans->min();
                     $checkOut = $dayScans->max();
                     if ($checkIn == $checkOut) $checkOut = null;
 
-                    // Find Schedule in pre-fetched collection
                     $sched = $allIndividualSchedules->get($emp->id . '_' . $date)?->first();
                     if (!$sched && $emp->squad_id) {
                         $sched = $allSquadSchedules->get($emp->squad_id . '_' . $date)?->first();
                     }
 
-                    // Metrics Calculation (Inline to avoid repeated queries)
                     $startTime = null;
                     $isPicket = false;
 
@@ -186,14 +195,13 @@ class AttendanceController extends Controller
                 }
             }
 
-            // 4. Final Upsert in Chunks
             if (!empty($upsertData)) {
                 foreach (array_chunk($upsertData, 500) as $chunk) {
                     Attendance::upsert($chunk, ['employee_id', 'date'], ['check_in', 'check_out', 'status', 'late_minutes', 'allowance_amount', 'updated_at']);
                 }
             }
 
-            return back()->with('success', "Berhasil memproses $importedCount data absensi secara instan.");
+            return back()->with('success', "Berhasil memproses $importedCount data absensi.");
 
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal: ' . $e->getMessage());
@@ -202,14 +210,10 @@ class AttendanceController extends Controller
 
     private function calculateAttendanceMetrics($attendance, $employee)
     {
-        // Set default values to prevent Integrity Constraint Violation
         $attendance->late_minutes = 0;
         $attendance->status = 'absent';
 
-        // 1. Get Schedule for this specific date
         $schedule = \App\Models\Schedule::where('employee_id', $employee->id)->where('date', $attendance->date)->first();
-        
-        // If no individual schedule, check squad schedule
         if (!$schedule && $employee->squad_id) {
             $schedule = \App\Models\SquadSchedule::where('squad_id', $employee->squad_id)->where('date', $attendance->date)->first();
         }
@@ -219,34 +223,25 @@ class AttendanceController extends Controller
 
         if ($schedule && $schedule->shift) {
             $startTime = Carbon::parse($attendance->date . ' ' . $schedule->shift->start_time);
-            $isPicket = true; // Any scheduled shift is treated as picket for staff, or normal for regu
+            $isPicket = true;
         } else {
-            // Default Office Hours for Staff (07:30 or 08:00)
             $threshold = Setting::getValue('office_late_threshold', '07:30');
             $startTime = Carbon::parse($attendance->date . ' ' . $threshold);
         }
 
         if ($attendance->check_in) {
             $checkIn = Carbon::parse($attendance->date . ' ' . $attendance->check_in);
-            
-            // Late calculation
-            if ($checkIn->gt($startTime->copy()->addMinutes(1))) { // 1 min tolerance
+            if ($checkIn->gt($startTime->copy()->addMinutes(1))) {
                 $attendance->late_minutes = $checkIn->diffInMinutes($startTime);
                 $attendance->status = 'late';
             } else {
-                $attendance->late_minutes = 0;
                 $attendance->status = $isPicket ? 'picket' : 'present';
             }
         } else {
             $attendance->status = 'absent';
         }
 
-        // Meal Allowance from Rank Model
-        $rate = 0;
-        if ($employee->rank_relation) {
-            $rate = $employee->rank_relation->meal_allowance;
-        }
-        
+        $rate = $employee->rank_relation->meal_allowance ?? 0;
         $attendance->allowance_amount = $rate;
     }
 
@@ -268,7 +263,7 @@ class AttendanceController extends Controller
                 'check_in' => $request->check_in,
                 'check_out' => $request->check_out,
                 'status' => $request->status,
-                'late_minutes' => 0, // Reset late minutes for manual entry
+                'late_minutes' => 0,
             ]
         );
 
@@ -290,14 +285,19 @@ class AttendanceController extends Controller
         set_time_limit(0);
         ini_set('memory_limit', '1024M');
 
-        $filter = $request->filter ?? 'monthly'; // daily, weekly, monthly, individual
+        $filter = $request->filter ?? 'range'; // range, daily, individual, monthly
         $type = $request->type ?? 'pdf';
-        $monthStr = $request->month ?? now()->format('Y-m');
-        $date = Carbon::parse($monthStr);
+        
+        $startDate = $request->start_date ?? now()->startOfMonth()->format('Y-m-d');
+        $endDate = $request->end_date ?? now()->endOfMonth()->format('Y-m-d');
+
+        if ($request->filled('month')) {
+            $startDate = Carbon::parse($request->month)->startOfMonth()->format('Y-m-d');
+            $endDate = Carbon::parse($request->month)->endOfMonth()->format('Y-m-d');
+        }
         
         $query = Employee::with(['work_unit', 'squad', 'rank_relation'])->orderBy('full_name');
 
-        // Individual Filter
         if ($request->filled('employee_id')) {
             $query->where('id', $request->employee_id);
         }
@@ -315,7 +315,7 @@ class AttendanceController extends Controller
                     'check_out' => $att ? $att->check_out : null,
                     'status' => $att ? $att->status : 'absent',
                     'late_minutes' => $att ? $att->late_minutes : 0,
-                    'allowance_amount' => $att ? $currentRate : 0, // Dynamic
+                    'allowance_amount' => $att ? $currentRate : 0,
                 ];
             });
             $reportTitle = "LAPORAN ABSENSI HARIAN - " . strtoupper($exactDate->translatedFormat('d F Y'));
@@ -325,9 +325,9 @@ class AttendanceController extends Controller
             }
             return Pdf::loadView('admin.attendance.pdf-daily', compact('data', 'reportTitle'))->setPaper('a4', 'landscape')->download("absensi-harian-{$exactDate->format('Y-m-d')}.pdf");
 
-        } elseif ($filter === 'weekly') {
-            $start = Carbon::parse($request->start_date ?? now()->startOfWeek());
-            $end = Carbon::parse($request->end_date ?? now()->endOfWeek());
+        } elseif ($filter === 'range' || $filter === 'weekly' || $filter === 'monthly') {
+            $start = Carbon::parse($startDate);
+            $end = Carbon::parse($endDate);
             
             $attendances = Attendance::whereBetween('date', [$start->format('Y-m-d'), $end->format('Y-m-d')])->get()->groupBy('employee_id');
             $data = $employees->map(function($emp) use ($attendances) {
@@ -338,23 +338,23 @@ class AttendanceController extends Controller
                     'employee' => $emp,
                     'total_present' => $presentCount,
                     'total_late_minutes' => $atts->sum('late_minutes'),
-                    'total_allowance' => $presentCount * $currentRate, // Dynamic
+                    'total_allowance' => $presentCount * $currentRate,
                 ];
             });
-            $reportTitle = "REKAPITULASI ABSENSI MINGGUAN (" . $start->format('d/m') . " - " . $end->format('d/m/Y') . ")";
+            
+            $reportTitle = "REKAPITULASI ABSENSI (" . $start->format('d/m/Y') . " - " . $end->format('d/m/Y') . ")";
             
             if ($type === 'excel') {
-                return $this->exportExcelMonthly($data, $reportTitle, "rekap-mingguan.xlsx");
+                return $this->exportExcelMonthly($data, $reportTitle, "rekap-absensi-{$start->format('Ymd')}-{$end->format('Ymd')}.xlsx");
             }
-            return Pdf::loadView('admin.attendance.pdf-monthly', compact('data', 'reportTitle'))->setPaper('a4', 'landscape')->download("rekap-mingguan.pdf");
+            return Pdf::loadView('admin.attendance.pdf-monthly', compact('data', 'reportTitle'))->setPaper('a4', 'landscape')->download("rekap-absensi-{$start->format('Ymd')}-{$end->format('Ymd')}.pdf");
 
         } elseif ($filter === 'individual') {
             $emp = $employees->first();
             if (!$emp) return back()->with('error', 'Pegawai tidak ditemukan.');
             
             $logs = Attendance::where('employee_id', $emp->id)
-                ->whereMonth('date', $date->month)
-                ->whereYear('date', $date->year)
+                ->whereBetween('date', [$startDate, $endDate])
                 ->orderBy('date', 'asc')
                 ->get();
                 
@@ -364,39 +364,12 @@ class AttendanceController extends Controller
                 return $log;
             });
 
-            $reportTitle = "LAPORAN INDIVIDU - " . strtoupper($emp->full_name) . " ({$date->translatedFormat('F Y')})";
+            $reportTitle = "LAPORAN INDIVIDU - " . strtoupper($emp->full_name) . " (" . Carbon::parse($startDate)->format('d/m/Y') . " - " . Carbon::parse($endDate)->format('d/m/Y') . ")";
             
             if ($type === 'excel') {
                 return $this->exportExcelIndividual($emp, $logs, $reportTitle, "laporan-individu-{$emp->nip}.xlsx");
             }
-            return Pdf::loadView('admin.attendance.pdf-individual', compact('emp', 'logs', 'reportTitle', 'date'))->setPaper('a4', 'portrait')->download("laporan-individu-{$emp->nip}.pdf");
-
-        } else {
-            // Monthly Recap
-            $attendances = Attendance::whereMonth('date', $date->month)->whereYear('date', $date->year)->get()->groupBy('employee_id');
-            $query = Employee::with(['work_unit', 'squad', 'rank_relation'])->orderBy('full_name');
-            if ($request->filled('employee_id')) {
-                $query->where('id', $request->employee_id);
-            }
-            $employees = $query->get();
-            
-            $data = $employees->map(function($emp) use ($attendances) {
-                $atts = $attendances->get($emp->id) ?? collect();
-                $currentRate = $emp->rank_relation->meal_allowance ?? 0;
-                $presentCount = $atts->where('status', '!=', 'absent')->count();
-                return (object)[
-                    'employee' => $emp,
-                    'total_present' => $presentCount,
-                    'total_late_minutes' => $atts->sum('late_minutes'),
-                    'total_allowance' => $presentCount * $currentRate, // Dynamic
-                ];
-            });
-            $reportTitle = "REKAPITULASI ABSENSI BULANAN - " . strtoupper($date->translatedFormat('F Y'));
-
-            if ($type === 'excel') {
-                return $this->exportExcelMonthly($data, $reportTitle, "rekap-bulanan-{$date->format('Y-m')}.xlsx");
-            }
-            return Pdf::loadView('admin.attendance.pdf-monthly', compact('data', 'reportTitle'))->setPaper('a4', 'landscape')->download("rekap-bulanan-{$date->format('Y-m')}.pdf");
+            return Pdf::loadView('admin.attendance.pdf-individual', compact('emp', 'logs', 'reportTitle'))->setPaper('a4', 'portrait')->download("laporan-individu-{$emp->nip}.pdf");
         }
     }
 
