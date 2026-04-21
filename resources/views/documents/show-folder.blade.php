@@ -77,15 +77,23 @@
                     </button>
 
                     @if(!$doc->is_locked && auth()->user()->role === 'superadmin')
-                    <button type="button" onclick="showDoc({{ $doc->id }}, '{{ $doc->title }}', '{{ route('documents.view', $doc->id) }}')" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl transition-all" title="Lihat">
+                    @php
+                        $extension = strtolower(pathinfo($doc->file_path, PATHINFO_EXTENSION));
+                        $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']);
+                    @endphp
+                    <button type="button" onclick="showDoc('{{ route('documents.view', $doc->id) }}', '{{ $doc->title }}', {{ $isImage ? 'true' : 'false' }})" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl transition-all" title="Lihat">
                         <i data-lucide="eye" class="w-4 h-4"></i>
                     </button>
                     @endif
                     
                     @if(!$doc->is_locked)
-                    <button type="button" onclick="handleDownload('{{ route('documents.download', $doc->id) }}', '{{ $doc->title }}')" class="p-2 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader"><i data-lucide="download" class="w-4 h-4"></i></button>
+                    <a href="{{ route('documents.download', $doc->id) }}" class="p-2 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader" title="Unduh">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                    </a>
                     @else
-                    <div class="p-2 text-gray-300 bg-gray-50 rounded-xl cursor-not-allowed border border-gray-100" title="Unduhan dikunci"><i data-lucide="download" class="w-4 h-4 opacity-50"></i></div>
+                    <div class="p-2 text-gray-300 bg-gray-50 rounded-xl cursor-not-allowed border border-gray-100" title="Unduhan dikunci">
+                        <i data-lucide="download" class="w-4 h-4 opacity-50"></i>
+                    </div>
                     @endif
                 </div>
             </div>

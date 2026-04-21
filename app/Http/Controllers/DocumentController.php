@@ -11,7 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use App\Models\Setting;
-use Intervention\Image\ImageManagerStatic as Image;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 use setasign\Fpdi\Fpdi;
 
 class DocumentController extends Controller
@@ -199,92 +200,115 @@ class DocumentController extends Controller
 
     public function download(Document $document)
     {
-        $this->ensureDocumentOwnerOrSuperadmin($document);
-        $user = auth()->user();
-        
-        // Prevent download if locked and not superadmin
-        if ($document->is_locked && $user->role !== 'superadmin') {
-            return back()->with('error', 'Dokumen ini dikunci oleh Admin dan tidak dapat diunduh.');
-        }
+        try {
+            $this->ensureDocumentOwnerOrSuperadmin($document);
+            $user = auth()->user();
+            
+            // Prevent download if locked and not superadmin
+            if ($document->is_locked && $user->role !== 'superadmin') {
+                return back()->with('error', 'Dokumen ini dikunci oleh Admin dan tidak dapat diunduh.');
+            }
 
-        $extension = strtolower(pathinfo($document->file_path, PATHINFO_EXTENSION));
-        $filename = $document->title . '.' . $extension;
-        $fullPath = storage_path('app/private/' . $document->file_path);
+            $extension = strtolower(pathinfo($document->file_path, PATHINFO_EXTENSION));
+            // Sanitize filename to avoid .htm issues with spaces or special chars
+            $safeTitle = preg_replace('/[^a-zA-Z0-9_\- ]/', '', $document->title);
+            $filename = $safeTitle . '.' . $extension;
+            $fullPath = storage_path('app/private/' . $document->file_path);
 
-        if (!file_exists($fullPath)) {
-            return back()->with('error', 'File tidak ditemukan di server.');
-        }
+            if (!file_exists($fullPath)) {
+                return back()->with('error', 'File tidak ditemukan di server.');
+            }
 
-        AuditLog::create([
-            'user_id' => $user->id,
-            'document_id' => $document->id,
-            'activity' => 'download_document',
-            'ip_address' => request()->ip(),
-            'details' => $user->name . ' mengunduh dokumen: ' . $document->title,
-        ]);
+            AuditLog::create([
+                'user_id' => $user->id,
+                'document_id' => $document->id,
+                'activity' => 'download_document',
+                'ip_address' => request()->ip(),
+                'details' => $user->name . ' mengunduh dokumen: ' . $document->title,
+            ]);
 
-        $watermarkEnabled = Setting::getValue('watermark_enabled', 'on') === 'on';
-        $watermarkText = Setting::getValue('watermark_text', 'SINERGI PAS JOMBANG');
+            $watermarkEnabled = Setting::getValue('watermark_enabled', 'on') === 'on';
+            $watermarkText = Setting::getValue('watermark_text', 'SINERGI PAS JOMBANG');
 
-        if ($watermarkEnabled) {
-            // --- PDF WATERMARKING ---
-            if ($extension === 'pdf') {
-                try {
-                    $pdf = new Fpdi();
-                    $pageCount = $pdf->setSourceFile($fullPath);
+            if ($watermarkEnabled) {
+                // --- PDF WATERMARKING ---
+                if ($extension === 'pdf') {
+                    try {
+                        $pdf = new Fpdi();
+                        $pageCount = $pdf->setSourceFile($fullPath);
 
-                    for ($n = 1; $n <= $pageCount; $n++) {
-                        $tplIdx = $pdf->importPage($n);
-                        $specs = $pdf->getTemplateSize($tplIdx);
-                        $pdf->AddPage($specs['orientation'], [$specs['width'], $specs['height']]);
-                        $pdf->useTemplate($tplIdx);
+                        for ($n = 1; $n <= $pageCount; $n++) {
+                            $tplIdx = $pdf->importPage($n);
+                            $specs = $pdf->getTemplateSize($tplIdx);
+                            $pdf->AddPage($specs['orientation'], [$specs['width'], $specs['height']]);
+                            $pdf->useTemplate($tplIdx);
 
-                        // Set watermark font & color
-                        $pdf->SetFont('Helvetica', 'B', 40);
-                        $pdf->SetTextColor(200, 200, 200); // Light gray
-                        
-                        $textWidth = $pdf->GetStringWidth($watermarkText);
-                        
-                        // Position it in the center (approx)
-                        $pdf->SetXY($specs['width']/2 - $textWidth/2, $specs['height']/2);
-                        $pdf->Write(0, $watermarkText);
+                            // Set watermark font & color
+                            $pdf->SetFont('Helvetica', 'B', 40);
+                            $pdf->SetTextColor(200, 200, 200); // Light gray
+                            
+                            $textWidth = $pdf->GetStringWidth($watermarkText);
+                            
+                            // Position it in the center (approx)
+                            $pdf->SetXY($specs['width']/2 - $textWidth/2, $specs['height']/2);
+                            $pdf->Write(0, $watermarkText);
+                        }
+
+                        $tempPdf = tempnam(sys_get_temp_dir(), 'pdf_wm');
+                        $pdf->Output('F', $tempPdf);
+                        return response()->download($tempPdf, $filename)->deleteFileAfterSend(true);
+                    } catch (\Exception $e) {
+                        // Fallback
+                        return Storage::disk('private')->download($document->file_path, $filename);
                     }
+                }
 
-                    $tempPdf = tempnam(sys_get_temp_dir(), 'pdf_wm');
-                    $pdf->Output('F', $tempPdf);
-                    return response()->download($tempPdf, $filename)->deleteFileAfterSend(true);
-                } catch (\Exception $e) {
-                    // Fallback
-                    return Storage::disk('private')->download($document->file_path, $filename);
+                // --- IMAGE WATERMARKING (v3 Syntax) ---
+                if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                    try {
+                        $manager = new ImageManager(new Driver());
+                        $image = $manager->read($fullPath);
+                        
+                        // Check for font file existence
+                        $fontPath = public_path('fonts/PlusJakartaSans-ExtraBold.ttf');
+                        if (!file_exists($fontPath)) {
+                            // Fallback font from dompdf or similar if available
+                            $fontPath = base_path('vendor/dompdf/dompdf/lib/fonts/DejaVuSans.ttf');
+                        }
+
+                        if (file_exists($fontPath)) {
+                            $image->text($watermarkText, $image->width() / 2, $image->height() / 2, function($font) use ($fontPath) {
+                                $font->filename($fontPath);
+                                $font->size(60);
+                                $font->color('rgba(255, 255, 255, 0.2)');
+                                $font->align('center');
+                                $font->valign('middle');
+                                $font->angle(45);
+                            });
+                        }
+
+                        return response()->streamDownload(function() use ($image, $extension) {
+                            if ($extension === 'png') {
+                                echo $image->toPng()->toString();
+                            } else {
+                                echo $image->toJpeg()->toString();
+                            }
+                        }, $filename);
+                    } catch (\Exception $e) {
+                        // Fallback
+                        return Storage::disk('private')->download($document->file_path, $filename);
+                    }
                 }
             }
 
-            // --- IMAGE WATERMARKING ---
-            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
-                try {
-                    $img = Image::make($fullPath);
-                    $img->text($watermarkText, $img->width() / 2, $img->height() / 2, function($font) {
-                        $font->file(public_path('fonts/PlusJakartaSans-ExtraBold.ttf'));
-                        $font->size(60);
-                        $font->color([255, 255, 255, 0.2]);
-                        $font->align('center');
-                        $font->valign('middle');
-                        $font->angle(45);
-                    });
-
-                    // For download, we should return a proper download response
-                    return response()->streamDownload(function() use ($img, $extension) {
-                        echo $img->encode($extension);
-                    }, $filename);
-                } catch (\Exception $e) {
-                    // Fallback
-                    return Storage::disk('private')->download($document->file_path, $filename);
-                }
-            }
+            return Storage::disk('private')->download($document->file_path, $filename);
+        } catch (\Exception $e) {
+            // Log the error and return a proper error message instead of 500
+            \Log::error('Download error: ' . $e->getMessage());
+            return back()->with('error', 'Gagal mengunduh file: ' . $e->getMessage());
         }
-
-        return Storage::disk('private')->download($document->file_path, $filename);
     }
+
 
     public function destroy(Document $document)
     {

@@ -79,9 +79,9 @@
 
                 <div class="flex gap-2">
                     @if(!$doc->is_locked)
-                        <button type="button" onclick="handleDownload('{{ route('documents.download', $doc->id) }}', '{{ $doc->title }}')" class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl text-amber-600 hover:bg-amber-600 hover:text-white transition-all no-loader border border-slate-100" title="Unduh">
+                        <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl text-amber-600 hover:bg-amber-600 hover:text-white transition-all no-loader border border-slate-100" title="Unduh">
                             <i data-lucide="download" class="w-4 h-4"></i>
-                        </button>
+                        </a>
                         <button type="button" onclick="confirmDocDelete({{ $doc->id }})" class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl text-red-500 hover:bg-red-600 hover:text-white transition-all border border-slate-100" title="Hapus">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
