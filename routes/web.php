@@ -43,6 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/documents/category', [DocumentController::class, 'storeCategory'])->name('documents.category.store');
     Route::delete('/documents/category/{category}', [DocumentController::class, 'destroyCategory'])->name('documents.category.destroy');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+    Route::get('/documents/{document}/view', [DocumentController::class, 'viewFile'])->name('documents.view');
     Route::post('/documents/{document}/verify', [DocumentController::class, 'verify'])->name('documents.verify');
     Route::post('/documents/{document}/reject', [DocumentController::class, 'reject'])->name('documents.reject');
     Route::post('/documents/{document}/revision', [DocumentController::class, 'storeRevision'])->name('documents.revision');

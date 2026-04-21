@@ -79,9 +79,9 @@
 
                 <div class="flex gap-2">
                     @if(!$doc->is_locked)
-                        <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl text-amber-600 hover:bg-amber-600 hover:text-white transition-all no-loader border border-slate-100" title="Unduh">
+                        <button type="button" onclick="handleDownload('{{ route('documents.download', $doc->id) }}', '{{ $doc->title }}')" class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl text-amber-600 hover:bg-amber-600 hover:text-white transition-all no-loader border border-slate-100" title="Unduh">
                             <i data-lucide="download" class="w-4 h-4"></i>
-                        </a>
+                        </button>
                         <button type="button" onclick="confirmDocDelete({{ $doc->id }})" class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl text-red-500 hover:bg-red-600 hover:text-white transition-all border border-slate-100" title="Hapus">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
@@ -195,6 +195,14 @@
 <form id="deleteDocForm" action="" method="POST" class="hidden no-loader">@csrf @method('DELETE')</form>
 
 <script>
+    function handleDownload(url, filename) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
     function updateFileName(input) {
         if (input.files && input.files[0]) {
             document.getElementById('uploadFileName').textContent = input.files[0].name;

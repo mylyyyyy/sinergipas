@@ -172,6 +172,31 @@ class DocumentController extends Controller
         return back()->with('success', 'Status kunci diperbarui.');
     }
 
+    public function viewFile(Document $document)
+    {
+        $this->ensureDocumentOwnerOrSuperadmin($document);
+        $user = auth()->user();
+
+        // Prevent viewing if locked and not superadmin
+        if ($document->is_locked && $user->role !== 'superadmin') {
+            abort(403, 'Dokumen ini dikunci oleh Admin.');
+        }
+
+        $fullPath = storage_path('app/private/' . $document->file_path);
+
+        if (!file_exists($fullPath)) {
+            abort(404, 'File tidak ditemukan.');
+        }
+
+        $mimeType = Storage::disk('private')->mimeType($document->file_path);
+        
+        // For viewing, we want to return the file as an inline response
+        return response()->file($fullPath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . basename($document->file_path) . '"'
+        ]);
+    }
+
     public function download(Document $document)
     {
         $this->ensureDocumentOwnerOrSuperadmin($document);
@@ -218,13 +243,10 @@ class DocumentController extends Controller
                         $pdf->SetFont('Helvetica', 'B', 40);
                         $pdf->SetTextColor(200, 200, 200); // Light gray
                         
-                        // Diagonal watermark
-                        $pdf->SetAlpha(0.2); // Not supported directly in FPDI core without extension, but we'll use light color
                         $textWidth = $pdf->GetStringWidth($watermarkText);
                         
                         // Position it in the center (approx)
                         $pdf->SetXY($specs['width']/2 - $textWidth/2, $specs['height']/2);
-                        // Rotation is tricky in basic FPDI, so we'll just put it center
                         $pdf->Write(0, $watermarkText);
                     }
 
@@ -232,7 +254,7 @@ class DocumentController extends Controller
                     $pdf->Output('F', $tempPdf);
                     return response()->download($tempPdf, $filename)->deleteFileAfterSend(true);
                 } catch (\Exception $e) {
-                    // Fallback to normal download if watermarking fails
+                    // Fallback
                     return Storage::disk('private')->download($document->file_path, $filename);
                 }
             }
@@ -242,17 +264,20 @@ class DocumentController extends Controller
                 try {
                     $img = Image::make($fullPath);
                     $img->text($watermarkText, $img->width() / 2, $img->height() / 2, function($font) {
-                        $font->file(public_path('fonts/PlusJakartaSans-ExtraBold.ttf')); // Ensure font exists or use default
+                        $font->file(public_path('fonts/PlusJakartaSans-ExtraBold.ttf'));
                         $font->size(60);
-                        $font->color([255, 255, 255, 0.2]); // White with 20% alpha
+                        $font->color([255, 255, 255, 0.2]);
                         $font->align('center');
                         $font->valign('middle');
                         $font->angle(45);
                     });
 
-                    return $img->response($extension);
+                    // For download, we should return a proper download response
+                    return response()->streamDownload(function() use ($img, $extension) {
+                        echo $img->encode($extension);
+                    }, $filename);
                 } catch (\Exception $e) {
-                    // Fallback to normal download
+                    // Fallback
                     return Storage::disk('private')->download($document->file_path, $filename);
                 }
             }

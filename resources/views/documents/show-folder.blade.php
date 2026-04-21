@@ -76,10 +76,14 @@
                         <i data-lucide="{{ $doc->is_locked ? 'lock' : 'unlock' }}" class="w-4 h-4"></i>
                     </button>
 
-                    
+                    @if(!$doc->is_locked && auth()->user()->role === 'superadmin')
+                    <button type="button" onclick="showDoc({{ $doc->id }}, '{{ $doc->title }}', '{{ route('documents.view', $doc->id) }}')" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl transition-all" title="Lihat">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                    @endif
                     
                     @if(!$doc->is_locked)
-                    <button onclick="handleDownload('{{ route('documents.download', $doc->id) }}', '{{ $doc->title }}')" class="p-2 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader"><i data-lucide="download" class="w-4 h-4"></i></button>
+                    <button type="button" onclick="handleDownload('{{ route('documents.download', $doc->id) }}', '{{ $doc->title }}')" class="p-2 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader"><i data-lucide="download" class="w-4 h-4"></i></button>
                     @else
                     <div class="p-2 text-gray-300 bg-gray-50 rounded-xl cursor-not-allowed border border-gray-100" title="Unduhan dikunci"><i data-lucide="download" class="w-4 h-4 opacity-50"></i></div>
                     @endif
@@ -122,6 +126,29 @@
     </div>
 </form>
 
+<!-- View Modal -->
+<div id="viewModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[60] p-4 backdrop-blur-md">
+    <div class="bg-white w-full max-w-5xl h-[90vh] rounded-[40px] flex flex-col overflow-hidden animate-in zoom-in duration-300">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center shrink-0">
+            <div>
+                <h3 id="viewModalTitle" class="text-xl font-black text-gray-900 truncate max-w-md">Detail Dokumen</h3>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Preview Arsip Digital</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="document.getElementById('viewModal').classList.add('hidden')" class="bg-gray-100 p-3 rounded-2xl text-gray-400 hover:text-red-500 transition-all border border-gray-200">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+        <div class="flex-1 bg-gray-50 relative">
+            <iframe id="viewIframe" src="" class="w-full h-full border-none"></iframe>
+            <div id="imageContainer" class="hidden w-full h-full overflow-auto flex items-center justify-center p-8">
+                <img id="viewImage" src="" class="max-w-full max-h-full rounded-2xl shadow-2xl">
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const docCheckboxes = document.querySelectorAll('.doc-checkbox');
     const bulkActionsDiv = document.getElementById('bulkActions');
@@ -138,6 +165,39 @@
             }
         });
     });
+
+    function handleDownload(url, filename) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function showDoc(id, title, url) {
+        const modal = document.getElementById('viewModal');
+        const iframe = document.getElementById('viewIframe');
+        const imgContainer = document.getElementById('imageContainer');
+        const img = document.getElementById('viewImage');
+        document.getElementById('viewModalTitle').innerText = title;
+
+        const extension = url.split('.').pop().toLowerCase();
+        
+        // Check if it's an image
+        if (url.match(/\.(jpeg|jpg|gif|png)$/) || url.includes('type=image')) {
+            iframe.classList.add('hidden');
+            imgContainer.classList.remove('hidden');
+            img.src = url;
+        } else {
+            imgContainer.classList.add('hidden');
+            iframe.classList.remove('hidden');
+            iframe.src = url;
+        }
+
+        modal.classList.remove('hidden');
+        lucide.createIcons();
+    }
 
     function submitBulk(action) {
         Swal.fire({
