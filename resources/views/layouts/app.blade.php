@@ -334,20 +334,43 @@
 
                     <div class="h-8 w-px bg-slate-200"></div>
 
-                    <a href="{{ route('profile.index') }}" class="flex items-center gap-3 pl-1 group">
-                        <div class="flex flex-col items-end hidden sm:flex">
-                            <span class="text-xs font-bold text-slate-900 leading-none group-hover:text-blue-600 transition-colors">{{ auth()->user()->name }}</span>
-                            <span class="text-[10px] text-slate-400 font-medium capitalize">{{ auth()->user()->role }}</span>
+                    <!-- Profile Dropdown -->
+                    <div class="relative">
+                        <button onclick="toggleProfileDropdown()" class="flex items-center gap-3 pl-1 group no-loader">
+                            <div class="flex flex-col items-end hidden sm:flex">
+                                <span class="text-xs font-bold text-slate-900 leading-none group-hover:text-blue-600 transition-colors">{{ auth()->user()->name }}</span>
+                                <span class="text-[10px] text-slate-400 font-medium capitalize">{{ auth()->user()->role }}</span>
+                            </div>
+                            @php $sidebarEmployee = \App\Models\Employee::where('user_id', auth()->id())->first(); @endphp
+                            <div class="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center text-slate-400 font-bold group-hover:border-blue-200 transition-colors">
+                                @if($sidebarEmployee && $sidebarEmployee->photo)
+                                    <img src="{{ $sidebarEmployee->photo }}" class="w-full h-full object-cover">
+                                @else
+                                    <i data-lucide="user" class="w-5 h-5"></i>
+                                @endif
+                            </div>
+                        </button>
+
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-3 w-56 bg-white rounded-2xl border border-slate-200 shadow-xl z-50 overflow-hidden">
+                            <div class="p-4 border-b border-slate-50 bg-slate-50/50 sm:hidden">
+                                <p class="text-xs font-black text-slate-900 truncate">{{ auth()->user()->name }}</p>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ auth()->user()->role }}</p>
+                            </div>
+                            <div class="p-2">
+                                <a href="{{ route('profile.index') }}" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all">
+                                    <i data-lucide="user-circle" class="w-4 h-4"></i>
+                                    <span>Profil Saya</span>
+                                </a>
+                                <form action="{{ route('logout') }}" method="POST" class="no-loader">
+                                    @csrf
+                                    <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all">
+                                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                                        <span>Keluar Aplikasi</span>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                        @php $sidebarEmployee = \App\Models\Employee::where('user_id', auth()->id())->first(); @endphp
-                        <div class="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center text-slate-400 font-bold group-hover:border-blue-200 transition-colors">
-                            @if($sidebarEmployee && $sidebarEmployee->photo)
-                                <img src="{{ $sidebarEmployee->photo }}" class="w-full h-full object-cover">
-                            @else
-                                <i data-lucide="user" class="w-5 h-5"></i>
-                            @endif
-                        </div>
-                    </a>
+                    </div>
                 </div>
             </header>
             
@@ -362,27 +385,23 @@
             <span class="text-[9px] font-bold uppercase tracking-widest">Beranda</span>
         </a>
         
-        @if(auth()->user()->role === 'superadmin')
-        <a href="{{ route('employees.index') }}" class="bottom-nav-item {{ request()->routeIs('employees.*') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group">
-            <i data-lucide="users" class="w-6 h-6 transition-transform group-active:scale-90"></i>
-            <span class="text-[9px] font-bold uppercase tracking-widest">Pegawai</span>
-        </a>
-        @else
         <a href="{{ route('documents.index') }}" class="bottom-nav-item {{ request()->routeIs('documents.*') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group">
             <i data-lucide="folder-open" class="w-6 h-6 transition-transform group-active:scale-90"></i>
             <span class="text-[9px] font-bold uppercase tracking-widest">Arsip</span>
-        </a>
-        @endif
-
-        <a href="{{ auth()->user()->role === 'superadmin' ? route('admin.attendance.index') : route('dashboard') }}" class="bottom-nav-item {{ request()->routeIs('admin.attendance.*') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group">
-            <i data-lucide="fingerprint" class="w-6 h-6 transition-transform group-active:scale-90"></i>
-            <span class="text-[9px] font-bold uppercase tracking-widest">Absensi</span>
         </a>
 
         <a href="{{ route('profile.index') }}" class="bottom-nav-item {{ request()->routeIs('profile.index') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group">
             <i data-lucide="user-circle" class="w-6 h-6 transition-transform group-active:scale-90"></i>
             <span class="text-[9px] font-bold uppercase tracking-widest">Profil</span>
         </a>
+
+        <form action="{{ route('logout') }}" method="POST" class="no-loader">
+            @csrf
+            <button type="submit" class="flex flex-col items-center gap-1 group text-red-400">
+                <i data-lucide="log-out" class="w-6 h-6 transition-transform group-active:scale-90"></i>
+                <span class="text-[9px] font-bold uppercase tracking-widest">Keluar</span>
+            </button>
+        </form>
     </nav>
 
     <script>
@@ -447,7 +466,13 @@
         });
 
         function toggleNotifications() {
+            document.getElementById('profileDropdown').classList.add('hidden');
             document.getElementById('notificationDropdown').classList.toggle('hidden');
+        }
+
+        function toggleProfileDropdown() {
+            document.getElementById('notificationDropdown').classList.add('hidden');
+            document.getElementById('profileDropdown').classList.toggle('hidden');
         }
 
         function toggleSidebar() {
@@ -467,6 +492,7 @@
         window.addEventListener('click', function(e) {
             if (!e.target.closest('.relative')) {
                 document.getElementById('notificationDropdown').classList.add('hidden');
+                document.getElementById('profileDropdown').classList.add('hidden');
             }
         });
 
