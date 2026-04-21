@@ -61,35 +61,26 @@
         <form action="{{ route('admin.attendance.index') }}" method="GET" class="relative z-10 space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
                 <!-- Search Box -->
-                <div class="lg:col-span-4">
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Pencarian</label>
+                <div class="lg:col-span-5">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Pencarian Pegawai</label>
                     <div class="relative group">
                         <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari NIP atau Nama..." class="w-full pl-11 pr-4 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all">
-                    </div>
-                </div>
-
-                <!-- Quick Month Filter -->
-                <div class="lg:col-span-3">
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Pilih Bulan</label>
-                    <div class="relative group">
-                        <i data-lucide="calendar-days" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
-                        <input type="month" name="month" value="{{ $monthStr }}" class="w-full pl-11 pr-4 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all">
+                        <input type="text" name="search" id="main_search" value="{{ request('search') }}" placeholder="Cari NIP atau Nama..." class="w-full pl-11 pr-4 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all">
                     </div>
                 </div>
 
                 <!-- Date Range -->
-                <div class="lg:col-span-5">
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Kustom Rentang Tanggal (Opsional)</label>
+                <div class="lg:col-span-7">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Rentang Tanggal Absensi</label>
                     <div class="flex items-center gap-3">
                         <div class="relative flex-1 group">
                             <i data-lucide="calendar" class="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"></i>
-                            <input type="date" name="start_date" value="{{ request('start_date') }}" class="w-full pl-10 pr-4 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all">
+                            <input type="date" name="start_date" id="main_start_date" value="{{ $startDate }}" class="w-full pl-10 pr-4 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all">
                         </div>
                         <span class="text-slate-300 font-bold text-sm">s/d</span>
                         <div class="relative flex-1 group">
                             <i data-lucide="calendar" class="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"></i>
-                            <input type="date" name="end_date" value="{{ request('end_date') }}" class="w-full pl-10 pr-4 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all">
+                            <input type="date" name="end_date" id="main_end_date" value="{{ $endDate }}" class="w-full pl-10 pr-4 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all">
                         </div>
                     </div>
                 </div>
@@ -101,7 +92,7 @@
                     <button type="submit" class="px-8 py-3.5 rounded-2xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg active:scale-95 flex items-center gap-2 group">
                         <i data-lucide="filter" class="w-4 h-4 group-hover:rotate-12 transition-transform"></i> Terapkan Filter
                     </button>
-                    @if(request()->anyFilled(['search', 'month', 'start_date', 'end_date']))
+                    @if(request()->anyFilled(['search', 'start_date', 'end_date']))
                         <a href="{{ route('admin.attendance.index') }}" class="px-5 py-3.5 rounded-2xl bg-red-50 text-red-500 font-bold text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm flex items-center gap-2 group">
                             <i data-lucide="rotate-ccw" class="w-4 h-4 group-hover:rotate-[-45deg] transition-transform"></i> Reset
                         </a>

@@ -20,17 +20,11 @@ class AttendanceController extends Controller
     public function index(Request $request)
     {
         $search = $request->search;
-        $monthStr = $request->month ?? now()->format('Y-m');
         
-        // Default range
+        // Default range to current month if not provided
         $startDate = $request->start_date ?? now()->startOfMonth()->format('Y-m-d');
         $endDate = $request->end_date ?? now()->endOfMonth()->format('Y-m-d');
-
-        // If month is provided and no specific start_date is given, override with month range
-        if ($request->filled('month') && !$request->filled('start_date')) {
-            $startDate = Carbon::parse($request->month)->startOfMonth()->format('Y-m-d');
-            $endDate = Carbon::parse($request->month)->endOfMonth()->format('Y-m-d');
-        }
+        $monthStr = Carbon::parse($startDate)->format('Y-m');
 
         // Fetch employees for Summary Tab (Paginated)
         $employees = Employee::with(['work_unit', 'squad'])
@@ -285,16 +279,11 @@ class AttendanceController extends Controller
         set_time_limit(0);
         ini_set('memory_limit', '1024M');
 
-        $filter = $request->filter ?? 'range'; // range, daily, individual, monthly
+        $filter = $request->filter ?? 'range'; // range, daily, individual
         $type = $request->type ?? 'pdf';
         
         $startDate = $request->start_date ?? now()->startOfMonth()->format('Y-m-d');
         $endDate = $request->end_date ?? now()->endOfMonth()->format('Y-m-d');
-
-        if ($request->filled('month')) {
-            $startDate = Carbon::parse($request->month)->startOfMonth()->format('Y-m-d');
-            $endDate = Carbon::parse($request->month)->endOfMonth()->format('Y-m-d');
-        }
         
         $query = Employee::with(['work_unit', 'squad', 'rank_relation'])->orderBy('full_name');
 
