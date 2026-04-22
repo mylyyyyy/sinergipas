@@ -168,6 +168,7 @@ class DashboardController extends Controller
             'details' => auth()->user()->name . ' mengekspor ringkasan dashboard ke PDF',
         ]);
 
+        if (ob_get_length()) ob_end_clean();
         $pdf = Pdf::loadView('reports.dashboard', $data);
         return $pdf->download('laporan-sinergi-pas.pdf');
     }

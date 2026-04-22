@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -146,51 +146,53 @@
 <body>
     <div class="header-container">
         @php
-            $logoPath = public_path('logo1.png');
-            $logoData = '';
-            if (file_exists($logoPath)) {
-                $logoData = base64_encode(file_get_contents($logoPath));
-            }
+            $logoData = "";
+            try {
+                $logoPath = public_path("logo1.png");
+                if (file_exists($logoPath)) {
+                    $logoData = base64_encode(file_get_contents($logoPath));
+                }
+            } catch (\Exception $e) {}
         @endphp
         @if($logoData)
             <img src="data:image/png;base64,{{ $logoData }}" class="logo-center">
         @endif
         <div class="kop-text">
-            <h1>{{ \App\Models\Setting::getValue('kop_line_1', 'KEMENTERIAN HUKUM DAN HAK ASASI MANUSIA RI') }}</h1>
-            <h2>{{ \App\Models\Setting::getValue('kop_line_2', 'LEMBAGA PEMASYARAKATAN KELAS IIB JOMBANG') }}</h2>
-            <p>{{ \App\Models\Setting::getValue('kop_address', 'Jl. KH. Wahid Hasyim No. 151, Jombang, Jawa Timur 61411') }}</p>
+            <h1>{{ \App\Models\Setting::getValue("kop_line_1", "KEMENTERIAN HUKUM DAN HAK ASASI MANUSIA RI") }}</h1>
+            <h2>{{ \App\Models\Setting::getValue("kop_line_2", "LEMBAGA PEMASYARAKATAN KELAS IIB JOMBANG") }}</h2>
+            <p>{{ \App\Models\Setting::getValue("kop_address", "Jl. KH. Wahid Hasyim No. 151, Jombang, Jawa Timur 61411") }}</p>
             <p>Telepon: (0321) 861054 | Email: lpjombang@gmail.com</p>
         </div>
     </div>
 
     <div class="report-title-box">
-        <h3>@yield('report_title')</h3>
+        <h3>@yield("report_title")</h3>
         <div class="report-meta">
-            @yield('report_meta')
+            @yield("report_meta")
         </div>
     </div>
 
-    @yield('content')
+    @yield("content")
 
     <div class="footer">
         <table class="signature-table">
             <tr>
                 <td class="sig-left">
-                    @yield('footer_left')
+                    @yield("footer_left")
                 </td>
                 <td class="sig-right">
-                    <p>Jombang, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
-                    <p><strong>@yield('signer_title', 'Kepala Lembaga Pemasyarakatan')</strong></p>
+                    <p>Jombang, {{ \Carbon\Carbon::now()->translatedFormat("d F Y") }}</p>
+                    <p><strong>@yield("signer_title", "Kepala Lembaga Pemasyarakatan")</strong></p>
                     <div class="signature-space"></div>
-                    <p><strong>@yield('signer_name', '__________________________')</strong></p>
-                    <p>NIP. @yield('signer_nip', '..........................')</p>
+                    <p><strong>@yield("signer_name", "__________________________")</strong></p>
+                    <p>NIP. @yield("signer_nip", "..........................")</p>
                 </td>
             </tr>
         </table>
     </div>
 
     <div class="generated-at">
-        Dokumen ini dibuat otomatis oleh Sistem Sinergi PAS - Lapas Kelas IIB Jombang pada {{ date('d/m/Y H:i:s') }}
+        Dokumen ini dibuat otomatis oleh Sistem Sinergi PAS - Lapas Kelas IIB Jombang pada {{ date("d/m/Y H:i:s") }}
     </div>
 </body>
 </html>

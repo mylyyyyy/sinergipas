@@ -335,6 +335,7 @@ class EmployeeController extends Controller
             'details' => auth()->user()->name . ' mengekspor data pegawai ke PDF'
         ]);
 
+        if (ob_get_length()) ob_end_clean();
         $pdf = Pdf::loadView('employees.pdf', compact('employees'));
         return $pdf->download('daftar-pegawai-jombang.pdf');
     }

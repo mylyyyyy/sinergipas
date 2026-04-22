@@ -312,6 +312,7 @@ class AttendanceController extends Controller
             if ($type === 'excel') {
                 return $this->exportExcelDaily($data, $reportTitle, "absensi-harian-{$exactDate->format('Y-m-d')}.xlsx");
             }
+            if (ob_get_length()) ob_end_clean();
             return Pdf::loadView('admin.attendance.pdf-daily', compact('data', 'reportTitle'))->setPaper('a4', 'landscape')->download("absensi-harian-{$exactDate->format('Y-m-d')}.pdf");
 
         } elseif ($filter === 'range' || $filter === 'weekly' || $filter === 'monthly') {
@@ -336,6 +337,7 @@ class AttendanceController extends Controller
             if ($type === 'excel') {
                 return $this->exportExcelMonthly($data, $reportTitle, "rekap-absensi-{$start->format('Ymd')}-{$end->format('Ymd')}.xlsx");
             }
+            if (ob_get_length()) ob_end_clean();
             return Pdf::loadView('admin.attendance.pdf-monthly', compact('data', 'reportTitle'))->setPaper('a4', 'landscape')->download("rekap-absensi-{$start->format('Ymd')}-{$end->format('Ymd')}.pdf");
 
         } elseif ($filter === 'individual') {
@@ -358,6 +360,7 @@ class AttendanceController extends Controller
             if ($type === 'excel') {
                 return $this->exportExcelIndividual($emp, $logs, $reportTitle, "laporan-individu-{$emp->nip}.xlsx");
             }
+            if (ob_get_length()) ob_end_clean();
             return Pdf::loadView('admin.attendance.pdf-individual', compact('emp', 'logs', 'reportTitle'))->setPaper('a4', 'portrait')->download("laporan-individu-{$emp->nip}.pdf");
         }
     }
