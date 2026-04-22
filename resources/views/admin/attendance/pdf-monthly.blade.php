@@ -1,74 +1,49 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ $reportTitle }}</title>
-    <style>
-        body { font-family: sans-serif; font-size: 10px; margin: 0; padding: 20px; }
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-        .header img { width: 60px; position: absolute; left: 20px; top: 20px; }
-        .header h2 { margin: 0; font-size: 14px; text-transform: uppercase; }
-        .header h3 { margin: 5px 0 0 0; font-size: 16px; font-weight: bold; text-transform: uppercase; }
-        .title { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 20px; text-decoration: underline; }
-        table { border-collapse: collapse; margin-bottom: 20px; width: 100%; }
-        th, td { border: 1px solid #000; padding: 6px; text-align: center; }
-        th { background-color: #f1f5f9; font-weight: bold; text-transform: uppercase; }
-        .text-left { text-align: left; }
-        .text-right { text-align: right; }
-        .footer { width: 100%; margin-top: 50px; }
-        .footer table { border: none; width: 100%; }
-        .footer th, .footer td { border: none; text-align: center; }
-        .signature { margin-top: 80px; font-weight: bold; text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <img src="{{ public_path('logo1.png') }}" alt="Logo">
-        <h2>{{ \App\Models\Setting::getValue('kop_line_1', 'KEMENTERIAN HUKUM DAN HAM RI') }}</h2>
-        <h3>{{ \App\Models\Setting::getValue('kop_line_2', 'LAPAS KELAS IIB JOMBANG') }}</h3>
-    </div>
+@extends('layouts.pdf_export')
 
-    <div class="title">{{ $reportTitle }}</div>
+@section('title', $reportTitle)
+@section('report_title', 'REKAPITULASI KEHADIRAN BULANAN')
+@section('report_meta')
+    Bulan: {{ \Carbon\Carbon::parse($startDate)->translatedFormat('F Y') }} | Unit Kerja: {{ $workUnit ? $workUnit->name : 'SELURUH UNIT' }}
+@endsection
 
-    <table>
+@section('content')
+    <table class="main-table">
         <thead>
             <tr>
-                <th width="30">NO</th>
-                <th class="text-left">NAMA PEGAWAI</th>
-                <th>NIP</th>
-                <th>TOTAL HADIR (HARI)</th>
-                <th>TOTAL TELAT (MENIT)</th>
-                <th class="text-right">TOTAL UANG MAKAN</th>
+                <th width="5%" class="text-center">NO</th>
+                <th width="25%">NAMA PEGAWAI</th>
+                <th width="15%">NIP</th>
+                <th width="10%" class="text-center">HADIR</th>
+                <th width="10%" class="text-center">TELAT</th>
+                <th width="10%" class="text-center">ABSEN</th>
+                <th width="25%" class="text-center">ESTIMASI UANG MAKAN</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($data as $index => $item)
+            @foreach($logs as $index => $log)
             <tr>
-                <td>{{ $index + 1 }}</td>
-                <td class="text-left">{{ $item->employee->full_name }}</td>
-                <td>{{ $item->employee->nip }}</td>
-                <td>{{ $item->total_present }}</td>
-                <td>{{ $item->total_late_minutes }}</td>
-                <td class="text-right">Rp {{ number_format($item->total_allowance, 0, ',', '.') }}</td>
+                <td class="text-center">{{ $index + 1 }}</td>
+                <td class="font-bold">{{ $log->full_name }}</td>
+                <td>{{ $log->nip }}</td>
+                <td class="text-center">{{ $log->present_count }}</td>
+                <td class="text-center">{{ $log->late_count }}</td>
+                <td class="text-center text-red-600">{{ $log->absent_count }}</td>
+                <td class="text-right font-bold">Rp {{ number_format($log->total_allowance, 0, ',', '.') }}</td>
             </tr>
             @endforeach
         </tbody>
+        <tfoot>
+            <tr style="background-color: #1e293b; color: white; font-weight: bold;">
+                <td colspan="3" class="text-right">TOTAL KESELURUHAN</td>
+                <td class="text-center">{{ $logs->sum('present_count') }}</td>
+                <td class="text-center">{{ $logs->sum('late_count') }}</td>
+                <td class="text-center">{{ $logs->sum('absent_count') }}</td>
+                <td class="text-right">Rp {{ number_format($logs->sum('total_allowance'), 0, ',', '.') }}</td>
+            </tr>
+        </tfoot>
     </table>
 
-    <div class="footer">
-        <table>
-            <tr>
-                <td width="70%"></td>
-                <td>
-                    <p>Jombang, {{ now()->translatedFormat('d F Y') }}</p>
-                    <p>Kepala Lembaga Pemasyarakatan,</p>
-                    <div class="signature">
-                        <br><br><br><br>
-                        (......................................................)
-                    </div>
-                </td>
-            </tr>
-        </table>
+    <div style="margin-top: 20px; font-size: 8px; color: #64748b; font-style: italic;">
+        * Rekapitulasi ini dihitung berdasarkan data fingerprint yang masuk ke sistem Sinergi PAS.
     </div>
-</body>
-</html>
+@endsection

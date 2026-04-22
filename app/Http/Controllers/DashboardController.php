@@ -207,17 +207,38 @@ class DashboardController extends Controller
                 return $drawing;
             }
             public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet) {
+                // KOP
                 $kop1 = \App\Models\Setting::getValue('kop_line_1', 'KEMENTERIAN HUKUM DAN HAK ASASI MANUSIA RI');
                 $kop2 = \App\Models\Setting::getValue('kop_line_2', 'LEMBAGA PEMASYARAKATAN KELAS IIB JOMBANG');
+                $address = \App\Models\Setting::getValue('kop_address', 'Jl. KH. Wahid Hasyim No. 151, Jombang');
+                
                 $sheet->mergeCells('B1:C1'); $sheet->setCellValue('B1', $kop1);
                 $sheet->mergeCells('B2:C2'); $sheet->setCellValue('B2', $kop2);
-                $sheet->getStyle('B1:B2')->getFont()->setBold(true)->setSize(12);
-                $sheet->mergeCells('A5:C5'); $sheet->setCellValue('A5', 'LAPORAN RINGKASAN EKSEKUTIF');
-                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14)->setUnderline(true);
+                $sheet->mergeCells('B3:C3'); $sheet->setCellValue('B3', $address);
+                
+                $sheet->getStyle('B1')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('B2')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('1E40AF'));
+                $sheet->getStyle('B3')->getFont()->setItalic(true)->setSize(9);
+
+                $sheet->mergeCells('A5:C5'); $sheet->setCellValue('A5', 'LAPORAN RINGKASAN EKSEKUTIF OPERASIONAL');
+                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(13)->setUnderline(true);
                 $sheet->getStyle('A5')->getAlignment()->setHorizontal('center');
-                $sheet->getStyle('A7:B7')->getFont()->setBold(true);
-                $sheet->getStyle('A7:B7')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F1F5F9');
+                
+                // Header Table
+                $sheet->getStyle('A7:B7')->applyFromArray([
+                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '0F172A']],
+                    'alignment' => ['horizontal' => 'center']
+                ]);
+
+                // Data Borders & Zebra
                 $sheet->getStyle('A7:B13')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                for ($row = 8; $row <= 13; $row++) {
+                    if ($row % 2 == 0) {
+                        $sheet->getStyle('A' . $row . ':B' . $row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5F9');
+                    }
+                }
+
                 $sheet->getColumnDimension('A')->setAutoSize(true);
                 $sheet->getColumnDimension('B')->setAutoSize(true);
                 return [];

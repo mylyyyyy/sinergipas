@@ -7,91 +7,109 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithDrawings;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
-use App\Models\Setting;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
-class EmployeesExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithDrawings, WithCustomStartCell
+class EmployeesExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithCustomStartCell, WithTitle
 {
     public function collection()
     {
-        return Employee::with(['user', 'position_relation', 'work_unit'])->get();
+        return Employee::with(['rank_relation', 'work_unit'])->get();
+    }
+
+    public function title(): string
+    {
+        return 'Data Pegawai';
     }
 
     public function startCell(): string
     {
-        return 'A7';
-    }
-
-    public function drawings()
-    {
-        $drawing = new Drawing();
-        $drawing->setName('Logo');
-        $drawing->setDescription('Instansi Logo');
-        $drawing->setPath(public_path('logo1.png'));
-        $drawing->setHeight(80);
-        $drawing->setCoordinates('A1');
-
-        return $drawing;
+        return 'A6';
     }
 
     public function headings(): array
     {
         return [
-            'NIP',
+            'NO',
             'NAMA LENGKAP',
+            'NIP',
+            'NIK',
+            'PANGKAT / GOLONGAN',
             'JABATAN',
             'UNIT KERJA',
-            'EMAIL',
-            'NIK',
-            'NO. WHATSAPP',
-            'GOLONGAN',
-            'REGU'
+            'NO. TELEPON',
+            'TIPE PEGAWAI'
         ];
     }
 
     public function map($employee): array
     {
+        static $no = 1;
         return [
-            $employee->nip,
-            $employee->full_name,
-            $employee->position,
-            $employee->work_unit->name ?? '-',
-            $employee->user->email ?? '-',
-            $employee->nik ?? '-',
+            $no++,
+            strtoupper($employee->full_name),
+            "'" . $employee->nip,
+            "'" . $employee->nik,
+            $employee->rank_relation->name ?? '-',
+            strtoupper($employee->position),
+            strtoupper($employee->work_unit->name ?? '-'),
             $employee->phone_number ?? '-',
-            $employee->rank_class ?? '-',
-            $employee->picket_regu ?? '-'
+            $employee->employee_type_label
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        $kop1 = Setting::getValue('kop_line_1', 'KEMENTERIAN HUKUM DAN HAK ASASI MANUSIA RI');
-        $kop2 = Setting::getValue('kop_line_2', 'LEMBAGA PEMASYARAKATAN KELAS IIB JOMBANG');
+        $sheet->mergeCells('A1:I1');
+        $sheet->setCellValue('A1', 'KEMENTERIAN HUKUM DAN HAK ASASI MANUSIA RI');
         
-        $sheet->mergeCells('B1:I1');
-        $sheet->setCellValue('B1', $kop1);
-        $sheet->mergeCells('B2:I2');
-        $sheet->setCellValue('B2', $kop2);
+        $sheet->mergeCells('A2:I2');
+        $sheet->setCellValue('A2', 'LEMBAGA PEMASYARAKATAN KELAS IIB JOMBANG');
         
-        $sheet->mergeCells('A5:I5');
-        $sheet->setCellValue('A5', 'DAFTAR NOMINATIF PEGAWAI');
+        $sheet->mergeCells('A3:I3');
+        $sheet->setCellValue('A3', 'Jl. KH. Wahid Hasyim No. 151, Jombang, Jawa Timur 61411');
         
-        $sheet->getStyle('B1:I2')->getFont()->setBold(true)->setSize(12);
-        $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14)->setUnderline(true);
-        $sheet->getStyle('A5')->getAlignment()->setHorizontal('center');
-        
-        $sheet->getStyle('A7:I7')->getFont()->setBold(true);
-        $sheet->getStyle('A7:I7')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F1F5F9');
-        
+        $sheet->mergeCells('A4:I4');
+        $sheet->setCellValue('A4', 'DATA INDUK KEPEGAWAIAN');
+
+        $sheet->getStyle('A1:A4')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(12);
+        $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(16)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('1E40AF'));
+        $sheet->getStyle('A3')->getFont()->setItalic(true)->setSize(10);
+        $sheet->getStyle('A4')->getFont()->setBold(true)->setSize(14)->setUnderline(true);
+
+        $headerRange = 'A6:I6';
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '0F172A'],
+            ],
+        ]);
+
         $lastRow = $sheet->getHighestRow();
-        $sheet->getStyle("A7:I$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $dataRange = 'A6:I' . $lastRow;
+        $sheet->getStyle($dataRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
         
         foreach (range('A', 'I') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        for ($row = 7; $row <= $lastRow; $row++) {
+            if ($row % 2 == 0) {
+                $sheet->getStyle('A' . $row . ':I' . $row)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5F9');
+            }
         }
 
         return [];

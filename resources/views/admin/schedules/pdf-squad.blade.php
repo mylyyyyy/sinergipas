@@ -1,48 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Jadwal Regu Jaga</title>
+@extends('layouts.pdf_export')
+
+@section('title', 'Jadwal Regu Jaga')
+
+@section('report_title', 'JADWAL TUGAS REGU JAGA')
+@section('report_meta', 'Periode: ' . strtoupper($date->translatedFormat('F Y')))
+
+@section('content')
     <style>
-        @page { margin: 1cm; }
-        body { font-family: 'Helvetica', sans-serif; font-size: 9px; color: #333; }
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-        .header h2 { margin: 0; font-size: 14px; text-transform: uppercase; }
-        .header h3 { margin: 5px 0 0 0; font-size: 16px; text-transform: uppercase; }
-        .title { text-align: center; margin-bottom: 20px; }
-        .title h4 { margin: 0; font-size: 12px; text-decoration: underline; text-transform: uppercase; }
-        
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th, td { border: 1px solid #000; padding: 4px 2px; text-align: center; }
-        th { background-color: #f2f2f2; font-weight: bold; text-transform: uppercase; font-size: 8px; }
-        
-        .shift-name { font-weight: bold; text-align: left; padding-left: 5px; width: 80px; }
-        .weekend { background-color: #ffebee; }
-        .regu-box { font-weight: bold; color: #1e40af; }
-        
-        .footer { margin-top: 30px; }
-        .footer-table { border: none; }
-        .footer-table td { border: none; text-align: center; padding: 0; }
-        .signature-space { height: 60px; }
+        /* Override for high column density */
+        @page { margin: 0.8cm 1cm; }
+        .main-table th, .main-table td { padding: 3px 1px; font-size: 7px; text-align: center; border: 1px solid #94a3b8; }
+        .weekend { background-color: #ffe4e6 !important; }
+        .shift-name { font-weight: bold; text-align: left !important; padding-left: 5px !important; background-color: #f8fafc; }
+        .regu-box { font-weight: 800; color: #1e40af; }
     </style>
-</head>
-<body>
-    <div class="header">
-        <h2>{{ $kop1 }}</h2>
-        <h3>{{ $kop2 }}</h3>
-    </div>
 
-    <div class="title">
-        <h4>JADWAL TUGAS REGU JAGA PERIODE {{ strtoupper($date->translatedFormat('F Y')) }}</h4>
-    </div>
-
-    <table>
+    <table class="main-table">
         <thead>
             <tr>
-                <th style="width: 60px;">SESI</th>
+                <th style="width: 50px; background-color: #0f172a; color: white;">SESI</th>
                 @for($d = 1; $d <= $daysInMonth; $d++)
-                    <th class="{{ $date->copy()->day($d)->isWeekend() ? 'weekend' : '' }}">
+                    @php $isWeekend = $date->copy()->day($d)->isWeekend(); @endphp
+                    <th class="{{ $isWeekend ? 'weekend' : '' }}" style="{{ $isWeekend ? 'color: #b91c1c;' : '' }}">
                         {{ $d }}<br>
-                        <span style="font-size: 7px;">{{ strtoupper($date->copy()->day($d)->translatedFormat('D')) }}</span>
+                        <span style="font-size: 6px;">{{ strtoupper($date->copy()->day($d)->translatedFormat('D')) }}</span>
                     </th>
                 @endfor
             </tr>
@@ -55,8 +36,9 @@
                     @php 
                         $dateStr = $date->copy()->day($d)->format('Y-m-d');
                         $current = $schedules->get($dateStr . '_' . $shift->id)?->first();
+                        $isWeekend = $date->copy()->day($d)->isWeekend();
                     @endphp
-                    <td class="{{ $date->copy()->day($d)->isWeekend() ? 'weekend' : '' }}">
+                    <td class="{{ $isWeekend ? 'weekend' : '' }}">
                         <span class="regu-box">{{ $current ? $current->squad->name : '-' }}</span>
                     </td>
                 @endfor
@@ -65,19 +47,13 @@
         </tbody>
     </table>
 
-    <div class="footer">
-        <table class="footer-table">
-            <tr>
-                <td style="width: 60%;"></td>
-                <td>
-                    Jombang, {{ now()->translatedFormat('d F Y') }}<br>
-                    Kepala Kesatuan Pengamanan,<br>
-                    <div class="signature-space"></div>
-                    <strong>( ........................................... )</strong><br>
-                    NIP. ...........................................
-                </td>
-            </tr>
-        </table>
+    <div style="margin-top: 15px; font-size: 7px; color: #64748b;">
+        <strong>Keterangan:</strong> Sesi Jaga menyesuaikan dengan jadwal shift yang telah ditetapkan di sistem Sinergi PAS.
     </div>
-</body>
-</html>
+@endsection
+
+@section('footer_left')
+    <!-- Empty left side for this specific layout -->
+@endsection
+
+@section('signer_title', 'Kepala Kesatuan Pengamanan')

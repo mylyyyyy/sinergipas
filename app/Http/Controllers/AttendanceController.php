@@ -386,15 +386,34 @@ class AttendanceController extends Controller
                 return $drawing;
             }
             public function styles($sheet) {
+                // KOP
                 $sheet->mergeCells('B1:G1'); $sheet->setCellValue('B1', Setting::getValue('kop_line_1'));
                 $sheet->mergeCells('B2:G2'); $sheet->setCellValue('B2', Setting::getValue('kop_line_2'));
+                $sheet->mergeCells('B3:G3'); $sheet->setCellValue('B3', Setting::getValue('kop_address'));
+                $sheet->getStyle('B1')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('B2')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('1E40AF'));
+                
                 $sheet->mergeCells('A5:G5'); $sheet->setCellValue('A5', $this->title);
-                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14);
-                $sheet->getStyle('A7:G7')->getFont()->setBold(true);
+                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(13)->setUnderline(true);
+                $sheet->getStyle('A5')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+                // Table Header
+                $sheet->getStyle('A7:G7')->applyFromArray([
+                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '0F172A']],
+                    'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER]
+                ]);
+
                 $lastRow = $sheet->getHighestRow();
                 if ($lastRow >= 7) {
                     $sheet->getStyle("A7:G$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                    // Zebra
+                    for ($row = 8; $row <= $lastRow; $row++) {
+                        if ($row % 2 == 0) $sheet->getStyle("A$row:G$row")->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5F9');
+                    }
                 }
+                
+                foreach (range('A', 'G') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
                 return [];
             }
         }, $filename);
@@ -409,7 +428,7 @@ class AttendanceController extends Controller
                 return $this->data->map(fn($item, $i) => [
                     $i+1, 
                     $item->employee->full_name, 
-                    $item->employee->nip, 
+                    "'" . $item->employee->nip, 
                     $item->check_in ? Carbon::parse($item->check_in)->format('H:i') : '--:--', 
                     $item->check_out && $item->check_out != $item->check_in ? Carbon::parse($item->check_out)->format('H:i') : '--:--', 
                     strtoupper($item->status), 
@@ -424,15 +443,32 @@ class AttendanceController extends Controller
                 return $drawing;
             }
             public function styles($sheet) {
+                // KOP
                 $sheet->mergeCells('B1:H1'); $sheet->setCellValue('B1', Setting::getValue('kop_line_1'));
                 $sheet->mergeCells('B2:H2'); $sheet->setCellValue('B2', Setting::getValue('kop_line_2'));
+                $sheet->mergeCells('B3:H3'); $sheet->setCellValue('B3', Setting::getValue('kop_address'));
+                $sheet->getStyle('B1')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('B2')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('1E40AF'));
+
                 $sheet->mergeCells('A5:H5'); $sheet->setCellValue('A5', $this->title);
-                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14);
-                $sheet->getStyle('A7:H7')->getFont()->setBold(true);
+                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(13)->setUnderline(true);
+                $sheet->getStyle('A5')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+                // Table Header
+                $sheet->getStyle('A7:H7')->applyFromArray([
+                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '0F172A']],
+                    'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER]
+                ]);
+
                 $lastRow = $sheet->getHighestRow();
                 if ($lastRow >= 7) {
                     $sheet->getStyle("A7:H$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                    for ($row = 8; $row <= $lastRow; $row++) {
+                        if ($row % 2 == 0) $sheet->getStyle("A$row:H$row")->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5F9');
+                    }
                 }
+                foreach (range('A', 'H') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
                 return [];
             }
         }, $filename);
@@ -447,7 +483,7 @@ class AttendanceController extends Controller
                 return $this->data->map(fn($item, $i) => [
                     $i+1, 
                     $item->employee->full_name, 
-                    $item->employee->nip, 
+                    "'" . $item->employee->nip, 
                     $item->total_present, 
                     $item->total_late_minutes, 
                     $item->total_allowance
@@ -461,15 +497,32 @@ class AttendanceController extends Controller
                 return $drawing;
             }
             public function styles($sheet) {
+                // KOP
                 $sheet->mergeCells('B1:G1'); $sheet->setCellValue('B1', Setting::getValue('kop_line_1'));
                 $sheet->mergeCells('B2:G2'); $sheet->setCellValue('B2', Setting::getValue('kop_line_2'));
+                $sheet->mergeCells('B3:G3'); $sheet->setCellValue('B3', Setting::getValue('kop_address'));
+                $sheet->getStyle('B1')->getFont()->setBold(true)->setSize(11);
+                $sheet->getStyle('B2')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('1E40AF'));
+
                 $sheet->mergeCells('A5:G5'); $sheet->setCellValue('A5', $this->title);
-                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14);
-                $sheet->getStyle('A7:G7')->getFont()->setBold(true);
+                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(13)->setUnderline(true);
+                $sheet->getStyle('A5')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+                // Table Header
+                $sheet->getStyle('A7:G7')->applyFromArray([
+                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '0F172A']],
+                    'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER]
+                ]);
+
                 $lastRow = $sheet->getHighestRow();
                 if ($lastRow >= 7) {
                     $sheet->getStyle("A7:G$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                    for ($row = 8; $row <= $lastRow; $row++) {
+                        if ($row % 2 == 0) $sheet->getStyle("A$row:G$row")->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5F9');
+                    }
                 }
+                foreach (range('A', 'G') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
                 return [];
             }
         }, $filename);
