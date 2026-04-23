@@ -368,6 +368,7 @@
             <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Jenis Laporan</label>
                 <select name="filter" id="export_filter" class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-sm text-slate-700">
+                    <option value="range">Rekap Rentang Waktu (Sesuai Filter)</option>
                     <option value="monthly">Rekap Bulanan (Seluruh Pegawai)</option>
                     <option value="daily">Laporan Harian (Satu Hari)</option>
                 </select>
@@ -387,6 +388,32 @@
     </div>
 </div>
 
+<!-- Individual Export Modal -->
+<div id="individualExportModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-md rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200">
+        <h3 class="text-2xl font-black text-slate-900 mb-2 italic uppercase tracking-tight">Export Individu</h3>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-8" id="ind_emp_name"></p>
+        
+        <input type="hidden" id="ind_emp_id">
+        <form id="individualExportForm" class="space-y-6">
+            <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100 mb-6">
+                <p class="text-[10px] font-bold text-blue-600 uppercase leading-relaxed">Laporan akan diekspor sesuai rentang tanggal filter saat ini: <br><span class="text-blue-800">{{ $rangeTitle }}</span></p>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Format File</label>
+                <select id="ind_export_type" class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-sm text-slate-700">
+                    <option value="pdf">Dokumen PDF Resmi</option>
+                    <option value="excel">Microsoft Excel (.xlsx)</option>
+                </select>
+            </div>
+            <button type="button" onclick="submitIndividualExport()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg btn-3d">
+                Download Laporan Individu
+            </button>
+            <button type="button" onclick="document.getElementById('individualExportModal').classList.add('hidden')" class="w-full text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-2">Batal</button>
+        </form>
+    </div>
+</div>
+
 <script>
     function openExportModal() { document.getElementById('exportModal').classList.remove('hidden'); }
     
@@ -396,6 +423,20 @@
         const url = `/admin/attendance/export?filter=${filter}&type=${type}&start_date={{ $startDate }}&end_date={{ $endDate }}`;
         window.location.href = url;
         document.getElementById('exportModal').classList.add('hidden');
+    }
+
+    function openIndividualExportModal(id, name) {
+        document.getElementById('ind_emp_id').value = id;
+        document.getElementById('ind_emp_name').innerText = name;
+        document.getElementById('individualExportModal').classList.remove('hidden');
+    }
+
+    function submitIndividualExport() {
+        const id = document.getElementById('ind_emp_id').value;
+        const type = document.getElementById('ind_export_type').value;
+        const url = `/admin/attendance/export?filter=individual&employee_id=${id}&type=${type}&start_date={{ $startDate }}&end_date={{ $endDate }}`;
+        window.location.href = url;
+        document.getElementById('individualExportModal').classList.add('hidden');
     }
 
     function switchTab(tabName) {
