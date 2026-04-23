@@ -15,8 +15,17 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 
+use App\Services\ScheduleService;
+
 class AttendanceController extends Controller
 {
+    protected $scheduleService;
+
+    public function __construct(ScheduleService $scheduleService)
+    {
+        $this->scheduleService = $scheduleService;
+    }
+
     public function index(Request $request)
     {
         $search = $request->search;
@@ -88,53 +97,18 @@ class AttendanceController extends Controller
             if (count($data) < 2) return back()->with('error', 'File terbaca namun kosong.');
 
             $scansByNip = [];
-            $allDates = [];
-            
-            // 1. Pre-collect NIPs and Dates
             foreach ($data as $index => $row) {
                 if ($index === 0 || !isset($row[4]) || !is_numeric($row[4])) continue;
                 $nip = trim((string)$row[4]);
                 $scansByNip[$nip][] = $row[1] . ' ' . $row[2];
-                $allDates[] = $row[1];
             }
 
-            if (empty($scansByNip)) return back()->with('error', 'Tidak ada data NIP valid ditemukan.');
-
-            $allDates = array_unique($allDates);
-            $minDate = min($allDates);
-            $maxDate = max($allDates);
-            $nips = array_keys($scansByNip);
-
-            // 2. Bulk Loading
-            $employees = Employee::with(['rank_relation', 'squad'])
-                ->whereIn('nip', $nips)
-                ->get()
-                ->keyBy('nip');
-
-            $empIds = $employees->pluck('id')->toArray();
-            $squadIds = $employees->pluck('squad_id')->filter()->unique()->toArray();
-
-            $allIndividualSchedules = \App\Models\Schedule::with('shift')
-                ->whereIn('employee_id', $empIds)
-                ->whereBetween('date', [$minDate, $maxDate])
-                ->get()
-                ->groupBy(fn($s) => $s->employee_id . '_' . $s->date);
-
-            $allSquadSchedules = \App\Models\SquadSchedule::with('shift')
-                ->whereIn('squad_id', $squadIds)
-                ->whereBetween('date', [$minDate, $maxDate])
-                ->get()
-                ->groupBy(fn($s) => $s->squad_id . '_' . $s->date);
-
-            $lateThreshold = Setting::getValue('office_late_threshold', '07:30');
+            $employees = Employee::with(['rank_relation', 'squad'])->whereIn('nip', array_keys($scansByNip))->get()->keyBy('nip');
             $now = now();
             $upsertData = [];
             $importedCount = 0;
 
-            // 3. Process data
             foreach ($employees as $nip => $emp) {
-                if (!isset($scansByNip[$nip])) continue;
-
                 $scans = collect($scansByNip[$nip])->map(fn($s) => Carbon::parse($s))->sort();
                 $empDates = $scans->groupBy(fn($s) => $s->format('Y-m-d'));
 
@@ -143,45 +117,51 @@ class AttendanceController extends Controller
                     $checkOut = $dayScans->max();
                     if ($checkIn == $checkOut) $checkOut = null;
 
-                    $sched = $allIndividualSchedules->get($emp->id . '_' . $date)?->first();
-                    if (!$sched && $emp->squad_id) {
-                        $sched = $allSquadSchedules->get($emp->squad_id . '_' . $date)?->first();
-                    }
-
-                    $startTime = null;
-                    $isPicket = false;
-
-                    if ($sched && $sched->shift) {
-                        $startTime = Carbon::parse($date . ' ' . $sched->shift->start_time);
-                        $isPicket = true;
-                    } else {
-                        $startTime = Carbon::parse($date . ' ' . $lateThreshold);
-                    }
-
-                    $lateMinutes = 0;
+                    // VALIDASI JADWAL
+                    $validation = $this->scheduleService->validateAttendanceForAllowance($emp, $date, $checkIn->format('H:i:s'));
+                    
                     $status = 'present';
+                    $lateMinutes = 0;
+                    $allowance = 0;
+                    $finalDate = $date;
 
-                    if ($checkIn) {
-                        if ($checkIn->gt($startTime->copy()->addMinutes(1))) {
-                            $lateMinutes = $checkIn->diffInMinutes($startTime);
-                            $status = 'late';
-                        } else {
-                            $status = $isPicket ? 'picket' : 'present';
+                    if ($validation['is_valid']) {
+                        $sched = $validation['schedule'];
+                        $shift = $sched['shift'] ?? null;
+                        
+                        // Jika Shift Malam, pindahkan baris ke hari kepulangan (besoknya)
+                        if ($validation['is_night_shift'] && !str_contains($validation['reason'], 'Kepulangan')) {
+                            continue; 
                         }
-                    } else {
-                        $status = 'absent';
-                    }
 
-                    $rate = $emp->rank_relation->meal_allowance ?? 0;
+                        if (str_contains($validation['reason'], 'Kepulangan')) {
+                            $status = 'picket';
+                        } else {
+                            // Gunakan status dari validation (on_leave, sick, picket, present)
+                            $status = $validation['status'] ?? ($sched['is_picket'] ? 'picket' : 'present');
+                            
+                            if ($shift && $status !== 'on_leave' && $status !== 'sick') {
+                                $startTime = Carbon::parse($date . ' ' . $shift->start_time);
+                                if ($checkIn->gt($startTime->copy()->addMinutes(1))) {
+                                    $lateMinutes = $checkIn->diffInMinutes($startTime);
+                                    $status = 'late';
+                                }
+                            }
+                        }
+                        $allowance = $emp->rank_relation->meal_allowance ?? 0;
+                    } else {
+                        $status = 'present'; // Tetap hadir tapi tanpa uang makan
+                        $allowance = 0;
+                    }
 
                     $upsertData[] = [
                         'employee_id' => $emp->id,
-                        'date' => $date,
+                        'date' => $finalDate,
                         'check_in' => $checkIn->format('H:i:s'),
                         'check_out' => $checkOut ? $checkOut->format('H:i:s') : null,
                         'status' => $status,
                         'late_minutes' => $lateMinutes,
-                        'allowance_amount' => $rate,
+                        'allowance_amount' => $allowance,
                         'created_at' => $now,
                         'updated_at' => $now,
                     ];
@@ -195,8 +175,7 @@ class AttendanceController extends Controller
                 }
             }
 
-            return back()->with('success', "Berhasil memproses $importedCount data absensi.");
-
+            return back()->with('success', "Berhasil memproses $importedCount data absensi dengan validasi jadwal ketat.");
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal: ' . $e->getMessage());
         }
@@ -204,39 +183,33 @@ class AttendanceController extends Controller
 
     private function calculateAttendanceMetrics($attendance, $employee)
     {
+        $validation = $this->scheduleService->validateAttendanceForAllowance($employee, $attendance->date, $attendance->check_in);
+        
         $attendance->late_minutes = 0;
-        $attendance->status = 'absent';
+        $attendance->allowance_amount = 0;
 
-        $schedule = \App\Models\Schedule::where('employee_id', $employee->id)->where('date', $attendance->date)->first();
-        if (!$schedule && $employee->squad_id) {
-            $schedule = \App\Models\SquadSchedule::where('squad_id', $employee->squad_id)->where('date', $attendance->date)->first();
-        }
-
-        $startTime = null;
-        $isPicket = false;
-
-        if ($schedule && $schedule->shift) {
-            $startTime = Carbon::parse($attendance->date . ' ' . $schedule->shift->start_time);
-            $isPicket = true;
-        } else {
-            $threshold = Setting::getValue('office_late_threshold', '07:30');
-            $startTime = Carbon::parse($attendance->date . ' ' . $threshold);
-        }
-
-        if ($attendance->check_in) {
-            $checkIn = Carbon::parse($attendance->date . ' ' . $attendance->check_in);
-            if ($checkIn->gt($startTime->copy()->addMinutes(1))) {
-                $attendance->late_minutes = $checkIn->diffInMinutes($startTime);
-                $attendance->status = 'late';
+        if ($validation['is_valid']) {
+            $sched = $validation['schedule'];
+            $shift = $sched['shift'];
+            
+            if (str_contains($validation['reason'], 'Kepulangan')) {
+                $attendance->status = 'picket';
             } else {
-                $attendance->status = $isPicket ? 'picket' : 'present';
+                $startTime = Carbon::parse($attendance->date . ' ' . $shift->start_time);
+                $checkIn = Carbon::parse($attendance->date . ' ' . $attendance->check_in);
+                
+                if ($checkIn->gt($startTime->copy()->addMinutes(1))) {
+                    $attendance->late_minutes = $checkIn->diffInMinutes($startTime);
+                    $attendance->status = 'late';
+                } else {
+                    $attendance->status = $sched['is_picket'] ? 'picket' : 'present';
+                }
             }
+            $attendance->allowance_amount = $employee->rank_relation->meal_allowance ?? 0;
         } else {
-            $attendance->status = 'absent';
+            // Jika tidak ada jadwal, status tetap sesuai input tapi uang makan 0
+            $attendance->allowance_amount = 0;
         }
-
-        $rate = $employee->rank_relation->meal_allowance ?? 0;
-        $attendance->allowance_amount = $rate;
     }
 
     public function storeManual(Request $request)

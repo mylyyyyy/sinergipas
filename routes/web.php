@@ -140,10 +140,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [ScheduleController::class, 'index'])->name('index');
             Route::post('/', [ScheduleController::class, 'store'])->name('store');
             Route::post('/individual', [ScheduleController::class, 'storeIndividual'])->name('store-individual');
-            Route::post('/generate', [ScheduleController::class, 'generateRoster'])->name('generate');
-            Route::delete('/reset', [ScheduleController::class, 'reset'])->name('reset');
-            Route::delete('/bulk-delete', [ScheduleController::class, 'bulkDelete'])->name('bulk-delete');
-            Route::get('/export', [ScheduleController::class, 'export'])->name('export');
+            Route::delete('/individual/{id}', [ScheduleController::class, 'destroyIndividual'])->name('destroy-individual');
+            Route::post('/generate', [ScheduleController::class, 'generate'])->name('generate');
+            Route::post('/copy-last-month', [ScheduleController::class, 'copyLastMonth'])->name('copy-last-month');
+            Route::delete('/clear', [ScheduleController::class, 'clear'])->name('clear');
+            Route::get('/export', [ScheduleController::class, 'exportPdf'])->name('export');
         });
     });
 });

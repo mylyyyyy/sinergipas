@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Manajemen Regu')
-@section('header-title', 'Kelola Regu Jaga')
+@section('header-title', 'Kelola Regu & P2U')
 
 @section('content')
 <div class="space-y-8 page-fade">
@@ -21,135 +21,118 @@
         </div>
 
         <button onclick="document.getElementById('squadModal').classList.remove('hidden')" class="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d flex items-center gap-3">
-            <i data-lucide="plus-circle" class="w-5 h-5"></i> Tambah Regu Baru
+            <i data-lucide="plus-circle" class="w-5 h-5"></i> Tambah Unit Baru
         </button>
     </div>
 
-    <!-- Squad Table -->
-    <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden card-3d">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-slate-50 border-b border-slate-100">
-                    <th class="px-6 py-5 w-12 text-center"></th>
-                    <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Identitas Regu</th>
-                    <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Kekuatan Personel</th>
-                    <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Aksi Manajemen</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-50">
-                @forelse($squads as $squad)
-                <tr class="hover:bg-slate-50/50 transition-colors group">
-                    <td class="px-6 py-4 text-center">
-                        <input type="checkbox" name="squad_ids[]" value="{{ $squad->id }}" class="squad-checkbox w-5 h-5 rounded-lg border-slate-200 text-blue-600 focus:ring-0 cursor-pointer transition-all">
-                    </td>
-                    <td class="px-6 py-4">
-                        <div>
-                            <span class="text-base font-black text-slate-900 uppercase">Regu {{ $squad->name }}</span>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{{ $squad->description ?? 'Garda Pengamanan Internal' }}</p>
+    <!-- Squad Grid (Card-based for better premium feel) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        @forelse($squads as $squad)
+        <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm p-8 card-3d group relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-6">
+                <input type="checkbox" name="squad_ids[]" value="{{ $squad->id }}" class="squad-checkbox w-5 h-5 rounded-lg border-slate-200 text-blue-600 focus:ring-0 cursor-pointer transition-all">
+            </div>
+
+            <div class="flex items-start gap-6">
+                <div class="w-16 h-16 rounded-[24px] flex items-center justify-center text-2xl font-black italic shadow-lg
+                    {{ $squad->type === 'p2u' ? 'bg-indigo-600 text-white shadow-indigo-200' : 'bg-slate-900 text-white shadow-slate-200' }}">
+                    {{ substr($squad->name, 0, 1) }}
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-xl font-black text-slate-900 uppercase tracking-tight">{{ $squad->name }}</h3>
+                        <span class="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border
+                            {{ $squad->type === 'p2u' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-50 text-slate-500 border-slate-200' }}">
+                            {{ strtoupper($squad->type) }}
+                        </span>
+                    </div>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{{ $squad->description ?? 'Unit Operasional' }}</p>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-8 border-t border-slate-50 flex items-center justify-between">
+                <div class="flex -space-x-3">
+                    @foreach($squad->employees->take(5) as $emp)
+                        <div class="w-10 h-10 rounded-2xl border-4 border-white bg-slate-100 flex items-center justify-center text-[10px] font-black uppercase overflow-hidden shadow-sm ring-1 ring-slate-100" title="{{ $emp->full_name }}">
+                            @if($emp->photo)
+                                <img src="{{ $emp->photo }}" class="w-full h-full object-cover">
+                            @else
+                                {{ substr($emp->full_name, 0, 1) }}
+                            @endif
                         </div>
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                        <div class="inline-flex items-center gap-3">
-                            <div class="flex -space-x-2.5 mr-2">
-                                @foreach($squad->employees->take(4) as $emp)
-                                    <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[10px] font-black uppercase overflow-hidden shadow-xs ring-1 ring-slate-200">
-                                        @if($emp->photo)
-                                            <img src="{{ $emp->photo }}" class="w-full h-full object-cover">
-                                        @else
-                                            {{ substr($emp->full_name, 0, 1) }}
-                                        @endif
-                                    </div>
-                                @endforeach
-                                @if($squad->employees_count > 4)
-                                    <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-900 text-white flex items-center justify-center text-[9px] font-black shadow-lg">
-                                        +{{ $squad->employees_count - 4 }}
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="text-left">
-                                <span class="block text-sm font-black text-slate-900 leading-none">{{ $squad->employees_count }}</span>
-                                <span class="text-[8px] text-slate-400 font-black uppercase tracking-widest">Petugas Aktif</span>
-                            </div>
+                    @endforeach
+                    @if($squad->employees_count > 5)
+                        <div class="w-10 h-10 rounded-2xl border-4 border-white bg-slate-50 text-slate-400 flex items-center justify-center text-[10px] font-black shadow-sm ring-1 ring-slate-100">
+                            +{{ $squad->employees_count - 5 }}
                         </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="flex justify-center items-center gap-2">
-                            <button onclick='openManageMembersModal(@json($squad->load("employees")), @json($unassignedEmployees))' class="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-blue-100 btn-3d">
-                                Kelola Anggota
-                            </button>
-                            <button onclick="openEditModal({{ json_encode($squad) }})" class="w-10 h-10 rounded-xl border border-slate-200 text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-all flex items-center justify-center shadow-xs">
-                                <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </button>
-                            <form action="{{ route('admin.squads.destroy', $squad->id) }}" method="POST" class="inline no-loader">
-                                @csrf @method('DELETE')
-                                <button type="button" onclick="confirmDelete(this.form)" class="w-10 h-10 rounded-xl border border-slate-200 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all flex items-center justify-center shadow-xs">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="4" class="px-6 py-24 text-center">
-                        <i data-lucide="shield-off" class="w-12 h-12 text-slate-200 mx-auto mb-4"></i>
-                        <h4 class="text-sm font-black text-slate-900 uppercase italic">Database Regu Kosong</h4>
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+                    @endif
+                </div>
+                <div class="text-right">
+                    <span class="block text-lg font-black text-slate-900 leading-none">{{ $squad->employees_count }}</span>
+                    <span class="text-[8px] text-slate-400 font-black uppercase tracking-widest">Personel</span>
+                </div>
+            </div>
+
+            <div class="mt-8 grid grid-cols-2 gap-3">
+                <button onclick='openManageMembersModal(@json($squad->load("employees")), @json($unassignedEmployees))' class="py-3.5 rounded-2xl bg-slate-50 text-slate-600 text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all border border-slate-100 shadow-sm flex items-center justify-center gap-2">
+                    <i data-lucide="users" class="w-3.5 h-3.5"></i> Anggota
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="openEditModal({{ json_encode($squad) }})" class="flex-1 py-3.5 rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-200 transition-all flex items-center justify-center">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </button>
+                    <form action="{{ route('admin.squads.destroy', $squad->id) }}" method="POST" class="flex-1 no-loader">
+                        @csrf @method('DELETE')
+                        <button type="button" onclick="confirmDelete(this.form)" class="w-full h-full py-3.5 rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 transition-all flex items-center justify-center">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        @empty
+        <div class="md:col-span-2 xl:col-span-3 py-24 text-center bg-white rounded-[40px] border border-slate-200 shadow-sm border-dashed">
+            <i data-lucide="shield-off" class="w-12 h-12 text-slate-200 mx-auto mb-4"></i>
+            <h4 class="text-sm font-black text-slate-900 uppercase italic">Database Unit Kosong</h4>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">Silakan tambahkan Regu Jaga atau Unit P2U baru</p>
+        </div>
+        @endforelse
     </div>
 </div>
 
-<form id="bulkDeleteSquadForm" action="{{ route('admin.squads.bulk-destroy') }}" method="POST" class="hidden no-loader">
-    @csrf @method('DELETE')
-</form>
-
-<!-- Add Modal -->
+<!-- Add/Edit Modal -->
 <div id="squadModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-sm rounded-[40px] p-10 shadow-2xl animate-in zoom-in duration-200 relative overflow-hidden">
-        <h3 id="squadModalTitle" class="text-2xl font-black text-slate-900 mb-8 italic tracking-tight">Tambah Regu</h3>
-        <form id="squadForm" action="{{ route('admin.squads.store') }}" method="POST" class="space-y-6">
+    <div class="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl animate-in zoom-in duration-200 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
+        
+        <h3 id="squadModalTitle" class="text-2xl font-black text-slate-900 mb-8 italic tracking-tight relative z-10">Konfigurasi Unit</h3>
+        
+        <form id="squadForm" action="{{ route('admin.squads.store') }}" method="POST" class="space-y-6 relative z-10">
             @csrf
             <input type="hidden" name="_method" id="squadMethod" value="POST">
             <input type="hidden" name="schedule_type_id" value="{{ $scheduleTypes->first()?->id ?? 1 }}">
             
             <div class="space-y-2">
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Nama Regu</label>
-                <input type="text" name="name" id="squad_name" required placeholder="A, B, C, D atau E" class="w-full px-6 py-4 rounded-2xl border border-slate-200 text-sm font-black focus:border-blue-500 bg-slate-50 outline-none transition-all uppercase">
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Nama Unit/Regu</label>
+                <input type="text" name="name" id="squad_name" required placeholder="Contoh: Regu A atau P2U-1" class="w-full px-6 py-4 rounded-2xl border border-slate-200 text-sm font-black focus:border-blue-500 bg-slate-50 outline-none transition-all uppercase">
             </div>
+
             <div class="space-y-2">
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Deskripsi</label>
-                <textarea name="description" id="squad_description" rows="3" placeholder="Deskripsi opsional..." class="w-full px-6 py-4 rounded-2xl border border-slate-200 text-sm font-bold focus:border-blue-500 bg-slate-50 outline-none transition-all"></textarea>
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Tipe Penugasan</label>
+                <select name="type" id="squad_type" required class="w-full px-6 py-4 rounded-2xl border border-slate-200 text-sm font-black focus:border-blue-500 bg-slate-50 outline-none transition-all">
+                    <option value="regu">Regu Jaga Umum (Blok/Lingkungan)</option>
+                    <option value="p2u">P2U (Pengamanan Pintu Utama)</option>
+                </select>
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Deskripsi Tugas</label>
+                <textarea name="description" id="squad_description" rows="3" placeholder="Jelaskan cakupan pengamanan unit ini..." class="w-full px-6 py-4 rounded-2xl border border-slate-200 text-sm font-bold focus:border-blue-500 bg-slate-50 outline-none transition-all"></textarea>
             </div>
             
             <div class="flex gap-3 pt-4">
                 <button type="button" onclick="closeSquadModal()" class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-widest">Batal</button>
-                <button type="submit" class="flex-[2] py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d">Simpan Data</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Edit Modal -->
-<div id="editModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-sm rounded-[40px] p-10 shadow-2xl animate-in zoom-in duration-200 relative overflow-hidden">
-        <h3 class="text-2xl font-black text-slate-900 mb-8 italic tracking-tight relative z-10">Informasi Regu</h3>
-        <form id="editForm" method="POST" class="space-y-6 relative z-10">
-            @csrf @method('PUT')
-            <div class="space-y-2">
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Nama Regu</label>
-                <input type="text" name="name" id="edit_name" required class="w-full px-6 py-4 rounded-2xl border border-slate-200 text-sm font-black focus:border-blue-500 bg-slate-50 outline-none transition-all uppercase">
-            </div>
-            <div class="space-y-2">
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Deskripsi</label>
-                <textarea name="description" id="edit_description" rows="3" class="w-full px-6 py-4 rounded-2xl border border-slate-200 text-sm font-bold focus:border-blue-500 bg-slate-50 outline-none transition-all"></textarea>
-            </div>
-            
-            <div class="flex gap-3 pt-4">
-                <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')" class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all">Batal</button>
-                <button type="submit" class="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl btn-3d">Update Regu</button>
+                <button type="submit" class="flex-[2] py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d">Simpan Konfigurasi</button>
             </div>
         </form>
     </div>
@@ -163,8 +146,8 @@
             <div class="flex items-center gap-6">
                 <div id="squad_icon_header" class="w-16 h-16 rounded-[24px] bg-slate-900 text-white flex items-center justify-center text-3xl font-black italic shadow-2xl">A</div>
                 <div>
-                    <h3 id="members_squad_name" class="text-3xl font-black text-slate-900 italic tracking-tighter">Kelola Anggota</h3>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1 italic">Atur penugasan petugas dalam unit regu jaga</p>
+                    <h3 id="members_squad_name" class="text-3xl font-black text-slate-900 italic tracking-tighter">Kelola Personel</h3>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1 italic">Atur penugasan petugas ke dalam unit operasional</p>
                 </div>
             </div>
             <button onclick="document.getElementById('membersModal').classList.add('hidden')" class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-all">
@@ -176,7 +159,7 @@
             <!-- Left: Current Members List -->
             <div class="flex-1 p-10 border-r border-slate-100 overflow-y-auto custom-scrollbar bg-white">
                 <h4 class="text-xs font-black text-slate-900 uppercase tracking-widest mb-8 flex items-center gap-2">
-                    <i data-lucide="users" class="w-4 h-4 text-blue-600"></i> Anggota Aktif Regu
+                    <i data-lucide="users" class="w-4 h-4 text-blue-600"></i> Anggota Aktif Unit
                 </h4>
                 <div id="members_list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
@@ -184,7 +167,7 @@
             <!-- Right: Add New Members -->
             <div class="lg:w-[420px] bg-slate-50 flex flex-col overflow-hidden">
                 <div class="p-10 pb-6 shrink-0">
-                    <h4 class="text-xs font-black text-slate-900 uppercase tracking-widest mb-6">Tambah Anggota Baru</h4>
+                    <h4 class="text-xs font-black text-slate-900 uppercase tracking-widest mb-6">Tambah Personel</h4>
                     <div class="relative group">
                         <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors"></i>
                         <input type="text" id="memberSearch" placeholder="Cari nama atau NIP..." class="w-full pl-12 pr-6 py-4 rounded-2xl border border-slate-200 bg-white text-sm font-bold focus:border-blue-500 outline-none transition-all shadow-sm">
@@ -223,12 +206,13 @@
     document.querySelectorAll('.squad-checkbox').forEach(cb => cb.addEventListener('change', updateSelection));
 
     function confirmDelete(form) {
-        Swal.fire({ title: 'Hapus Regu?', text: "Petugas di dalamnya akan otomatis kehilangan status regu.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444', confirmButtonText: 'Ya, Hapus!', customClass: { popup: 'rounded-[32px]' } }).then((result) => { if (result.isConfirmed) form.submit(); });
+        Swal.fire({ title: 'Hapus Unit?', text: "Data jadwal operasional unit ini akan hilang.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444', confirmButtonText: 'Ya, Hapus!', customClass: { popup: 'rounded-[32px]' } }).then((result) => { if (result.isConfirmed) form.submit(); });
     }
 
     function openEditModal(squad) {
-        document.getElementById('squadModalTitle').innerText = 'Edit Informasi Regu';
+        document.getElementById('squadModalTitle').innerText = 'Edit Informasi Unit';
         document.getElementById('squad_name').value = squad.name;
+        document.getElementById('squad_type').value = squad.type;
         document.getElementById('squad_description').value = squad.description || '';
         document.getElementById('squadForm').action = '/admin/squads/' + squad.id;
         document.getElementById('squadMethod').value = 'PUT';
@@ -242,26 +226,18 @@
         document.getElementById('squadForm').reset();
     }
 
-    document.getElementById('memberSearch')?.addEventListener('keyup', function() {
-        const term = this.value.toLowerCase();
-        document.querySelectorAll('.available-item').forEach(item => {
-            const text = item.innerText.toLowerCase();
-            item.classList.toggle('hidden', !text.includes(term));
-        });
-    });
-
     function openManageMembersModal(squad, unassigned) {
-        document.getElementById('members_squad_name').innerText = `Regu ${squad.name}`;
-        document.getElementById('squad_icon_header').innerText = squad.name;
+        document.getElementById('members_squad_name').innerText = squad.name;
+        document.getElementById('squad_icon_header').innerText = squad.name.substring(0, 1).toUpperCase();
         document.getElementById('addMemberForm').action = `/admin/squads/${squad.id}/add-member`;
         
         // Members List (Left)
         const list = document.getElementById('members_list');
-        list.innerHTML = squad.employees.length ? '' : '<div class="col-span-2 py-20 text-center text-slate-300 font-bold uppercase text-[10px] tracking-widest italic">Belum ada anggota</div>';
+        list.innerHTML = squad.employees.length ? '' : '<div class="col-span-2 py-20 text-center text-slate-300 font-bold uppercase text-[10px] tracking-widest italic">Belum ada personel</div>';
         squad.employees.forEach(emp => {
             const photo = emp.photo ? `<img src="${emp.photo}" class="w-full h-full object-cover">` : `<span class="text-xs font-black text-slate-400 uppercase">${emp.full_name.substring(0, 1)}</span>`;
             list.innerHTML += `
-                <div class="flex items-center justify-between p-5 bg-slate-50 rounded-3xl border border-slate-100 group transition-all">
+                <div class="flex items-center justify-between p-5 bg-slate-50 rounded-3xl border border-slate-100 group transition-all hover:bg-white hover:shadow-md">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm ring-2 ring-white">
                             ${photo}
@@ -294,8 +270,8 @@
                         ${photo}
                     </div>
                     <div>
-                        <p class="text-xs font-black text-slate-900 group-hover:text-blue-600 transition-colors">${emp.full_name}</p>
-                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">${emp.nip}</p>
+                        <p class="text-xs font-black text-slate-900 group-hover:text-blue-600 transition-colors text-left">${emp.full_name}</p>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5 text-left">${emp.nip}</p>
                     </div>
                 </label>
             `;

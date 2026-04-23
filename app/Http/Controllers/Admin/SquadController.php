@@ -29,6 +29,7 @@ class SquadController extends Controller
     {
         $request->validate([
             'name' => 'required|string|unique:squads,name|max:255',
+            'type' => 'required|in:regu,p2u',
             'description' => 'nullable|string|max:500',
             'schedule_type_id' => 'required|exists:schedule_types,id',
         ]);
@@ -39,7 +40,7 @@ class SquadController extends Controller
             'user_id' => auth()->id(),
             'activity' => 'create_squad',
             'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . " membuat regu baru: " . $squad->name
+            'details' => auth()->user()->name . " membuat regu (" . $squad->type . ") baru: " . $squad->name
         ]);
 
         return back()->with('success', 'Regu berhasil dibuat.');
@@ -49,6 +50,7 @@ class SquadController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:squads,name,' . $squad->id,
+            'type' => 'required|in:regu,p2u',
             'description' => 'nullable|string|max:500',
             'schedule_type_id' => 'required|exists:schedule_types,id',
         ]);

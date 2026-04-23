@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Schedule extends Model
 {
-    protected $fillable = ['employee_id', 'shift_id', 'date', 'schedule_type_id'];
+    protected $fillable = ['employee_id', 'shift_id', 'date', 'status', 'schedule_type_id'];
 
     public function employee(): BelongsTo
     {

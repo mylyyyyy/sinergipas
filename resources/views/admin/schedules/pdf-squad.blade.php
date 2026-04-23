@@ -2,17 +2,17 @@
 
 @section('title', 'Jadwal Regu Jaga')
 
-@section('report_title', 'JADWAL TUGAS REGU JAGA')
+@section('report_title', $title)
 @section('report_meta', 'Periode: ' . strtoupper($date->translatedFormat('F Y')))
 
 @section('content')
     <style>
-        /* Override for high column density */
-        @page { margin: 0.8cm 1cm; }
-        .main-table th, .main-table td { padding: 3px 1px; font-size: 7px; text-align: center; border: 1px solid #94a3b8; }
-        .weekend { background-color: #ffe4e6 !important; }
-        .shift-name { font-weight: bold; text-align: left !important; padding-left: 5px !important; background-color: #f8fafc; }
-        .regu-box { font-weight: 800; color: #1e40af; }
+        /* Speed optimization for high column density */
+        @page { margin: 0.5cm 0.5cm; }
+        .main-table th, .main-table td { padding: 2px; font-size: 6px; text-align: center; border: 1px solid #000; }
+        .weekend { background-color: #fdd !important; }
+        .shift-name { font-weight: bold; text-align: left !important; padding-left: 3px !important; }
+        .regu-box { font-weight: bold; color: #000; }
     </style>
 
     <table class="main-table">
@@ -47,8 +47,33 @@
         </tbody>
     </table>
 
-    <div style="margin-top: 15px; font-size: 7px; color: #64748b;">
-        <strong>Keterangan:</strong> Sesi Jaga menyesuaikan dengan jadwal shift yang telah ditetapkan di sistem Sinergi PAS.
+    <div style="margin-top: 25px;">
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td style="width: 60%; vertical-align: top; text-align: left; border: none; padding: 0;">
+                    <div style="font-size: 8px; font-weight: bold; color: #0f172a; margin-bottom: 5px; text-decoration: underline;">KETERANGAN JADWAL:</div>
+                    <table style="font-size: 7px; color: #475569; border: none;">
+                        <tr>
+                            <td style="border: none; padding: 1px 0; text-align: left; width: 80px;">1. Pola Rotasi</td>
+                            <td style="border: none; padding: 1px 0; text-align: left;">: 4 Regu (Pagi - Siang & Malam - Libur - Libur)</td>
+                        </tr>
+                        <tr>
+                            <td style="border: none; padding: 1px 0; text-align: left;">2. Sesi Pagi</td>
+                            <td style="border: none; padding: 1px 0; text-align: left;">: Sesuai jam dinas yang ditetapkan di sistem</td>
+                        </tr>
+                        <tr>
+                            <td style="border: none; padding: 1px 0; text-align: left;">3. Sesi Siang/Malam</td>
+                            <td style="border: none; padding: 1px 0; text-align: left;">: Sesuai jam dinas pengamanan yang berlaku</td>
+                        </tr>
+                        <tr>
+                            <td style="border: none; padding: 1px 0; text-align: left;">4. Validitas</td>
+                            <td style="border: none; padding: 1px 0; text-align: left;">: Dokumen resmi hasil sistem Sinergi PAS Jombang</td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="border: none;"></td>
+            </tr>
+        </table>
     </div>
 @endsection
 

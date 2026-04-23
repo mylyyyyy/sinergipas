@@ -4,119 +4,68 @@
     <meta charset="UTF-8">
     <title>@yield('title', 'Laporan Sinergi PAS')</title>
     <style>
-        @page { margin: 1cm 1.5cm; }
+        @page { margin: 0.5cm 1cm; }
         body { 
-            font-family: sans-serif; 
-            font-size: 10px; 
-            color: #1e293b; 
-            line-height: 1.5;
+            font-family: Arial, sans-serif; 
+            font-size: 9px; 
+            color: #000; 
+            line-height: 1.2;
             margin: 0;
             padding: 0;
         }
         
         .header-container {
-            border-bottom: 2px solid #0f172a;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
             text-align: center;
         }
         
         .logo-center {
-            margin: 0 auto 5px auto;
-            width: 60px;
+            margin: 0 auto;
+            width: 50px;
+            height: auto;
         }
         
-        .kop-text h1 { 
-            margin: 0; 
-            font-size: 11px; 
-            font-weight: bold; 
-            text-transform: uppercase;
-            color: #0f172a; 
-        }
-        
-        .kop-text h2 { 
-            margin: 2px 0; 
-            font-size: 14px; 
-            font-weight: bold; 
-            text-transform: uppercase;
-            color: #1e40af;
-        }
-        
-        .kop-text p { 
-            margin: 1px 0; 
-            font-size: 8px; 
-            color: #475569; 
-        }
+        .kop-text h1 { margin: 0; font-size: 10px; font-weight: bold; }
+        .kop-text h2 { margin: 1px 0; font-size: 12px; font-weight: bold; color: #1e40af; }
+        .kop-text p { margin: 0; font-size: 7px; color: #333; }
 
         .report-title-box {
             text-align: center;
-            margin: 15px 0;
-            background-color: #f1f5f9;
-            padding: 8px;
+            margin: 10px 0;
+            padding: 5px;
+            background: #eee;
         }
 
         .report-title-box h3 {
             margin: 0;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
-            color: #0f172a;
-            text-transform: uppercase;
             text-decoration: underline;
         }
 
-        .report-meta {
-            font-size: 8px;
-            color: #64748b;
-            margin-top: 3px;
-        }
+        .report-meta { font-size: 7px; margin-top: 2px; }
 
-        table.main-table { 
-            width: 100%; 
-            border-collapse: collapse; 
-        }
-        table.main-table th { 
-            background-color: #1e293b; 
-            color: #ffffff; 
-            padding: 6px; 
-            text-align: left; 
-            text-transform: uppercase;
-            font-size: 8px;
-            border: 1px solid #0f172a;
-        }
-        table.main-table td { 
-            border: 1px solid #cbd5e1; 
-            padding: 5px; 
-            vertical-align: middle;
-            font-size: 8px;
-        }
-        table.main-table tr:nth-child(even) {
-            background-color: #f8fafc;
-        }
-
-        .badge {
-            padding: 1px 4px;
-            border-radius: 3px;
+        table { width: 100%; border-collapse: collapse; }
+        .main-table th { 
+            background-color: #333; 
+            color: #fff; 
+            padding: 4px; 
             font-size: 7px;
-            font-weight: bold;
+            border: 1px solid #000;
         }
-        .badge-success { background: #dcfce7; color: #15803d; }
-        .badge-danger { background: #fee2e2; color: #b91c1c; }
-        .badge-warning { background: #fef9c3; color: #a16207; }
+        .main-table td { 
+            border: 1px solid #ccc; 
+            padding: 3px; 
+            font-size: 7px;
+        }
 
-        .footer { 
-            margin-top: 30px;
-            width: 100%;
-        }
-        .signature-table { width: 100%; }
-        .signature-table td { width: 50%; vertical-align: top; }
-        .signature-space { height: 50px; }
+        .footer { margin-top: 20px; width: 100%; }
+        .signature-table { width: 100%; border: none; }
+        .signature-table td { width: 50%; border: none; }
+        .signature-space { height: 40px; }
         
-        .generated-at {
-            font-size: 7px;
-            color: #94a3b8;
-            text-align: center;
-            margin-top: 20px;
-        }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .font-bold { font-weight: bold; }

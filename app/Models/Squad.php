@@ -10,7 +10,7 @@ class Squad extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description', 'schedule_type_id'];
+    protected $fillable = ['name', 'type', 'description', 'schedule_type_id'];
 
     public function employees(): HasMany
     {
