@@ -30,7 +30,7 @@
             </div>
             <div>
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kehadiran Valid (Uang Makan)</p>
-                <h3 class="text-2xl font-bold text-slate-900">{{ number_format($employees->sum(fn($e) => $e->attendances->where('allowance_amount', '>', 0)->count())) }} Hari</h3>
+                <h3 class="text-2xl font-bold text-slate-900">{{ number_format($summary->total_valid_days ?? 0) }} Hari</h3>
             </div>
         </div>
         <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm card-3d flex items-center gap-5 border-l-4 border-l-amber-500">
@@ -39,7 +39,7 @@
             </div>
             <div>
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Keterlambatan</p>
-                <h3 class="text-2xl font-bold text-slate-900">{{ number_format($summary->total_late) }} Kali</h3>
+                <h3 class="text-2xl font-bold text-slate-900">{{ number_format($summary->total_late ?? 0) }} Kali</h3>
             </div>
         </div>
         <div class="bg-slate-900 rounded-3xl p-6 text-white shadow-xl card-3d flex items-center gap-5 relative overflow-hidden">
@@ -51,7 +51,7 @@
             </div>
             <div class="relative z-10">
                 <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Uang Makan Dibayarkan</p>
-                <h3 class="text-2xl font-bold text-white">Rp {{ number_format($employees->sum(fn($e) => $e->attendances->sum('allowance_amount')), 0, ',', '.') }}</h3>
+                <h3 class="text-2xl font-bold text-white">Rp {{ number_format($summary->total_allowance ?? 0, 0, ',', '.') }}</h3>
             </div>
         </div>
     </div>

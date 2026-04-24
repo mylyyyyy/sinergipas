@@ -118,6 +118,7 @@ class AttendanceController extends Controller
             ->get();
 
         $totalPresent = 0;
+        $totalValidDays = 0;
         $totalLate = 0;
         $totalAllowance = 0;
 
@@ -128,8 +129,9 @@ class AttendanceController extends Controller
             if ($att->status !== 'absent') {
                 $totalPresent++;
                 if ($att->late_minutes > 0) $totalLate++;
-                
+
                 if ($checkIsScheduled($emp, $att->date)) {
+                    $totalValidDays++;
                     $totalAllowance += ($emp->rank_relation->meal_allowance ?? 0);
                 }
             }
@@ -137,8 +139,21 @@ class AttendanceController extends Controller
 
         $summary = (object)[
             'total_present' => $totalPresent,
+            'total_valid_days' => $totalValidDays,
             'total_late' => $totalLate,
             'total_allowance' => $totalAllowance
+        ];
+            'total_late' => $totalLate,
+            'total_allowance' => $totalAllowance
+        ];
+            'total_late' => $totalLate,
+            'total_allowance' => $totalAllowance
+        ];
+            'total_late' => $totalLate,
+            'total_allowance' => $totalAllowance
+        ];
+            'total_allowance' => $totalAllowance,
+            'valid_presence' => $validPresence
         ];
 
         $rangeTitle = Carbon::parse($startDate)->translatedFormat('d M') . ' - ' . Carbon::parse($endDate)->translatedFormat('d M Y');
