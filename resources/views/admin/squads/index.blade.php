@@ -278,8 +278,25 @@
         });
 
         document.getElementById('membersModal').classList.remove('hidden');
+        
+        // Clear search input on open
+        const searchInput = document.getElementById('memberSearch');
+        if (searchInput) {
+            searchInput.value = '';
+            document.querySelectorAll('.available-item').forEach(item => item.style.display = '');
+        }
+
         lucide.createIcons();
     }
+
+    // Member search functionality
+    document.getElementById('memberSearch')?.addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.available-item').forEach(item => {
+            const text = item.innerText.toLowerCase();
+            item.style.display = text.includes(term) ? '' : 'none';
+        });
+    });
 </script>
 
 @if(session('success'))
