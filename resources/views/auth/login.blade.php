@@ -78,16 +78,16 @@
                     <form action="{{ route('login.post') }}" method="POST" class="space-y-5">
                         @csrf
                         
-                        <!-- Input NIP -->
+                        <!-- Input Email -->
                         <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Username / NIP</label>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Alamat Email</label>
                             <div class="relative group">
                                 <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
-                                    <i class="fas fa-user-circle"></i>
+                                    <i class="fas fa-envelope"></i>
                                 </div>
-                                <input type="text" name="nip" required
+                                <input type="email" name="email" value="{{ old('email') }}" required
                                     class="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-sm text-slate-700"
-                                    placeholder="Masukkan NIP">
+                                    placeholder="Masukkan Email">
                             </div>
                         </div>
 
