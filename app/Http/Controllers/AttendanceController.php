@@ -143,18 +143,6 @@ class AttendanceController extends Controller
             'total_late' => $totalLate,
             'total_allowance' => $totalAllowance
         ];
-            'total_late' => $totalLate,
-            'total_allowance' => $totalAllowance
-        ];
-            'total_late' => $totalLate,
-            'total_allowance' => $totalAllowance
-        ];
-            'total_late' => $totalLate,
-            'total_allowance' => $totalAllowance
-        ];
-            'total_allowance' => $totalAllowance,
-            'valid_presence' => $validPresence
-        ];
 
         $rangeTitle = Carbon::parse($startDate)->translatedFormat('d M') . ' - ' . Carbon::parse($endDate)->translatedFormat('d M Y');
 
