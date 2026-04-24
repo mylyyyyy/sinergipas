@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sinergi PAS - Login</title>
+    <title>Login | SINERGI PAS - Lapas Jombang</title>
     
     <!-- Scripts & Styles -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,152 +13,165 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
-        :root {
-            --font-custom: 'Plus Jakarta Sans', sans-serif;
-            --color-primary: #0F172A;
-            --color-accent: #B45309;
-        }
         body {
-            font-family: var(--font-custom);
-            background: #F8FAFC;
-            overflow: hidden;
-            position: relative;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
-
-        /* Animated Background Blobs */
-        .blob {
-            position: absolute;
-            width: 500px;
-            height: 500px;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
-            filter: blur(80px);
-            border-radius: 50%;
-            z-index: -1;
-            animation: move 25s infinite alternate;
+        .bg-navy {
+            background-color: #0F172A;
         }
-        .blob-1 { top: -100px; left: -100px; animation-delay: 0s; }
-        .blob-2 { bottom: -100px; right: -100px; background: linear-gradient(135deg, rgba(234, 179, 8, 0.08) 0%, rgba(202, 138, 4, 0.08) 100%); animation-delay: -5s; }
-        .blob-3 { top: 20%; right: 20%; width: 300px; height: 300px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(79, 70, 229, 0.05) 100%); animation-delay: -10s; }
-
-        @keyframes move {
-            0% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(100px, 50px) scale(1.1); }
-            66% { transform: translate(-50px, 150px) scale(0.9); }
-            100% { transform: translate(0, 0) scale(1); }
+        .text-pas-orange {
+            color: #F59E0B;
         }
-
+        .glass-overlay {
+            background: linear-gradient(to right, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.3));
+        }
         .login-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
-        .login-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.1);
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 5px;
         }
-        .animate-float {
-            animation: float 6s ease-in-out infinite;
+        ::-webkit-scrollbar-track {
+            background: #0F172A;
         }
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-        }
-        .btn-3d {
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .btn-3d:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px -6px rgba(15, 23, 42, 0.3);
+        ::-webkit-scrollbar-thumb {
+            background: #1E293B;
+            border-radius: 10px;
         }
     </style>
 </head>
-<body class="antialiased min-h-screen flex items-center justify-center p-6">
-    <!-- Background Blobs -->
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
+<body class="antialiased bg-navy selection:bg-blue-500 selection:text-white">
 
-    <div class="w-full max-w-[420px] space-y-10 relative z-10">
-        <div class="text-center space-y-6 animate-float">
-            <img src="{{ asset('logo1.png') }}" class="w-20 h-20 mx-auto drop-shadow-2xl">
-            <div class="space-y-2">
-                <h1 class="text-3xl font-black text-slate-900 tracking-tight uppercase tracking-[0.1em]">SINERGI PAS</h1>
-                <p class="text-sm font-bold text-slate-500 uppercase tracking-widest">Lapas Kelas IIB Jombang</p>
-                <div class="pt-2">
-                    <p class="text-xs font-black text-blue-600 uppercase tracking-[0.3em] inline-block px-4 py-2 bg-blue-50 rounded-full">
+    <div class="min-h-screen flex flex-col md:flex-row overflow-y-auto">
+        
+        <!-- SISI KIRI: FORM LOGIN -->
+        <div class="w-full md:w-[40%] bg-navy flex items-center justify-center p-6 lg:p-12 py-12 min-h-screen relative overflow-hidden">
+            <!-- Decorative circle backgrounds -->
+            <div class="absolute -top-24 -left-24 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl"></div>
+
+            <div class="w-full max-w-[380px] relative z-10 flex flex-col items-center">
+                <!-- Logo Instansi -->
+                <img src="{{ asset('logo1.png') }}" alt="Logo Lapas" class="w-20 h-20 mb-8 drop-shadow-2xl animate-bounce" style="animation-duration: 3s;">
+
+                <!-- Card Login -->
+                <div class="bg-white w-full rounded-[32px] p-8 lg:p-10 login-card border border-white/10">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Silakan Login</h2>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Akses Sistem Internal</p>
+                    </div>
+
+                    @if($errors->any())
+                        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-exclamation-circle text-red-500"></i>
+                                <p class="text-xs font-bold text-red-700">{{ $errors->first() }}</p>
+                            </div>
+                        </div>
+                    @endif
+
+                    <form action="{{ route('login.post') }}" method="POST" class="space-y-5">
+                        @csrf
+                        
+                        <!-- Input NIP -->
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Username / NIP</label>
+                            <div class="relative group">
+                                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <input type="text" name="nip" required
+                                    class="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-sm text-slate-700"
+                                    placeholder="Masukkan NIP">
+                            </div>
+                        </div>
+
+                        <!-- Input Password -->
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kata Sandi</label>
+                            <div class="relative group">
+                                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                                <input type="password" name="password" id="password" required
+                                    class="w-full pl-12 pr-12 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-sm text-slate-700"
+                                    placeholder="••••••••">
+                                <button type="button" onclick="togglePassword()"
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                                    <i id="eyeIcon" class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" 
+                            class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-500/30 transition-all transform hover:-translate-y-1 active:scale-95 mt-4">
+                            LOGIN KE SISTEM
+                        </button>
+                    </form>
+
+                    <!-- Footer Card -->
+                    <div class="mt-10 pt-8 border-t border-slate-100 text-center">
+                        <div class="inline-flex items-center gap-2">
+                            <span class="text-[10px] font-black text-slate-900 tracking-[0.2em] uppercase">SINERGI</span>
+                            <span class="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-black rounded-md tracking-[0.2em] uppercase">PAS</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Copyright mobile only -->
+                <p class="mt-8 text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] md:hidden text-center">
+                    &copy; 2026 Lapas Jombang
+                </p>
+            </div>
+        </div>
+
+        <!-- SISI KANAN: BRANDING -->
+        <div class="hidden md:flex md:w-[60%] bg-cover bg-center relative items-center justify-center p-20" 
+            style="background-image: url('https://images.unsplash.com/photo-1555421689-491a97ff2040?q=80&w=2070&auto=format&fit=crop');">
+            
+            <!-- Glass Overlay -->
+            <div class="absolute inset-0 glass-overlay"></div>
+
+            <div class="relative z-10 w-full">
+                <div class="space-y-2 animate-in fade-in slide-in-from-right duration-1000">
+                    <h3 class="text-xl font-bold text-white/80 uppercase tracking-[0.5em] mb-4">Official Application</h3>
+                    <h1 class="text-7xl lg:text-8xl font-black leading-none flex flex-col">
+                        <span class="text-white drop-shadow-2xl">SINERGI</span>
+                        <span class="text-pas-orange drop-shadow-2xl">PAS</span>
+                    </h1>
+                    <div class="h-1.5 w-32 bg-pas-orange rounded-full my-6"></div>
+                    <h2 class="text-3xl font-extrabold text-white tracking-tight">LAPAS KELAS IIB JOMBANG</h2>
+                    <p class="text-lg font-medium text-blue-100/90 tracking-[0.2em] mt-8 uppercase border-l-4 border-blue-500 pl-6 py-2">
                         Digitalisasi Data, Wujudkan SDM Prima
                     </p>
                 </div>
             </div>
+
+            <!-- Decorative corner bottom right -->
+            <div class="absolute bottom-12 right-12 text-white/50 text-[10px] font-bold uppercase tracking-[0.5em]">
+                Sinergi PAS v2.0
+            </div>
         </div>
-
-        <div class="login-card p-10 rounded-3xl shadow-xl shadow-slate-200/50">
-            <h2 class="text-lg font-bold text-slate-900 mb-8 text-center italic">Autentikasi Sistem</h2>
-            
-            <form action="{{ route('login.post') }}" method="POST" class="space-y-6">
-                @csrf
-                
-                @if ($errors->any())
-                    <div class="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-[11px] font-bold">
-                        {{ $errors->first() }}
-                    </div>
-                @endif
-
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email Kedinasan</label>
-                    <input type="email" name="email" required placeholder="username@pas.id" 
-                        class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white text-sm font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all">
-                </div>
-
-                <div class="space-y-2 relative">
-                    <div class="flex justify-between items-center px-1">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Kata Sandi</label>
-                        <a href="{{ route('password.request') }}" class="text-[10px] font-bold text-blue-600 hover:underline">Lupa Password?</a>
-                    </div>
-                    <div class="relative">
-                        <input type="password" name="password" id="password" required placeholder="••••••••" 
-                            class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white text-sm font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all pr-12">
-                        <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
-                            <i data-lucide="eye" id="eye-icon" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 active:scale-[0.98] btn-3d">
-                    Masuk Sekarang
-                </button>
-            </form>
-        </div>
-
-        <p class="text-center text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">
-            &copy; 2026 Sinergi PAS - Versi 2.0
-        </p>
-    </div>
-
-    <!-- Background Decoration -->
-    <div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-0">
-        <div class="absolute top-[10%] right-[10%] w-64 h-64 bg-blue-500/5 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-[10%] left-[10%] w-64 h-64 bg-amber-500/5 rounded-full blur-3xl"></div>
     </div>
 
     <script>
-        lucide.createIcons();
         function togglePassword() {
-            const input = document.getElementById('password');
-            const icon = document.getElementById('eye-icon');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.setAttribute('data-lucide', 'eye-off');
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
             } else {
-                input.type = 'password';
-                icon.setAttribute('data-lucide', 'eye');
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
             }
-            lucide.createIcons();
         }
     </script>
 </body>
