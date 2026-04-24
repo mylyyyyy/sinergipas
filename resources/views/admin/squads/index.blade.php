@@ -209,6 +209,22 @@
         Swal.fire({ title: 'Hapus Unit?', text: "Data jadwal operasional unit ini akan hilang.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444', confirmButtonText: 'Ya, Hapus!', customClass: { popup: 'rounded-[32px]' } }).then((result) => { if (result.isConfirmed) form.submit(); });
     }
 
+    function confirmRemoveMember(form, name) {
+        Swal.fire({ 
+            title: 'Keluarkan Personel?', 
+            text: `Yakin ingin mengeluarkan ${name} dari unit ini?`, 
+            icon: 'question', 
+            showCancelButton: true, 
+            confirmButtonColor: '#EF4444', 
+            cancelButtonColor: '#94A3B8',
+            confirmButtonText: 'Ya, Keluarkan!',
+            cancelButtonText: 'Batal',
+            customClass: { popup: 'rounded-[32px]' } 
+        }).then((result) => { 
+            if (result.isConfirmed) form.submit(); 
+        });
+    }
+
     function openEditModal(squad) {
         document.getElementById('squadModalTitle').innerText = 'Edit Informasi Unit';
         document.getElementById('squad_name').value = squad.name;
@@ -250,7 +266,7 @@
                     <form action="/admin/squads/${squad.id}/remove-member" method="POST" class="no-loader">
                         @csrf
                         <input type="hidden" name="employee_id" value="${emp.id}">
-                        <button type="submit" class="w-10 h-10 rounded-xl bg-white text-red-400 hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center justify-center border border-slate-100">
+                        <button type="button" onclick="confirmRemoveMember(this.form, '${emp.full_name}')" class="w-10 h-10 rounded-xl bg-white text-red-400 hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center justify-center border border-slate-100">
                             <i data-lucide="user-minus" class="w-4 h-4"></i>
                         </button>
                     </form>
