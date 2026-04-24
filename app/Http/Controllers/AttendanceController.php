@@ -92,7 +92,8 @@ class AttendanceController extends Controller
 
         $allEmployees = Employee::whereHas('user')->orderBy('full_name')->get();
 
-        $attendanceLogs = Attendance::whereHas('employee')
+        // --- SHARED BASE QUERY FOR LOGS AND SUMMARY ---
+        $baseAttendanceQuery = Attendance::whereHas('employee')
             ->with(['employee.rank_relation'])
             ->whereBetween('date', [$startDate, $endDate])
             ->when($search, function($q) use ($search) {
@@ -100,7 +101,10 @@ class AttendanceController extends Controller
                     $eq->where('full_name', 'like', "%$search%")
                        ->orWhere('nip', 'like', "%$search%");
                 });
-            })
+            });
+
+        // 1. Get Paginated Logs
+        $attendanceLogs = (clone $baseAttendanceQuery)
             ->orderBy('date', 'desc')
             ->orderBy('check_in', 'asc')
             ->paginate(50, ['*'], 'log_page')->withQueryString();
@@ -112,16 +116,8 @@ class AttendanceController extends Controller
             return $log;
         });
 
-        // Optimized Summary Calculation with Schedule Sync
-        $allAttendancesInRange = Attendance::with(['employee.rank_relation'])
-            ->whereBetween('date', [$startDate, $endDate])
-            ->when($search, function($q) use ($search) {
-                $q->whereHas('employee', function($eq) use ($search) {
-                    $eq->where('full_name', 'like', "%$search%")
-                       ->orWhere('nip', 'like', "%$search%");
-                });
-            })
-            ->get();
+        // 2. Calculate Summary from ALL filtered attendances (not paginated)
+        $allAttendancesInRange = $baseAttendanceQuery->get();
 
         $totalPresent = 0;
         $totalValidDays = 0;
