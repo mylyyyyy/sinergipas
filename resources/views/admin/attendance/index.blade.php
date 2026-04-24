@@ -137,8 +137,8 @@
                     <tbody class="divide-y divide-slate-50">
                         @forelse($employees as $emp)
                         @php
-                            $totalUangMakan = $emp->attendances->sum('allowance_amount');
-                            $validDays = $emp->attendances->where('allowance_amount', '>', 0)->count();
+                            $totalUangMakan = $emp->corrected_total_allowance ?? 0;
+                            $validDays = $emp->valid_attendance_count ?? 0;
                         @endphp
                         <tr class="hover:bg-slate-50/50 transition-colors group">
                             <td class="px-6 py-4">
