@@ -63,6 +63,7 @@
             <div>
                 <h1 class="text-2xl font-[800] text-slate-900 tracking-tight uppercase tracking-widest">SINERGI PAS</h1>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Lapas Kelas IIB Jombang</p>
+                <p class="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mt-3">Digitalisasi Data, Wujudkan SDM Prima</p>
             </div>
         </div>
 
