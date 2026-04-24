@@ -117,14 +117,22 @@ class AttendanceController extends Controller
         });
 
         // 2. Calculate Summary from ALL filtered attendances (not paginated)
-        $allAttendancesInRange = $baseAttendanceQuery->get();
+        $summaryAttendances = Attendance::whereHas('employee', function($q) use ($search) {
+                if ($search) {
+                    $q->where('full_name', 'like', "%$search%")
+                      ->orWhere('nip', 'like', "%$search%");
+                }
+            })
+            ->with(['employee.rank_relation'])
+            ->whereBetween('date', [$startDate, $endDate])
+            ->get();
 
         $totalPresent = 0;
         $totalValidDays = 0;
         $totalLate = 0;
         $totalAllowance = 0;
 
-        foreach ($allAttendancesInRange as $att) {
+        foreach ($summaryAttendances as $att) {
             $emp = $att->employee;
             if (!$emp) continue;
 
