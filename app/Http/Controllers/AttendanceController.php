@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\Attendance;
 use App\Models\Shift;
 use App\Models\Schedule;
+use App\Models\SquadSchedule;
 use App\Models\Setting;
 use App\Models\AuditLog;
 use App\Models\WorkUnit;
@@ -177,15 +178,28 @@ class AttendanceController extends Controller
             $employees = $query->with('rank_relation')->get();
             $attendances = Attendance::whereDate('date', $exactDate)->get()->keyBy('employee_id');
 
-            $data = $employees->map(function($emp) use ($attendances) {
+            // Fetch active schedules for the day
+            $squadSchedules = SquadSchedule::whereDate('date', $exactDate)->pluck('squad_id')->toArray();
+            $individualSchedules = Schedule::whereDate('date', $exactDate)->pluck('employee_id')->toArray();
+
+            $data = $employees->map(function($emp) use ($attendances, $squadSchedules, $individualSchedules) {
                 $att = $attendances->get($emp->id);
+                
+                // Determine if scheduled
+                $isScheduled = false;
+                if ($emp->squad_id && in_array($emp->squad_id, $squadSchedules)) {
+                    $isScheduled = true;
+                } elseif (in_array($emp->id, $individualSchedules)) {
+                    $isScheduled = true;
+                }
+
                 return (object)[
                     'employee' => $emp,
                     'check_in' => $att ? $att->check_in : null,
                     'check_out' => $att ? $att->check_out : null,
                     'status' => $att ? $att->status : 'absent',
                     'late_minutes' => $att ? $att->late_minutes : 0,
-                    'allowance_amount' => $att ? ($emp->rank_relation->meal_allowance ?? 0) : 0,
+                    'allowance_amount' => ($isScheduled && $att && $att->status !== 'absent') ? ($emp->rank_relation->meal_allowance ?? 0) : 0,
                 ];
             });
 
@@ -203,16 +217,42 @@ class AttendanceController extends Controller
             $employees = $query->with('rank_relation')->get();
             $attendances = Attendance::whereBetween('date', [$startDate, $endDate])->get()->groupBy('employee_id');
 
-            $data = $employees->map(function($emp) use ($attendances, $totalDays) {
+            // Pre-fetch all schedules in the range
+            $squadSchedules = SquadSchedule::whereBetween('date', [$startDate, $endDate])
+                ->get()
+                ->groupBy('squad_id')
+                ->map(fn($group) => $group->pluck('date')->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))->toArray());
+
+            $individualSchedules = Schedule::whereBetween('date', [$startDate, $endDate])
+                ->get()
+                ->groupBy('employee_id')
+                ->map(fn($group) => $group->pluck('date')->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))->toArray());
+
+            $data = $employees->map(function($emp) use ($attendances, $totalDays, $squadSchedules, $individualSchedules) {
                 $atts = $attendances->get($emp->id) ?? collect();
-                $present = $atts->whereNotIn('status', ['absent'])->count();
+                
+                // Presence count regardless of schedule
+                $presentCount = $atts->whereNotIn('status', ['absent'])->count();
+
+                // Eligible presence count (scheduled only)
+                $scheduledDates = [];
+                if ($emp->squad_id && isset($squadSchedules[$emp->squad_id])) {
+                    $scheduledDates = $squadSchedules[$emp->squad_id];
+                } elseif (isset($individualSchedules[$emp->id])) {
+                    $scheduledDates = $individualSchedules[$emp->id];
+                }
+
+                $eligiblePresence = $atts->filter(function($att) use ($scheduledDates) {
+                    return $att->status !== 'absent' && in_array(Carbon::parse($att->date)->format('Y-m-d'), $scheduledDates);
+                })->count();
+
                 return (object)[
                     'full_name' => strtoupper($emp->full_name),
                     'nip' => $emp->nip,
-                    'present_count' => $present,
+                    'present_count' => $presentCount,
                     'late_count' => $atts->where('status', 'late')->count(),
-                    'absent_count' => max(0, $totalDays - $present),
-                    'total_allowance' => $present * ($emp->rank_relation->meal_allowance ?? 0),
+                    'absent_count' => max(0, $totalDays - $presentCount),
+                    'total_allowance' => $eligiblePresence * ($emp->rank_relation->meal_allowance ?? 0),
                 ];
             });
             
@@ -226,9 +266,29 @@ class AttendanceController extends Controller
         } elseif ($filter === 'individual') {
             $emp = $query->with('rank_relation')->first();
             if (!$emp) return back()->with('error', 'Pegawai tidak ditemukan.');
+            
             $logs = Attendance::where('employee_id', $emp->id)->whereBetween('date', [$startDate, $endDate])->orderBy('date', 'asc')->get();
             $rate = $emp->rank_relation->meal_allowance ?? 0;
-            foreach($logs as $l) $l->allowance_amount = $l->status !== 'absent' ? $rate : 0;
+
+            // Fetch scheduled dates for this specific employee
+            if ($emp->squad_id) {
+                $scheduledDates = SquadSchedule::where('squad_id', $emp->squad_id)
+                    ->whereBetween('date', [$startDate, $endDate])
+                    ->pluck('date')
+                    ->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))
+                    ->toArray();
+            } else {
+                $scheduledDates = Schedule::where('employee_id', $emp->id)
+                    ->whereBetween('date', [$startDate, $endDate])
+                    ->pluck('date')
+                    ->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))
+                    ->toArray();
+            }
+
+            foreach($logs as $l) {
+                $isScheduled = in_array(Carbon::parse($l->date)->format('Y-m-d'), $scheduledDates);
+                $l->allowance_amount = ($isScheduled && $l->status !== 'absent') ? $rate : 0;
+            }
 
             $reportTitle = "LAPORAN INDIVIDU - " . strtoupper($emp->full_name);
             if ($type === 'excel') return $this->exportExcelIndividual($emp, $logs, $reportTitle, "laporan-individu-{$emp->nip}.xlsx");
