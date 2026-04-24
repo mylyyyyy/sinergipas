@@ -63,15 +63,64 @@ class AttendanceController extends Controller
             ->orderBy('check_in', 'asc')
             ->paginate(50, ['*'], 'log_page')->withQueryString();
 
-        $summary = DB::table('attendances')
-            ->join('employees', 'attendances.employee_id', '=', 'employees.id')
-            ->leftJoin('ranks', 'employees.rank_id', '=', 'ranks.id')
-            ->whereBetween('attendances.date', [$startDate, $endDate])
-            ->selectRaw('
-                COUNT(CASE WHEN attendances.status != "absent" THEN 1 END) as total_present,
-                COUNT(CASE WHEN attendances.late_minutes > 0 THEN 1 END) as total_late,
-                SUM(COALESCE(ranks.meal_allowance, attendances.allowance_amount, 0)) as total_allowance
-            ')->first();
+        // Optimized Summary Calculation with Schedule Sync
+        $allAttendancesInRange = Attendance::with(['employee.rank_relation'])
+            ->whereBetween('date', [$startDate, $endDate])
+            ->get();
+
+        $squadSchedules = SquadSchedule::whereBetween('date', [$startDate, $endDate])
+            ->get()->groupBy('squad_id')
+            ->map(fn($g) => $g->pluck('date')->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))->toArray());
+
+        $individualSchedules = Schedule::whereBetween('date', [$startDate, $endDate])
+            ->get()->groupBy('employee_id')
+            ->map(fn($g) => $g->keyBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
+
+        $totalPresent = 0;
+        $totalLate = 0;
+        $totalAllowance = 0;
+
+        foreach ($allAttendancesInRange as $att) {
+            $emp = $att->employee;
+            if (!$emp) continue;
+
+            $dateStr = Carbon::parse($att->date)->format('Y-m-d');
+            $isScheduled = false;
+
+            // 1. Hierarchy: Individual Overrides
+            if (isset($individualSchedules[$emp->id][$dateStr])) {
+                $status = $individualSchedules[$emp->id][$dateStr]->status;
+                if (!in_array($status, ['off', 'leave', 'sick'])) {
+                    $isScheduled = true;
+                }
+            } 
+            // 2. Hierarchy: Squad Schedule
+            elseif ($emp->squad_id && isset($squadSchedules[$emp->squad_id]) && in_array($dateStr, $squadSchedules[$emp->squad_id])) {
+                $isScheduled = true;
+            } 
+            // 3. Hierarchy: Default Office Staff (Mon-Fri)
+            elseif (!$emp->squad_id) {
+                $dayNum = Carbon::parse($att->date)->dayOfWeek;
+                if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) {
+                    $isScheduled = true;
+                }
+            }
+
+            if ($att->status !== 'absent') {
+                $totalPresent++;
+                if ($att->late_minutes > 0) $totalLate++;
+                
+                if ($isScheduled) {
+                    $totalAllowance += ($emp->rank_relation->meal_allowance ?? 0);
+                }
+            }
+        }
+
+        $summary = (object)[
+            'total_present' => $totalPresent,
+            'total_late' => $totalLate,
+            'total_allowance' => $totalAllowance
+        ];
 
         $rangeTitle = Carbon::parse($startDate)->translatedFormat('d M') . ' - ' . Carbon::parse($endDate)->translatedFormat('d M Y');
 
@@ -172,26 +221,48 @@ class AttendanceController extends Controller
         if ($request->filled('work_unit_id')) $query->where('work_unit_id', $request->work_unit_id);
         $workUnit = $request->filled('work_unit_id') ? WorkUnit::find($request->work_unit_id) : null;
 
+        // --- UNIFIED SCHEDULE DATA FETCHING ---
+        $squadSchedules = SquadSchedule::whereBetween('date', [$startDate, $endDate])
+            ->get()->groupBy('squad_id')
+            ->map(fn($g) => $g->pluck('date')->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))->toArray());
+
+        $individualSchedules = Schedule::whereBetween('date', [$startDate, $endDate])
+            ->get()->groupBy('employee_id')
+            ->map(fn($g) => $g->keyBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
+
+        // Helper logic to determine if an employee is scheduled on a specific date
+        $checkIsScheduled = function($emp, $date) use ($squadSchedules, $individualSchedules) {
+            $dateStr = Carbon::parse($date)->format('Y-m-d');
+            
+            // 1. Individual Override (Highest Priority)
+            if (isset($individualSchedules[$emp->id][$dateStr])) {
+                return !in_array($individualSchedules[$emp->id][$dateStr]->status, ['off', 'leave', 'sick']);
+            }
+            
+            // 2. Squad Schedule
+            if ($emp->squad_id && isset($squadSchedules[$emp->squad_id])) {
+                return in_array($dateStr, $squadSchedules[$emp->squad_id]);
+            }
+            
+            // 3. Default Office (Staff only, Mon-Fri)
+            if (!$emp->squad_id) {
+                $dayNum = Carbon::parse($date)->dayOfWeek;
+                return ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY);
+            }
+            
+            return false;
+        };
+        // --------------------------------------
+
         if ($filter === 'daily') {
             $exactDate = $request->filled('exact_date') ? Carbon::parse($request->exact_date) : now();
             $dateStr = $exactDate->format('Y-m-d');
             $employees = $query->with('rank_relation')->get();
             $attendances = Attendance::whereDate('date', $exactDate)->get()->keyBy('employee_id');
 
-            // Fetch active schedules for the day
-            $squadSchedules = SquadSchedule::whereDate('date', $exactDate)->pluck('squad_id')->toArray();
-            $individualSchedules = Schedule::whereDate('date', $exactDate)->pluck('employee_id')->toArray();
-
-            $data = $employees->map(function($emp) use ($attendances, $squadSchedules, $individualSchedules) {
+            $data = $employees->map(function($emp) use ($attendances, $dateStr, $checkIsScheduled) {
                 $att = $attendances->get($emp->id);
-                
-                // Determine if scheduled
-                $isScheduled = false;
-                if ($emp->squad_id && in_array($emp->squad_id, $squadSchedules)) {
-                    $isScheduled = true;
-                } elseif (in_array($emp->id, $individualSchedules)) {
-                    $isScheduled = true;
-                }
+                $isScheduled = $checkIsScheduled($emp, $dateStr);
 
                 return (object)[
                     'employee' => $emp,
@@ -217,33 +288,13 @@ class AttendanceController extends Controller
             $employees = $query->with('rank_relation')->get();
             $attendances = Attendance::whereBetween('date', [$startDate, $endDate])->get()->groupBy('employee_id');
 
-            // Pre-fetch all schedules in the range
-            $squadSchedules = SquadSchedule::whereBetween('date', [$startDate, $endDate])
-                ->get()
-                ->groupBy('squad_id')
-                ->map(fn($group) => $group->pluck('date')->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))->toArray());
-
-            $individualSchedules = Schedule::whereBetween('date', [$startDate, $endDate])
-                ->get()
-                ->groupBy('employee_id')
-                ->map(fn($group) => $group->pluck('date')->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))->toArray());
-
-            $data = $employees->map(function($emp) use ($attendances, $totalDays, $squadSchedules, $individualSchedules) {
+            $data = $employees->map(function($emp) use ($attendances, $totalDays, $checkIsScheduled) {
                 $atts = $attendances->get($emp->id) ?? collect();
-                
-                // Presence count regardless of schedule
                 $presentCount = $atts->whereNotIn('status', ['absent'])->count();
 
-                // Eligible presence count (scheduled only)
-                $scheduledDates = [];
-                if ($emp->squad_id && isset($squadSchedules[$emp->squad_id])) {
-                    $scheduledDates = $squadSchedules[$emp->squad_id];
-                } elseif (isset($individualSchedules[$emp->id])) {
-                    $scheduledDates = $individualSchedules[$emp->id];
-                }
-
-                $eligiblePresence = $atts->filter(function($att) use ($scheduledDates) {
-                    return $att->status !== 'absent' && in_array(Carbon::parse($att->date)->format('Y-m-d'), $scheduledDates);
+                // Calculate allowance only for days where they were both present AND scheduled
+                $eligiblePresence = $atts->filter(function($att) use ($emp, $checkIsScheduled) {
+                    return $att->status !== 'absent' && $checkIsScheduled($emp, $att->date);
                 })->count();
 
                 return (object)[
@@ -270,23 +321,8 @@ class AttendanceController extends Controller
             $logs = Attendance::where('employee_id', $emp->id)->whereBetween('date', [$startDate, $endDate])->orderBy('date', 'asc')->get();
             $rate = $emp->rank_relation->meal_allowance ?? 0;
 
-            // Fetch scheduled dates for this specific employee
-            if ($emp->squad_id) {
-                $scheduledDates = SquadSchedule::where('squad_id', $emp->squad_id)
-                    ->whereBetween('date', [$startDate, $endDate])
-                    ->pluck('date')
-                    ->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))
-                    ->toArray();
-            } else {
-                $scheduledDates = Schedule::where('employee_id', $emp->id)
-                    ->whereBetween('date', [$startDate, $endDate])
-                    ->pluck('date')
-                    ->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))
-                    ->toArray();
-            }
-
             foreach($logs as $l) {
-                $isScheduled = in_array(Carbon::parse($l->date)->format('Y-m-d'), $scheduledDates);
+                $isScheduled = $checkIsScheduled($emp, $l->date);
                 $l->allowance_amount = ($isScheduled && $l->status !== 'absent') ? $rate : 0;
             }
 
