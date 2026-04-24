@@ -152,7 +152,6 @@ class AttendanceController extends Controller
 
         return view('admin.attendance.index', compact('employees', 'allEmployees', 'attendanceLogs', 'summary', 'startDate', 'endDate', 'rangeTitle', 'monthStr'));
     }
-    }
 
     public function import(Request $request)
     {
