@@ -18,6 +18,12 @@ class Attendance extends Model
         'status'
     ];
 
+    protected $casts = [
+        'date' => 'date',
+        'check_in' => 'datetime',
+        'check_out' => 'datetime',
+    ];
+
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);

@@ -233,8 +233,18 @@
                 </a>
 
                 <a href="{{ route('admin.schedules.index') }}" class="sidebar-item {{ request()->routeIs('admin.schedules.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
-                    <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                    <i data-lucide="calendar" class="w-5 h-5"></i>
                     <span class="text-sm font-semibold">Jadwal Shift</span>
+                </a>
+
+                <a href="{{ route('admin.tunkins.index') }}" class="sidebar-item {{ request()->routeIs('admin.tunkins.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
+                    <i data-lucide="coins" class="w-5 h-5"></i>
+                    <span class="text-sm font-semibold">Besaran Tunkin</span>
+                </a>
+
+                <a href="{{ route('admin.payroll-settings.index') }}" class="sidebar-item {{ request()->routeIs('admin.payroll-settings.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
+                    <i data-lucide="settings-2" class="w-5 h-5"></i>
+                    <span class="text-sm font-semibold">Master Aturan</span>
                 </a>
 
                 <a href="{{ route('admin.squads.index') }}" class="sidebar-item {{ request()->routeIs('admin.squads.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">

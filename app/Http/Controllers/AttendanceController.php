@@ -98,9 +98,14 @@ class AttendanceController extends Controller
             foreach ($emp->attendances as $att) {
                 if ($att->status !== 'absent') {
                     $totalPresent++;
-                    if ($att->late_minutes > 0) $totalLate++;
+                    
+                    $isScheduled = $checkIsScheduled($emp, $att->date);
 
-                    if ($checkIsScheduled($emp, $att->date)) {
+                    if ($isScheduled) {
+                        // Hitung telat jika statusnya 'late' ATAU menit telat > 0
+                        if ($att->status === 'late' || $att->late_minutes > 0) {
+                            $totalLate++;
+                        }
                         $empValidDays++;
                         $empTotalAllowance += $empRate;
                     }

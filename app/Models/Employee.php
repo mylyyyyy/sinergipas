@@ -22,6 +22,7 @@ class Employee extends Model
         'rank',
         'rank_id',
         'rank_class',
+        'tunkin_id',
         'employee_type',
         'picket_regu',
         'photo',
@@ -40,6 +41,11 @@ class Employee extends Model
     public function rank_relation(): BelongsTo
     {
         return $this->belongsTo(Rank::class, 'rank_id');
+    }
+
+    public function tunkin(): BelongsTo
+    {
+        return $this->belongsTo(Tunkin::class);
     }
 
     public function squad(): BelongsTo

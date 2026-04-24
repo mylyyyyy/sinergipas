@@ -212,6 +212,10 @@
     </div>
 </div>
 
+<form id="bulkDeleteForm" action="{{ route('admin.squads.bulk-destroy') }}" method="POST" class="hidden no-loader">
+    @csrf @method('DELETE')
+</form>
+
 <script>
     function updateSelection() {
         const checked = document.querySelectorAll('.squad-checkbox:checked').length;
@@ -225,6 +229,38 @@
     });
 
     document.querySelectorAll('.squad-checkbox').forEach(cb => cb.addEventListener('change', updateSelection));
+
+    function confirmBulkDelete() {
+        const checked = document.querySelectorAll('.squad-checkbox:checked');
+        if (checked.length === 0) return;
+
+        Swal.fire({
+            title: 'Hapus Unit Terpilih?',
+            text: `${checked.length} unit dan seluruh data jadwal operasionalnya akan dimusnahkan.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#EF4444',
+            confirmButtonText: 'Ya, Hapus Semua!',
+            customClass: { popup: 'rounded-[32px]' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.getElementById('bulkDeleteForm');
+                // Clear existing hidden inputs
+                form.querySelectorAll('input[name="ids[]"]').forEach(i => i.remove());
+                
+                // Add new hidden inputs for each selected ID
+                checked.forEach(cb => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'ids[]';
+                    input.value = cb.value;
+                    form.appendChild(input);
+                });
+                
+                form.submit();
+            }
+        });
+    }
 
     function confirmDelete(form) {
         Swal.fire({ title: 'Hapus Unit?', text: "Data jadwal operasional unit ini akan hilang.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444', confirmButtonText: 'Ya, Hapus!', customClass: { popup: 'rounded-[32px]' } }).then((result) => { if (result.isConfirmed) form.submit(); });

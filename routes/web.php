@@ -12,6 +12,8 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\Admin\SquadController;
+use App\Http\Controllers\Admin\PayrollSettingController;
+use App\Http\Controllers\TunkinController;
 use Illuminate\Support\Facades\Route;
 
 // Guest Routes
@@ -146,5 +148,17 @@ Route::middleware('auth')->group(function () {
             Route::delete('/clear', [ScheduleController::class, 'clear'])->name('clear');
             Route::get('/export', [ScheduleController::class, 'exportPdf'])->name('export');
         });
+
+        Route::prefix('admin/tunkins')->name('admin.tunkins.')->group(function () {
+            Route::get('/', [TunkinController::class, 'index'])->name('index');
+            Route::get('/export/excel', [TunkinController::class, 'exportRecapExcel'])->name('export.excel');
+            Route::get('/export/pdf', [TunkinController::class, 'exportRecapPdf'])->name('export.pdf');
+            Route::get('/employee/{employee}', [TunkinController::class, 'showEmployee'])->name('employee');
+            Route::get('/employee/{employee}/export', [TunkinController::class, 'exportIndividualPdf'])->name('employee.export');
+            Route::put('/{tunkin}', [TunkinController::class, 'update'])->name('update');
+        });
+
+        Route::get('/admin/payroll-settings', [PayrollSettingController::class, 'index'])->name('admin.payroll-settings.index');
+        Route::post('/admin/payroll-settings', [PayrollSettingController::class, 'update'])->name('admin.payroll-settings.update');
     });
 });

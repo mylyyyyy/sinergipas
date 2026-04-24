@@ -195,6 +195,11 @@
                                 <div class="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-100 text-amber-700 text-[9px] font-black shadow-xs">
                                     GOL. {{ $employee->rank_relation->name ?? $employee->rank_class ?? '-' }}
                                 </div>
+                                @if($employee->tunkin)
+                                <div class="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-100 text-blue-700 text-[9px] font-black shadow-xs">
+                                    GRADE {{ $employee->tunkin->grade }}
+                                </div>
+                                @endif
                             </div>
                         </td>
                         <td class="px-6 py-4 text-center">
@@ -302,6 +307,26 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pangkat/Golongan</label>
+                        <select name="rank_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                            <option value="">-- Tanpa Golongan --</option>
+                            @foreach($ranks as $rank)
+                                <option value="{{ $rank->id }}">{{ $rank->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Kelas Jabatan (Tunkin)</label>
+                        <select name="tunkin_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                            <option value="">-- Pilih Kelas --</option>
+                            @foreach($tunkins as $tk)
+                                <option value="{{ $tk->id }}">Kelas {{ $tk->grade }} (Rp {{ number_format($tk->nominal, 0, ',', '.') }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-1.5">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Jabatan</label>
                         <select name="position_id" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none appearance-none cursor-pointer">
                             @foreach($positions as $pos)
@@ -381,6 +406,15 @@
                             <option value="">-- Tanpa Golongan --</option>
                             @foreach($ranks as $rank)
                                 <option value="{{ $rank->id }}">{{ $rank->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Kelas Jabatan (Tunkin)</label>
+                        <select name="tunkin_id" id="edit_tunkin_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                            <option value="">-- Pilih Kelas --</option>
+                            @foreach($tunkins as $tk)
+                                <option value="{{ $tk->id }}">Kelas {{ $tk->grade }} (Rp {{ number_format($tk->nominal, 0, ',', '.') }})</option>
                             @endforeach
                         </select>
                     </div>
@@ -629,6 +663,7 @@
         document.getElementById('edit_phone_number').value = employee.phone_number || '';
         document.getElementById('edit_email').value = email;
         document.getElementById('edit_rank_id').value = employee.rank_id || '';
+        document.getElementById('edit_tunkin_id').value = employee.tunkin_id || '';
         document.getElementById('edit_employee_type').value = employee.employee_type || 'non_regu_jaga';
         document.getElementById('edit_picket_regu').value = employee.picket_regu || '';
         document.getElementById('edit_role_in_squad').value = employee.role_in_squad || '';

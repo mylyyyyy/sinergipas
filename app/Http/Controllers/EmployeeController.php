@@ -9,6 +9,7 @@ use App\Models\Position;
 use App\Models\WorkUnit;
 use App\Models\AuditLog;
 use App\Models\Rank;
+use App\Models\Tunkin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -44,8 +45,9 @@ class EmployeeController extends Controller
         $workUnits = WorkUnit::orderBy('name')->get();
         $ranks = Rank::orderBy('name')->get();
         $categories = \App\Models\Category::orderBy('name')->get();
+        $tunkins = Tunkin::orderBy('grade', 'desc')->get();
 
-        return view('employees.index', compact('employees', 'positions', 'workUnits', 'ranks', 'categories'));
+        return view('employees.index', compact('employees', 'positions', 'workUnits', 'ranks', 'categories', 'tunkins'));
     }
 
     public function show(Employee $employee)
@@ -65,6 +67,7 @@ class EmployeeController extends Controller
             'position_id' => 'required|exists:positions,id',
             'work_unit_id' => 'required|exists:work_units,id',
             'rank_id' => 'nullable|exists:ranks,id',
+            'tunkin_id' => 'nullable|exists:tunkins,id',
             'category_id' => 'nullable|exists:categories,id',
             'password' => 'required|min:8',
             'picket_regu' => 'nullable|string',
@@ -94,6 +97,7 @@ class EmployeeController extends Controller
             'position_id' => $request->position_id,
             'work_unit_id' => $request->work_unit_id,
             'rank_id' => $request->rank_id,
+            'tunkin_id' => $request->tunkin_id,
             'rank_class' => $rank?->name,
             'category_id' => $request->category_id,
             'employee_type' => $employeeType,
@@ -123,6 +127,7 @@ class EmployeeController extends Controller
             'position_id' => 'required|exists:positions,id',
             'work_unit_id' => 'required|exists:work_units,id',
             'rank_id' => 'nullable|exists:ranks,id',
+            'tunkin_id' => 'nullable|exists:tunkins,id',
             'category_id' => 'nullable|exists:categories,id',
             'password' => 'nullable|min:8',
             'picket_regu' => 'nullable|string',
@@ -155,6 +160,7 @@ class EmployeeController extends Controller
             'position_id' => $request->position_id,
             'work_unit_id' => $request->work_unit_id,
             'rank_id' => $request->rank_id,
+            'tunkin_id' => $request->tunkin_id,
             'rank_class' => $rank?->name,
             'category_id' => $request->category_id,
             'employee_type' => $employeeType,
