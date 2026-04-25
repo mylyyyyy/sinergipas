@@ -1,72 +1,90 @@
 <div align="center">
   <img src="public/logo1.png" alt="Sinergi PAS Logo" width="120">
   
-  # 🚀 Sinergi PAS v2.0
-  ### Sistem Informasi Manajemen Kepegawaian & Payroll Terpadu
+  # 🚀 Sinergi PAS
+  ### **Sistem Informasi Manajemen Kepegawaian & Payroll Terpadu**
   **Lembaga Pemasyarakatan Kelas IIB Jombang**
 
   [![Laravel](https://img.shields.io/badge/Framework-Laravel%2011-FF2D20?style=for-the-badge&logo=laravel)](https://laravel.com)
   [![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php)](https://php.net)
+  [![Database](https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql)](https://mysql.com)
   [![WIB](https://img.shields.io/badge/Timezone-Asia%2FJakarta-00AA13?style=for-the-badge)](https://time.is)
-  [![TailwindCSS](https://img.shields.io/badge/UI-Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com)
 </div>
 
 ---
 
-## 📝 Tentang Proyek
-**Sinergi PAS** adalah ekosistem digital internal Lapas Jombang yang menyinkronkan seluruh data kepegawaian (Profil, Jadwal, Absensi) menjadi sistem **Payroll Otomatis**. Proyek ini memastikan perhitungan Tunjangan Kinerja dan Uang Makan dilakukan secara transparan, akurat, dan sesuai dengan regulasi kementerian terbaru.
+## 📝 Deskripsi Proyek
+**Sinergi PAS** adalah platform ERP (*Enterprise Resource Planning*) internal yang dirancang khusus untuk mentransformasi tata kelola administrasi di **Lembaga Pemasyarakatan Kelas IIB Jombang**. 
+
+Sistem ini mengintegrasikan empat pilar utama birokrasi digital: **Manajemen Personel, Penjadwalan Operasional, Arsip Digital, dan Digital Payroll**. Dengan sistem ini, seluruh proses yang sebelumnya manual (Excel-based) kini berjalan secara otomatis, transparan, dan real-time.
 
 ---
 
-## ✨ Fitur Unggulan Terbaru
+## 🛠️ Modul & Fitur Utama (End-to-End)
 
-### 🛡️ 1. Smart Payroll Engine (Permenkumham 10/2021)
-Sistem perhitungan akumulatif harian yang sangat presisi:
-- 📈 **Status Khusus:** Kalkulasi otomatis untuk **CPNS (80%)**, **Tugas Belajar (Potong 100%)**, dan insentif **Plt/Plh (+20%)**.
-- ⏱️ **Kompensasi Waktu:** Deteksi otomatis "Tebus Telat" sesuai aturan (Telat < 30m bisa diganti dengan pulang lebih lambat 30m).
-- 📉 **Potongan Akumulatif:** Perhitungan TL 1-4, PSW, Mangkir harian, dan Sakit Progresif yang langsung memotong Pagu Bulanan.
-- 🍱 **Uang Makan (PMK):** Sinkronisasi otomatis tarif per golongan berdasarkan kehadiran riil di hari kerja valid.
+### 👥 1. Manajemen Kepegawaian (Personnel)
+Pusat database seluruh personel Lapas Jombang:
+- **Profil Digital:** Database lengkap 109+ pegawai mencakup NIP, NIK, Pangkat/Golongan, Jabatan, dan Unit Kerja.
+- **Riwayat Perubahan:** Audit log otomatis untuk setiap perubahan data profil (melacak nilai lama vs nilai baru).
+- **Integrasi WhatsApp:** Tombol komunikasi instan untuk koordinasi cepat antar admin dan pegawai.
 
-### ⚙️ 2. Master Aturan Dinamis (Control Center)
-Admin memiliki kendali penuh melalui satu pintu:
-- 🔧 **Custom Percentages:** Ubah persentase potongan TL/PSW/Mangkir tanpa menyentuh kode.
-- ⏰ **Flexible Work Hours:** Atur jam masuk/pulang kantor secara global (mendukung jam khusus hari Jumat).
-- 📅 **Quota Management:** Pengaturan kuota maksimal telat bulanan (Default: 8x).
+### 📅 2. Penjadwalan & Absensi (Smart Scheduling)
+Sistem penjadwalan hirarkis yang mengatur operasional harian:
+- **Manajemen Regu:** Pengaturan jadwal kolektif untuk Regu Pengamanan (RUPAM) dan Unit P2U (Pagi, Siang, Malam, Libur).
+- **Piket Individual:** Fleksibilitas untuk mengatur penugasan khusus, dinas luar, atau izin personel secara mandiri.
+- **Import Fingerprint:** Pengolahan data mentah mesin absensi menjadi informasi kedisiplinan (Menit telat, Pulang cepat).
+- **Hirarki Prioritas:** Sistem cerdas yang memprioritaskan jadwal individu di atas jadwal regu untuk mencegah bentrok.
 
-### 👤 3. Employee Self-Service (Portal Mandiri)
-Memberikan transparansi penuh kepada seluruh 109 pegawai:
-- 💰 **Tunkin Saya:** Rincian estimasi gaji bulan berjalan, lengkap dengan daftar pelanggaran harian.
-- 📱 **Monitor Absensi:** Pantau log scan fingerprint harian (Valid vs Luar Jadwal).
-- 📂 **Digital Slip Gaji:** Unduh Slip Gaji resmi PDF yang diunggah Bendahara langsung dari dashboard.
+### 📂 3. Arsip Digital (Document Archive)
+Ruang penyimpanan dokumen kedinasan yang teratur:
+- **Kategori Terstruktur:** Pengelompokan berkas (SK, SKP, Ijazah, Sertifikat) dengan kategori wajib (*mandatory*).
+- **Alur Verifikasi:** Sistem persetujuan berjenjang (Pending, Verified, Rejected, Revision Required).
+- **Compliance Tracker:** Dashboard monitoring untuk melihat pegawai mana yang belum melengkapi dokumen wajib.
 
-### 📊 4. Admin & Analytics Dashboard
-- 📈 **Real-time Monitoring:** Pantau kepatuhan dokumen dan statistik keterlambatan secara instan.
-- 📑 **Official Reporting:** Export Rekapitulasi bulanan ke Excel atau PDF dengan Kop Surat Resmi Lapas Jombang.
-- ⚡ **High-Performance Export:** Dioptimalkan untuk memproses ratusan data pegawai dalam hitungan detik (N+1 Query Optimized).
+### 💰 4. Digital Payroll Engine (Tunkin & Uang Makan)
+Inti dari sistem finansial yang patuh pada **Permenkumham No. 10 Tahun 2021**:
+- **Kalkulasi Otomatis:** Perhitungan Tunjangan Kinerja (Tukin) berdasarkan 17 Kelas Jabatan (Grade).
+- **Potongan Akumulatif Harian:** Deteksi otomatis TL 1-4, PSW, dan Mangkir yang diakumulasikan per hari.
+- **Kompensasi Waktu:** Fitur "Tebus Telat" otomatis (Telat < 30m diganti dengan pulang +30m) sesuai aturan kementerian.
+- **Status Khusus:** Dukungan kalkulasi untuk **CPNS (80%)**, **Tugas Belajar (Potong 100%)**, dan **Plt/Plh (+20% bonus)**.
+- **Uang Makan (PMK):** Pembayaran otomatis berdasarkan kehadiran riil di hari kerja valid sesuai tarif golongan.
+
+### 👤 5. Employee Self-Service (Portal Pegawai)
+Memberikan transparansi penuh bagi setiap pegawai:
+- **Dashboard Mandiri:** Monitor progres berkas pribadi dan status presensi harian.
+- **Tunkin Saya:** Transparansi rincian gaji, total uang makan, dan detail rincian pelanggaran (TL/Mangkir) per tanggal.
+- **Download Slip Resmi:** Unduh slip gaji resmi PDF yang telah divalidasi bendahara di Arsip Digital.
 
 ---
 
-## 📜 Alur Kerja Terintegrasi
+## ⚙️ Pusat Kendali Admin (Master Settings)
+Administrator memiliki kontrol penuh untuk menyesuaikan sistem tanpa menyentuh kode:
+- **Master Aturan Payroll:** Mengubah persentase potongan denda dan batas maksimal keterlambatan secara dinamis.
+- **Konfigurasi Jam Kerja:** Pengaturan jam masuk/pulang kantor (mendukung jam khusus hari Jumat).
+- **Manajemen Unit & Jabatan:** Pengaturan struktur organisasi yang fleksibel.
+
+---
+
+## 📈 Alur Integrasi Data
 ```mermaid
-graph LR
-    A[Master Aturan] --> B(Logic Engine)
-    C[Jadwal Regu/Piket] --> B
-    D[Absen Fingerprint] --> B
-    E[Status Khusus: CPNS/Plt] --> B
-    B --> F{Output}
-    F --> G[Slip Gaji Pegawai]
-    F --> H[Rekap Keuangan Admin]
-    F --> I[Dashboard Analytics]
+graph TD
+    A[Master Aturan & Jam Kerja] --> E[Logic Payroll Engine]
+    B[Profil Pegawai & Grade] --> E
+    C[Jadwal Regu/Piket] --> E
+    D[Data Absen Fingerprint] --> E
+    E --> F[Dashboard Admin]
+    E --> G[Portal Mandiri Pegawai]
+    E --> H[Laporan Excel & PDF]
 ```
 
 ---
 
-## 🛠️ Tech Stack & Optimization
-- **Core:** Laravel 11, PHP 8.2, MySQL
-- **Frontend:** Blade, Tailwind CSS, Lucide Icons, SweetAlert2
-- **PDF Engine:** Barryvdh DomPDF (Optimized with Base64 Assets & Memory Boost)
-- **Excel Engine:** Maatwebsite Excel
-- **Timezone:** Asia/Jakarta (WIB)
+## 🛠️ Spesifikasi Teknis & Optimasi
+- **Framework:** Laravel 11 (Latest Stable)
+- **Frontend:** Tailwind CSS (Modern Card-based UI)
+- **Performance:** Database Pre-fetching (Fix N+1 Query) untuk proses kalkulasi instan.
+- **Security:** Role-Based Access Control (Superadmin vs Pegawai) & Session Protection.
+- **Optimization:** Base64 Image Injection pada PDF Engine untuk proses export dokumen yang ringan.
 
 ---
 
@@ -78,5 +96,5 @@ graph LR
 
 ---
 <div align="center">
-  Dibuat dengan ❤️ untuk Transformasi Digital Pemasyarakatan
+  Dibuat dengan ❤️ untuk Masa Depan Pemasyarakatan yang Lebih Digital dan Akuntabel.
 </div>
