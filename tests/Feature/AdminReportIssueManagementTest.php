@@ -6,10 +6,11 @@ use App\Models\ReportIssue;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Illuminate\Foundation\Testing\WithoutMiddleware;
 
 class AdminReportIssueManagementTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, WithoutMiddleware;
 
     public function test_superadmin_can_bulk_delete_selected_report_issues(): void
     {
