@@ -37,27 +37,51 @@ class AttendanceController extends Controller
         $monthStr = Carbon::parse($startDate)->format('Y-m');
 
         // --- PRE-FETCH SCHEDULES FOR ALL CALCULATIONS ---
-        $squadSchedules = SquadSchedule::whereBetween('date', [$startDate, $endDate])
+        $squadSchedules = SquadSchedule::with('shift')->whereBetween('date', [$startDate, $endDate])
             ->get()->groupBy('squad_id')
-            ->map(fn($g) => $g->pluck('date')->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))->toArray());
+            ->map(fn($g) => $g->keyBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
 
-        $individualSchedules = Schedule::whereBetween('date', [$startDate, $endDate])
+        $individualSchedules = Schedule::with('shift')->whereBetween('date', [$startDate, $endDate])
             ->get()->groupBy('employee_id')
             ->map(fn($g) => $g->keyBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
 
-        $checkIsScheduled = function($emp, $date) use ($squadSchedules, $individualSchedules) {
+        $staffInTime = \App\Models\Setting::getValue('payroll_staff_in', '07:30');
+
+        // Helper to get effective shift start time for a date
+        $getScheduledStartTime = function($emp, $date) use ($squadSchedules, $individualSchedules, $staffInTime) {
             $dateStr = Carbon::parse($date)->format('Y-m-d');
+            
+            // 1. Individual Priority
             if (isset($individualSchedules[$emp->id][$dateStr])) {
-                return !in_array($individualSchedules[$emp->id][$dateStr]->status, ['off', 'leave', 'sick']);
+                $sched = $individualSchedules[$emp->id][$dateStr];
+                if (in_array($sched->status, ['off', 'leave', 'sick'])) return null;
+                return $sched->shift->start_time ?? null;
             }
-            if ($emp->squad_id && isset($squadSchedules[$emp->squad_id])) {
-                return in_array($dateStr, $squadSchedules[$emp->squad_id]);
+            
+            // 2. Squad Priority (Regu/P2U)
+            if ($emp->squad_id && isset($squadSchedules[$emp->squad_id][$dateStr])) {
+                $st = $squadSchedules[$emp->squad_id][$dateStr]->shift->start_time ?? null;
+                
+                // Force 06:00 for Morning Guard Shifts to ensure consistency
+                if ($st && str_contains(strtoupper($squadSchedules[$emp->squad_id][$dateStr]->shift->name ?? ''), 'PAGI')) {
+                    return '06:00:00';
+                }
+                
+                // Fallback jika shift_id ada tapi data waktu kosong
+                return $st ?? '06:00:00';
             }
+            
+            // 3. Default Staff (Mon-Fri) - Hanya jika BUKAN anggota regu
             if (!$emp->squad_id) {
                 $dayNum = Carbon::parse($date)->dayOfWeek;
-                return ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY);
+                if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) return $staffInTime;
             }
-            return false;
+            
+            return null;
+        };
+
+        $checkIsScheduled = function($emp, $date) use ($getScheduledStartTime) {
+            return !is_null($getScheduledStartTime($emp, $date));
         };
         // ------------------------------------------------
 
@@ -74,7 +98,6 @@ class AttendanceController extends Controller
             ->paginate(50)->withQueryString();
 
         // --- CALCULATE SUMMARY FROM THE FILTERED EMPLOYEES ---
-        // Note: For accurate global summary (not just current page), we need the full filtered set
         $allFilteredEmployees = Employee::whereHas('user')
             ->when($search, function($q) use ($search) {
                 $q->where('full_name', 'like', "%$search%")
@@ -99,16 +122,22 @@ class AttendanceController extends Controller
                 if ($att->status !== 'absent') {
                     $totalPresent++;
                     
-                    $isScheduled = $checkIsScheduled($emp, $att->date);
+                    $effectiveStart = $getScheduledStartTime($emp, $att->date);
 
-                    if ($isScheduled) {
-                        // Hitung telat jika statusnya 'late' ATAU menit telat > 0
-                        if ($att->status === 'late' || $att->late_minutes > 0) {
+                    if ($effectiveStart) {
+                        // LOGIKA TELAT DINAMIS UNTUK SUMMARY
+                        $isLate = ($att->status === 'late');
+                        if (!$isLate && $att->check_in) {
+                            $checkInOnly = date('H:i', strtotime($att->check_in));
+                            $targetStart = date('H:i', strtotime($effectiveStart));
+                            if ($checkInOnly > $targetStart) $isLate = true;
+                        }
+
+                        if ($isLate) {
                             $totalLate++;
                         }
                         $empValidDays++;
                         
-                        // KHUSUS: Dinas Luar Full & Tubel tidak dapat Uang Makan
                         if ($att->status !== 'duty_full' && $att->status !== 'tubel') {
                             $empTotalAllowance += $empRate;
                         }
@@ -119,7 +148,6 @@ class AttendanceController extends Controller
             $totalValidDays += $empValidDays;
             $totalAllowance += $empTotalAllowance;
 
-            // Also update the paginated collection attributes if they are on the current page
             $paginatedEmp = $employees->getCollection()->where('id', $emp->id)->first();
             if ($paginatedEmp) {
                 $paginatedEmp->setAttribute('valid_attendance_count', $empValidDays);
@@ -150,20 +178,36 @@ class AttendanceController extends Controller
             ->orderBy('check_in', 'asc')
             ->paginate(50, ['*'], 'log_page')->withQueryString();
 
-        $attendanceLogs->getCollection()->transform(function($log) use ($checkIsScheduled) {
+        $attendanceLogs->getCollection()->transform(function($log) use ($getScheduledStartTime) {
             $emp = $log->employee;
-            $isScheduled = $checkIsScheduled($emp, $log->date);
+            $effectiveStart = $getScheduledStartTime($emp, $log->date);
+            $isScheduled = !is_null($effectiveStart);
             
-            // Logika Uang Makan Real-time di Tabel Log
             $hasMeal = $isScheduled && !in_array($log->status, ['absent', 'duty_full', 'tubel', 'on_leave', 'sick']);
             $log->allowance_amount = $hasMeal ? ($emp->rank_relation->meal_allowance ?? 0) : 0;
+
+            if ($log->check_in && $isScheduled && !in_array($log->status, ['absent', 'duty_full', 'tubel', 'on_leave', 'sick'])) {
+                $checkInTime = date('H:i', strtotime($log->check_in));
+                $targetInTime = date('H:i', strtotime($effectiveStart));
+
+                if ($checkInTime > $targetInTime) {
+                    $log->status = 'late';
+                    $dateOnly = Carbon::parse($log->date)->format('Y-m-d');
+                    $startTime = Carbon::parse($dateOnly . ' ' . $targetInTime);
+                    $actualIn = Carbon::parse($dateOnly . ' ' . date('H:i:s', strtotime($log->check_in)));
+                    
+                    // Hitung selisih mutlak agar selalu positif
+                    $log->late_minutes = (int)$actualIn->diffInMinutes($startTime);
+                } else {
+                    if ($log->status === 'late') $log->status = 'present';
+                    $log->late_minutes = 0;
+                }
+            }
             
             return $log;
         });
 
-        // Get max late count from settings for any UI indicators
         $maxLateCount = (int)\App\Models\Setting::getValue('payroll_max_late_count', 8);
-
         $rangeTitle = Carbon::parse($startDate)->translatedFormat('d M') . ' - ' . Carbon::parse($endDate)->translatedFormat('d M Y');
 
         return view('admin.attendance.index', compact('employees', 'allEmployees', 'attendanceLogs', 'summary', 'startDate', 'endDate', 'rangeTitle', 'monthStr', 'maxLateCount'));

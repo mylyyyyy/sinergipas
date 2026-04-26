@@ -78,13 +78,9 @@ class PayrollService
         ];
 
         $sickCounter = 0;
-        // 1. Dasar Tunkin & Penyesuaian CPNS (80%)
         $baseTunkin = (float)($employee->tunkin->nominal ?? 0);
-        if ($employee->is_cpns) {
-            $baseTunkin = 0.8 * $baseTunkin;
-        }
+        if ($employee->is_cpns) $baseTunkin = 0.8 * $baseTunkin;
 
-        // 2. Bonus Plt / Plh (20% dari jabatan yang dirangkap jika > 1 bulan)
         $actingBonus = 0;
         if ($employee->acting_tunkin_id && $employee->acting_start_date) {
             $startDateObj = Carbon::parse($employee->acting_start_date);
@@ -103,8 +99,6 @@ class PayrollService
         }
 
         $mealRate = (float)($employee->rank_relation->meal_allowance ?? 0);
-
-        // 5. Main Processing Loop (No DB queries inside this loop)
         $today = now()->startOfDay();
 
         for ($d = 1; $d <= $daysInMonth; $d++) {
@@ -115,25 +109,41 @@ class PayrollService
             
             $attendance = $attendances->get($currentDate);
             
-            // Logic Prioritas Jadwal (Memory Based)
+            // LOGIKA JADWAL DINAMIS
             $isScheduled = false;
+            $scheduledInTime = null;
             $scheduledOutTime = null;
             $specialStatus = null; 
+            $isDefaultOffice = false;
 
             if ($individualSchedules->has($currentDate)) {
                 $indiv = $individualSchedules->get($currentDate);
                 $specialStatus = $indiv->status ?? 'picket';
                 $isScheduled = !in_array($specialStatus, ['off', 'leave', 'sick']);
+                $scheduledInTime = $indiv->shift->start_time ?? null;
                 $scheduledOutTime = $indiv->shift->end_time ?? null;
             } elseif ($employee->squad_id && isset($squadSchedules[$currentDate])) {
                 $isScheduled = true;
-                $scheduledOutTime = $squadSchedules[$currentDate]->shift->end_time ?? null;
+                $squadSched = $squadSchedules[$currentDate];
+                $scheduledInTime = $squadSched->shift->start_time ?? null;
+                $scheduledOutTime = $squadSched->shift->end_time ?? null;
+                
+                // Force 06:00 for Guard Morning Shifts (Bukan Ramadhan)
+                if ($scheduledInTime && str_contains(strtoupper($squadSched->shift->name ?? ''), 'PAGI')) {
+                    $scheduledInTime = '06:00:00';
+                }
             } elseif (!$employee->squad_id && $dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) {
                 $isScheduled = true;
+                $isDefaultOffice = true;
+                $scheduledInTime = $rules['staff_in'];
                 $scheduledOutTime = ($dayOfWeek === Carbon::FRIDAY) ? $rules['staff_out_fri'] : $rules['staff_out_mon_thu'];
             }
 
-            // A. LOGIKA STATUS KHUSUS
+            // Fallback absolut untuk regu jaga pagi jika data shift terputus
+            if ($employee->squad_id && $isScheduled && empty($scheduledInTime)) {
+                $scheduledInTime = '06:00:00'; 
+            }
+
             if ($specialStatus && in_array($specialStatus, ['duty_full', 'duty_half', 'tubel'])) {
                 $isEligibleMeal = ($specialStatus === 'duty_half');
                 $stats['processed_logs'][] = [
@@ -148,11 +158,18 @@ class PayrollService
                 $status = $attendance->status;
                 $isEligibleMeal = in_array($status, ['present', 'late', 'duty_half', 'picket']) && $isScheduled;
 
+                $checkInDisplay = $attendance->check_in ? date('H:i', strtotime($attendance->check_in)) : '--:--';
+                $checkOutDisplay = $attendance->check_out ? date('H:i', strtotime($attendance->check_out)) : '--:--';
+                
+                if ($checkInDisplay !== '--:--' && $checkInDisplay === $checkOutDisplay) {
+                    $checkOutDisplay = '--:--';
+                }
+
                 $stats['processed_logs'][] = [
                     'date' => $currentDate,
                     'status' => $status,
-                    'check_in' => $attendance->check_in ? (is_string($attendance->check_in) ? substr($attendance->check_in, 0, 5) : $attendance->check_in->format('H:i')) : '--:--',
-                    'check_out' => $attendance->check_out ? (is_string($attendance->check_out) ? substr($attendance->check_out, 0, 5) : $attendance->check_out->format('H:i')) : '--:--',
+                    'check_in' => $checkInDisplay,
+                    'check_out' => $checkOutDisplay,
                     'is_scheduled' => $isScheduled,
                     'meal_amount' => $isEligibleMeal ? $mealRate : 0
                 ];
@@ -160,36 +177,73 @@ class PayrollService
                 if ($isEligibleMeal) { $stats['meal_allowance_days']++; $stats['total_present']++; }
 
                 if ($isScheduled) {
-                    $lateMin = abs($attendance->late_minutes ?? 0);
-                    $earlyMin = abs($attendance->early_minutes ?? 0);
+                    // Paksa ambil late_minutes sebagai angka positif (mengatasi kasus Syahrul -17m)
+                    $lateMin = abs((int)($attendance->late_minutes ?? 0));
+                    $checkInStr = $attendance->check_in ? (is_string($attendance->check_in) ? $attendance->check_in : $attendance->check_in->format('H:i:s')) : null;
+                    
+                    if ($checkInStr && $scheduledInTime) {
+                        $actualTime = date('H:i', strtotime($checkInStr));
+                        $targetIn = date('H:i', strtotime($scheduledInTime));
 
-                    if ($status === 'late' || $lateMin > 0) {
+                        // 1. Denda Apel (HANYA untuk Default Staff Kantor)
+                        if ($isDefaultOffice && $actualTime > $rules['staff_in']) {
+                            $stats['deduction_percentage'] += $rules['apel'];
+                            $stats['details'][] = [
+                                'type' => 'Tidak Ikut Apel', 
+                                'info' => "Masuk {$actualTime} (> {$rules['staff_in']})", 
+                                'date' => $currentDate, 
+                                'percent' => $rules['apel'], 
+                                'rupiah' => ($rules['apel'] / 100) * $baseTunkin
+                            ];
+                        }
+
+                        // 2. Denda Terlambat (TL) - Force recalculate selisih menit (Mengatasi kasus Budi Mulyono)
+                        if ($actualTime > $targetIn) {
+                            $diff = (int) Carbon::parse($currentDate . ' ' . $actualTime)->diffInMinutes(Carbon::parse($currentDate . ' ' . $targetIn));
+                            $lateMin = max($lateMin, $diff);
+                        }
+                    }
+
+                    // --- BAGIAN TL: HARUS SELALU DICATAT JIKA LATE_MIN > 0 ---
+                    if ($lateMin > 0) {
                         $stats['late_count']++;
-                        $p = $this->getLatePSWPercentage($lateMin ?: 1, $rules);
+                        $p = $this->getLatePSWPercentage($lateMin, $rules);
                         $canCompensate = false;
+                        
+                        // Kompensasi hanya berlaku jika ada jam pulang (check_out)
                         if ($lateMin <= 30 && $stats['compensation_count'] < 8 && $attendance->check_out && $scheduledOutTime) {
-                            $outTimeString = is_string($attendance->check_out) ? $attendance->check_out : $attendance->check_out->format('H:i:s');
-                            $actualOut = Carbon::parse($currentDate . ' ' . $outTimeString);
-                            $schedOutStr = is_string($scheduledOutTime) ? $scheduledOutTime : $scheduledOutTime;
-                            $requiredOut = Carbon::parse($currentDate . ' ' . $schedOutStr)->addMinutes(30);
-                            if ($actualOut->greaterThanOrEqualTo($requiredOut)) { $canCompensate = true; }
+                            $actualOut = Carbon::parse($currentDate . ' ' . date('H:i:s', strtotime($attendance->check_out)));
+                            $requiredOut = Carbon::parse($currentDate . ' ' . $scheduledOutTime)->addMinutes(30);
+                            if ($actualOut->greaterThanOrEqualTo($requiredOut)) $canCompensate = true;
                         }
 
                         if ($canCompensate) {
                             $stats['compensation_count']++;
-                            $outDisplay = is_string($attendance->check_out) ? substr($attendance->check_out, 0, 5) : $attendance->check_out->format('H:i');
-                            $stats['details'][] = ['type' => 'TL Diganti (Kompensasi)', 'info' => "Telat {$lateMin}m, Pulang {$outDisplay}", 'date' => $currentDate, 'percent' => 0, 'rupiah' => 0];
+                            $stats['details'][] = [
+                                'type' => 'TL Diganti (Kompensasi)', 
+                                'info' => "Telat {$lateMin}m, Ganti Pulang", 
+                                'date' => $currentDate, 
+                                'percent' => 0, 
+                                'rupiah' => 0
+                            ];
                         } else {
                             $stats['deduction_percentage'] += $p;
-                            $stats['details'][] = ['type' => 'Terlambat (TL)', 'info' => "{$lateMin}m", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
-                        }
-
-                        if ($attendance->check_in && Carbon::parse($attendance->check_in)->format('H:i') > $rules['staff_in']) {
-                            $stats['deduction_percentage'] += $rules['apel'];
-                            $stats['details'][] = ['type' => 'Tidak Ikut Apel', 'info' => "Masuk > {$rules['staff_in']}", 'date' => $currentDate, 'percent' => $rules['apel'], 'rupiah' => ($rules['apel'] / 100) * $baseTunkin];
+                            $label = $isDefaultOffice ? 'Terlambat (TL)' : 'Terlambat (TL Shift)';
+                            $displayTarget = $scheduledInTime ? date('H:i', strtotime($scheduledInTime)) : '--:--';
+                            $infoText = "{$lateMin}m (Jadwal: {$displayTarget})";
+                            
+                            $stats['details'][] = [
+                                'type' => $label, 
+                                'info' => $infoText, 
+                                'date' => $currentDate, 
+                                'percent' => $p, 
+                                'rupiah' => ($p / 100) * $baseTunkin
+                            ];
                         }
                     }
 
+                    // 3. PSW & Lupa Absen
+                    $earlyMin = abs((int)($attendance->early_minutes ?? 0));
                     if ($earlyMin > 0) {
                         $p = $this->getLatePSWPercentage($earlyMin, $rules);
                         $stats['deduction_percentage'] += $p;
@@ -201,6 +255,20 @@ class PayrollService
                         $p = $rules['lupa_absen'];
                         $stats['deduction_percentage'] += $p;
                         $stats['details'][] = ['type' => 'Lupa Absen', 'info' => (empty($attendance->check_in) ? "Tanpa Masuk" : "Tanpa Pulang"), 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
+                    }
+                } else if (!$isScheduled && $attendance && in_array($attendance->status, ['present', 'late'])) {
+                    $lateMinFallback = abs((int)($attendance->late_minutes ?? 0));
+                    if ($lateMinFallback > 0) {
+                        $stats['late_count']++;
+                        $p = $this->getLatePSWPercentage($lateMinFallback, $rules);
+                        $stats['deduction_percentage'] += $p;
+                        $stats['details'][] = [
+                            'type' => 'Terlambat (TL)', 
+                            'info' => "{$lateMinFallback}m (Tercatat)", 
+                            'date' => $currentDate, 
+                            'percent' => $p, 
+                            'rupiah' => ($p / 100) * $baseTunkin
+                        ];
                     }
                 }
 
@@ -220,8 +288,6 @@ class PayrollService
                 }
 
             } else {
-                // TIDAK ADA DATA ABSEN SAMA SEKALI
-                // Hanya anggap Mangkir jika tanggal tersebut BUKAN masa depan (!isFuture)
                 if ($isScheduled && !$isFuture) {
                     $p = $rules['mangkir'];
                     $stats['deduction_percentage'] += $p;
