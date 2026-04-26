@@ -23,7 +23,10 @@
             <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden card-3d">
                 <div class="h-32 bg-slate-900 relative">
                     <div class="absolute -bottom-12 left-1/2 -translate-x-1/2">
-                        <div class="relative w-24 h-24 rounded-3xl bg-white border-4 border-white shadow-xl overflow-visible flex items-center justify-center text-slate-300 font-black text-2xl">
+                        @php
+                            $isKalapas = strtoupper($employee->position) === 'KEPALA LEMBAGA PEMASYARAKATAN';
+                        @endphp
+                        <div class="relative w-24 h-24 rounded-3xl bg-white border-4 {{ $isKalapas ? 'border-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.5)]' : 'border-white' }} shadow-xl overflow-visible flex items-center justify-center text-slate-300 font-black text-2xl">
                             <div class="w-full h-full rounded-3xl overflow-hidden flex items-center justify-center">
                                 @if($employee->photo)
                                     <img src="{{ $employee->photo }}" class="w-full h-full object-cover">
@@ -32,13 +35,26 @@
                                 @endif
                             </div>
 
-                            @if($employee->is_cpns)
+                            @if($isKalapas)
+                                <!-- Top Center: Crown Icon -->
+                                <div class="absolute -top-5 left-1/2 -translate-x-1/2 z-30">
+                                    <div class="bg-linear-to-b from-amber-300 to-yellow-600 p-1.5 rounded-full shadow-xl border-2 border-white animate-pulse">
+                                        <i data-lucide="crown" class="w-5 h-5 text-slate-900"></i>
+                                    </div>
+                                </div>
+                                <!-- Bottom Center: Text Label -->
+                                <div class="absolute -bottom-3.5 left-1/2 -translate-x-1/2 z-30 whitespace-nowrap">
+                                    <div class="bg-slate-900 text-amber-400 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl border-2 border-amber-500/50">
+                                        KALAPAS
+                                    </div>
+                                </div>
+                            @elseif($employee->is_cpns)
                                 <div class="absolute -top-2 -right-2 px-2 py-1 bg-slate-900 text-white text-[8px] font-black uppercase rounded-lg shadow-lg border border-slate-700 z-10">
                                     CPNS
                                 </div>
                             @endif
 
-                            @if($employee->squad)
+                            @if($employee->squad && !$isKalapas)
                                 <div class="absolute -bottom-2 -right-2 min-w-[32px] h-8 px-2 bg-{{ $employee->squad->type === 'p2u' ? 'emerald' : 'blue' }}-600 border-4 border-white rounded-xl flex items-center justify-center shadow-lg">
                                     <span class="text-[10px] font-black text-white whitespace-nowrap">{{ $employee->squad->type === 'p2u' ? 'P2U' : '' }} {{ str_replace('Regu ', '', $employee->squad->name) }}</span>
                                 </div>

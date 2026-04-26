@@ -356,7 +356,7 @@ class AttendanceController extends Controller
                     'full_name' => strtoupper($emp->full_name),
                     'nip' => $emp->nip,
                     'present_count' => $presentCount,
-                    'late_count' => $atts->where('status', 'late')->count(),
+                    'late_count' => $atts->filter(fn($a) => $a->status === 'late' || $a->late_minutes > 0)->count(),
                     'absent_count' => max(0, $totalDays - $presentCount),
                     'total_allowance' => $eligiblePresence * ($emp->rank_relation->meal_allowance ?? 0),
                 ];
