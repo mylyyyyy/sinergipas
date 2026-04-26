@@ -99,15 +99,15 @@ class ScheduleController extends Controller
         $request->validate([
             'employee_id' => 'required|exists:employees,id',
             'date' => 'required|date',
-            'status' => 'required|in:picket,leave,sick,off',
-            'shift_id' => 'required_if:status,picket|nullable|exists:shifts,id',
+            'status' => 'required|in:picket,leave,sick,off,duty_full,duty_half,tubel',
+            'shift_id' => 'required_if:status,picket,duty_half|nullable|exists:shifts,id',
         ]);
 
         $schedule = Schedule::updateOrCreate(
             ['employee_id' => $request->employee_id, 'date' => $request->date],
             [
                 'status' => $request->status,
-                'shift_id' => $request->status === 'picket' ? $request->shift_id : null
+                'shift_id' => in_array($request->status, ['picket', 'duty_half']) ? $request->shift_id : null
             ]
         );
 
@@ -115,6 +115,9 @@ class ScheduleController extends Controller
         $attendanceStatus = null;
         if ($request->status === 'leave') $attendanceStatus = 'on_leave';
         elseif ($request->status === 'sick') $attendanceStatus = 'sick';
+        elseif ($request->status === 'duty_full') $attendanceStatus = 'duty_full';
+        elseif ($request->status === 'duty_half') $attendanceStatus = 'duty_half';
+        elseif ($request->status === 'tubel') $attendanceStatus = 'tubel';
 
         if ($attendanceStatus) {
             \App\Models\Attendance::updateOrCreate(

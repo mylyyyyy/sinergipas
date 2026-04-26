@@ -78,14 +78,13 @@ class PayrollService
         ];
 
         $sickCounter = 0;
-        
-        // 4. Dasar Tunkin & Penyesuaian
+        // 1. Dasar Tunkin & Penyesuaian CPNS (80%)
         $baseTunkin = (float)($employee->tunkin->nominal ?? 0);
         if ($employee->is_cpns) {
             $baseTunkin = 0.8 * $baseTunkin;
-            $stats['details'][] = ['type' => 'Status CPNS', 'info' => 'Pagu Dasar 80%', 'date' => null, 'percent' => 0, 'rupiah' => 0];
         }
 
+        // 2. Bonus Plt / Plh (20% dari jabatan yang dirangkap jika > 1 bulan)
         $actingBonus = 0;
         if ($employee->acting_tunkin_id && $employee->acting_start_date) {
             $startDateObj = Carbon::parse($employee->acting_start_date);
@@ -93,7 +92,6 @@ class PayrollService
                 $actingTunkin = $employee->actingTunkin->nominal ?? 0;
                 $actingBonus = 0.2 * $actingTunkin;
                 $stats['is_acting'] = true;
-                $stats['details'][] = ['type' => 'Bonus Plt/Plh', 'info' => 'Tambahan 20%', 'date' => null, 'percent' => 0, 'rupiah' => $actingBonus];
             }
         }
 
@@ -107,10 +105,13 @@ class PayrollService
         $mealRate = (float)($employee->rank_relation->meal_allowance ?? 0);
 
         // 5. Main Processing Loop (No DB queries inside this loop)
+        $today = now()->startOfDay();
+
         for ($d = 1; $d <= $daysInMonth; $d++) {
             $currentDateObj = $date->copy()->day($d);
             $currentDate = $currentDateObj->format('Y-m-d');
             $dayOfWeek = $currentDateObj->dayOfWeek;
+            $isFuture = $currentDateObj->isAfter($today);
             
             $attendance = $attendances->get($currentDate);
             
@@ -219,7 +220,9 @@ class PayrollService
                 }
 
             } else {
-                if ($isScheduled) {
+                // TIDAK ADA DATA ABSEN SAMA SEKALI
+                // Hanya anggap Mangkir jika tanggal tersebut BUKAN masa depan (!isFuture)
+                if ($isScheduled && !$isFuture) {
                     $p = $rules['mangkir'];
                     $stats['deduction_percentage'] += $p;
                     $stats['details'][] = ['type' => 'Mangkir (Otomatis)', 'info' => "Bolos Jadwal", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
@@ -235,7 +238,6 @@ class PayrollService
         $stats['total_meal_allowance'] = $stats['meal_allowance_days'] * $mealRate;
         $stats['grand_total'] = $stats['tunkin_final'] + $stats['total_meal_allowance'];
         $stats['base_tunkin'] = $baseTunkin;
-        $stats['total_potongan_rupiah'] = ($finalPercent / 100) * $baseTunkin;
 
         return $stats;
     }

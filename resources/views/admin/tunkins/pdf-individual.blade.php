@@ -77,8 +77,17 @@
         <tbody>
             <tr>
                 <td>
-                    <strong>Tunjangan Kinerja Dasar</strong><br>
-                    <small style="color: #64748b;">Besaran standar sesuai Kelas Jabatan {{ $employee->tunkin->grade }}</small>
+                    <strong>Tunjangan Kinerja Dasar</strong>
+                    @if($employee->is_cpns)
+                        <span style="font-size: 8px; background: #000; color: #fff; padding: 1px 4px; border-radius: 3px; margin-left: 5px;">CPNS 80%</span>
+                    @endif
+                    <br>
+                    <small style="color: #64748b;">
+                        Besaran standar sesuai Kelas Jabatan {{ $employee->tunkin->grade }}
+                        @if($employee->is_cpns)
+                            (Pagu 80% dari Rp {{ number_format($employee->tunkin->nominal ?? 0, 0, ',', '.') }})
+                        @endif
+                    </small>
                 </td>
                 <td style="text-align: right;">{{ number_format($baseTunkin, 0, ',', '.') }}</td>
             </tr>

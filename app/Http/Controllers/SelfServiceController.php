@@ -39,6 +39,10 @@ class SelfServiceController extends Controller
             'employee' => $employee,
             'monthStr' => $monthStr,
             'date' => $date,
+            'base_tunkin' => $payroll['base_tunkin'],
+            'grand_total' => $payroll['grand_total'],
+            'total_potongan_rupiah' => $payroll['total_potongan_rupiah'],
+            'total_meal_allowance' => $payroll['total_meal_allowance'],
         ], $payroll));
     }
 
@@ -74,7 +78,7 @@ class SelfServiceController extends Controller
             'attendances' => $payroll['meal_allowance_days'],
             'mealAllowancePerDay' => $employee->rank_relation->meal_allowance ?? 0,
             'totalMealAllowance' => $payroll['total_meal_allowance'],
-            'baseTunkin' => $employee->tunkin->nominal ?? 0,
+            'baseTunkin' => $payroll['base_tunkin'],
             'potongan' => $payroll['total_potongan_rupiah'],
             'totalTerima' => $payroll['grand_total'],
             'deduction_percentage' => $payroll['deduction_percentage'],

@@ -74,10 +74,20 @@
                             </div>
                             <div>
                                 <h5 class="text-sm font-black text-slate-900">Tunjangan Kinerja Dasar</h5>
-                                <p class="text-[10px] font-bold text-slate-400 uppercase">Berdasarkan Kelas Jabatan {{ $employee->tunkin->grade }}</p>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase">Kelas Jabatan {{ $employee->tunkin->grade ?? '-' }}</p>
+                                    @if($employee->is_cpns)
+                                        <span class="px-2 py-0.5 bg-slate-900 text-white text-[8px] font-black rounded uppercase tracking-tighter">CPNS 80%</span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
-                        <span class="text-base font-black text-slate-900">Rp {{ number_format($baseTunkin, 0, ',', '.') }}</span>
+                        <div class="text-right">
+                            <span class="text-base font-black text-slate-900">Rp {{ number_format($base_tunkin, 0, ',', '.') }}</span>
+                            @if($employee->is_cpns)
+                                <p class="text-[9px] font-bold text-slate-400 mt-1 italic">* Pagu CPNS 80% dari Rp {{ number_format($employee->tunkin->nominal ?? 0, 0, ',', '.') }}</p>
+                            @endif
+                        </div>
                     </div>
 
                     <!-- Meal Allowance -->

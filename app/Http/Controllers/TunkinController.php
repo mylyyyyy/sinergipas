@@ -120,7 +120,7 @@ class TunkinController extends Controller
             'attendances' => $payroll['meal_allowance_days'],
             'mealAllowancePerDay' => $employee->rank_relation->meal_allowance ?? 0,
             'totalMealAllowance' => $payroll['total_meal_allowance'],
-            'baseTunkin' => $employee->tunkin->nominal ?? 0,
+            'baseTunkin' => $payroll['base_tunkin'], // Gunakan hasil service (80% jika CPNS)
             'potongan' => $payroll['total_potongan_rupiah'],
             'totalTerima' => $payroll['grand_total'],
             'deduction_percentage' => $payroll['deduction_percentage'],
@@ -151,7 +151,7 @@ class TunkinController extends Controller
             'date' => $date,
             'mealAllowancePerDay' => $employee->rank_relation->meal_allowance ?? 0,
             'totalMealAllowance' => $payroll['total_meal_allowance'],
-            'baseTunkin' => $employee->tunkin->nominal ?? 0,
+            'baseTunkin' => $payroll['base_tunkin'], // Gunakan hasil service (80% jika CPNS)
             'potongan' => $payroll['total_potongan_rupiah'],
             'deduction_percentage' => $payroll['deduction_percentage'],
         ], $payroll));
