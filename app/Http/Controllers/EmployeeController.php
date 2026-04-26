@@ -22,7 +22,7 @@ class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Employee::with(['user', 'work_unit', 'position_relation', 'rank_relation', 'category']);
+        $query = Employee::with(['user', 'work_unit', 'position_relation', 'rank_relation', 'category', 'squad']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -46,13 +46,14 @@ class EmployeeController extends Controller
         $ranks = Rank::orderBy('name')->get();
         $categories = \App\Models\Category::orderBy('name')->get();
         $tunkins = Tunkin::orderBy('grade', 'desc')->get();
+        $squads = \App\Models\Squad::orderBy('type')->orderBy('name')->get();
 
-        return view('employees.index', compact('employees', 'positions', 'workUnits', 'ranks', 'categories', 'tunkins'));
+        return view('employees.index', compact('employees', 'positions', 'workUnits', 'ranks', 'categories', 'tunkins', 'squads'));
     }
 
     public function show(Employee $employee)
     {
-        $employee->load(['user', 'work_unit', 'position_relation', 'rank_relation', 'audit_logs.user']);
+        $employee->load(['user', 'work_unit', 'position_relation', 'rank_relation', 'audit_logs.user', 'squad']);
         $history = $employee->audit_logs()->with('user')->latest()->get();
         
         return view('employees.show', compact('employee', 'history'));
@@ -74,7 +75,7 @@ class EmployeeController extends Controller
             'acting_start_date' => 'nullable|date',
             'category_id' => 'nullable|exists:categories,id',
             'password' => 'required|min:8',
-            'picket_regu' => 'nullable|string',
+            'squad_id' => 'nullable|exists:squads,id',
             'role_in_squad' => 'nullable|string',
         ]);
 
@@ -88,9 +89,9 @@ class EmployeeController extends Controller
         $position = Position::find($request->position_id);
         $rank = $request->rank_id ? Rank::find($request->rank_id) : null;
 
-        // Auto-correct employee_type based on position
+        // Auto-correct employee_type based on position or squad
         $jNameUpper = strtoupper($position->name);
-        $isJaga = str_contains($jNameUpper, 'JAGA') || str_contains($jNameUpper, 'PENGAMANAN') || str_contains($jNameUpper, 'PENJAGA');
+        $isJaga = str_contains($jNameUpper, 'JAGA') || str_contains($jNameUpper, 'PENGAMANAN') || str_contains($jNameUpper, 'PENJAGA') || $request->filled('squad_id');
         $employeeType = $isJaga ? 'regu_jaga' : 'non_regu_jaga';
 
         $employee = Employee::create([
@@ -109,7 +110,7 @@ class EmployeeController extends Controller
             'rank_class' => $rank?->name,
             'category_id' => $request->category_id,
             'employee_type' => $employeeType,
-            'picket_regu' => $request->picket_regu,
+            'squad_id' => $request->squad_id,
             'role_in_squad' => $request->role_in_squad,
         ]);
 
@@ -142,7 +143,7 @@ class EmployeeController extends Controller
             'acting_start_date' => 'nullable|date',
             'category_id' => 'nullable|exists:categories,id',
             'password' => 'nullable|min:8',
-            'picket_regu' => 'nullable|string',
+            'squad_id' => 'nullable|exists:squads,id',
             'role_in_squad' => 'nullable|string',
         ]);
 
@@ -162,7 +163,7 @@ class EmployeeController extends Controller
         $rank = $request->rank_id ? Rank::find($request->rank_id) : null;
 
         $jNameUpper = strtoupper($position->name);
-        $isJaga = str_contains($jNameUpper, 'JAGA') || str_contains($jNameUpper, 'PENGAMANAN') || str_contains($jNameUpper, 'PENJAGA');
+        $isJaga = str_contains($jNameUpper, 'JAGA') || str_contains($jNameUpper, 'PENGAMANAN') || str_contains($jNameUpper, 'PENJAGA') || $request->filled('squad_id');
         $employeeType = $isJaga ? 'regu_jaga' : 'non_regu_jaga';
 
         $employee->update([
@@ -180,7 +181,7 @@ class EmployeeController extends Controller
             'rank_class' => $rank?->name,
             'category_id' => $request->category_id,
             'employee_type' => $employeeType,
-            'picket_regu' => $request->picket_regu,
+            'squad_id' => $request->squad_id,
             'role_in_squad' => $request->role_in_squad,
         ]);
 

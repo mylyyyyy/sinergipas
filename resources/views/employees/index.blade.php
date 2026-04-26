@@ -164,9 +164,9 @@
                                             </div>
                                         @endif
 
-                                        @if($employee->picket_regu)
-                                            <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 border-2 border-white rounded-lg flex items-center justify-center shadow-sm">
-                                                <span class="text-[9px] font-black text-white">{{ $employee->picket_regu }}</span>
+                                        @if($employee->squad)
+                                            <div class="absolute -bottom-1 -right-1 min-w-[24px] h-6 px-1.5 bg-{{ $employee->squad->type === 'p2u' ? 'emerald' : 'blue' }}-600 border-2 border-white rounded-lg flex items-center justify-center shadow-sm">
+                                                <span class="text-[8px] font-black text-white whitespace-nowrap">{{ $employee->squad->type === 'p2u' ? 'P2U' : '' }} {{ str_replace('Regu ', '', $employee->squad->name) }}</span>
                                             </div>
                                         @endif
                                     </div>
@@ -306,17 +306,16 @@
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Tipe Pegawai</label>
                         <select name="employee_type" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer" onchange="toggleRegu(this, 'add')">
                             <option value="non_regu_jaga">Non-Regu (Kantor)</option>
-                            <option value="regu_jaga">Regu Jaga (Shift)</option>
+                            <option value="regu_jaga">Regu Jaga / P2U (Shift)</option>
                         </select>
                     </div>
                     <div id="regu_container_add" class="space-y-1.5 hidden">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pilih Regu</label>
-                        <select name="picket_regu" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
-                            <option value="">-- Tanpa Regu --</option>
-                            <option value="A">Regu A</option>
-                            <option value="B">Regu B</option>
-                            <option value="C">Regu C</option>
-                            <option value="D">Regu D</option>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pilih Unit (Regu/P2U)</label>
+                        <select name="squad_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                            <option value="">-- Tanpa Unit --</option>
+                            @foreach($squads as $squad)
+                                <option value="{{ $squad->id }}">[{{ strtoupper($squad->type) }}] {{ $squad->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -513,17 +512,16 @@
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Tipe Pegawai</label>
                         <select name="employee_type" id="edit_employee_type" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none" onchange="toggleRegu(this, 'edit')">
                             <option value="non_regu_jaga">Non-Regu (Kantor)</option>
-                            <option value="regu_jaga">Regu Jaga (Shift)</option>
+                            <option value="regu_jaga">Regu Jaga / P2U (Shift)</option>
                         </select>
                     </div>
                     <div id="regu_container_edit" class="space-y-1.5 hidden">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pilih Regu</label>
-                        <select name="picket_regu" id="edit_picket_regu" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none">
-                            <option value="">-- Tanpa Regu --</option>
-                            <option value="A">Regu A</option>
-                            <option value="B">Regu B</option>
-                            <option value="C">Regu C</option>
-                            <option value="D">Regu D</option>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pilih Unit (Regu/P2U)</label>
+                        <select name="squad_id" id="edit_squad_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none">
+                            <option value="">-- Tanpa Unit --</option>
+                            @foreach($squads as $squad)
+                                <option value="{{ $squad->id }}">[{{ strtoupper($squad->type) }}] {{ $squad->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -734,7 +732,7 @@
                         }
                     }
                 }).then((res) => {
-                    if (res.resConfirmed) {
+                    if (res.isConfirmed) {
                         document.getElementById('destroyAllForm').submit();
                     }
                 });
@@ -758,7 +756,7 @@
         document.getElementById('edit_acting_tunkin_id').value = employee.acting_tunkin_id || '';
         document.getElementById('edit_acting_start_date').value = employee.acting_start_date || '';
         document.getElementById('edit_employee_type').value = employee.employee_type || 'non_regu_jaga';
-        document.getElementById('edit_picket_regu').value = employee.picket_regu || '';
+        document.getElementById('edit_squad_id').value = employee.squad_id || '';
         document.getElementById('edit_role_in_squad').value = employee.role_in_squad || '';
         document.getElementById('edit_position_id').value = employee.position_id;
         document.getElementById('edit_work_unit_id').value = employee.work_unit_id;

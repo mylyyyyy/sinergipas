@@ -37,6 +37,12 @@
                                     CPNS
                                 </div>
                             @endif
+
+                            @if($employee->squad)
+                                <div class="absolute -bottom-2 -right-2 min-w-[32px] h-8 px-2 bg-{{ $employee->squad->type === 'p2u' ? 'emerald' : 'blue' }}-600 border-4 border-white rounded-xl flex items-center justify-center shadow-lg">
+                                    <span class="text-[10px] font-black text-white whitespace-nowrap">{{ $employee->squad->type === 'p2u' ? 'P2U' : '' }} {{ str_replace('Regu ', '', $employee->squad->name) }}</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -96,10 +102,10 @@
                                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Unit Kerja</span>
                                 <span class="text-xs font-black text-slate-700 uppercase">{{ $employee->work_unit->name ?? '-' }}</span>
                             </div>
-                            @if($employee->employee_type === 'regu_jaga')
+                            @if($employee->squad)
                             <div class="flex justify-between items-center px-1">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Regu Picket</span>
-                                <span class="px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase">{{ $employee->picket_regu ?? '-' }}</span>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Unit Penugasan</span>
+                                <span class="px-2 py-0.5 rounded-lg bg-{{ $employee->squad->type === 'p2u' ? 'emerald' : 'indigo' }}-50 text-{{ $employee->squad->type === 'p2u' ? 'emerald' : 'indigo' }}-600 text-[10px] font-black uppercase">{{ $employee->squad->name }} [{{ strtoupper($employee->squad->type) }}]</span>
                             </div>
                             @endif
                             <div class="h-px bg-slate-100 my-2"></div>
@@ -173,12 +179,12 @@
                                         @if($log->old_values && $log->new_values)
                                         <div class="mt-4 p-4 rounded-2xl bg-slate-900/5 border border-slate-100 space-y-3">
                                             @php
-                                                $keysToTrack = ['position', 'rank_class', 'work_unit_id', 'picket_regu', 'employee_type', 'phone_number', 'nik'];
+                                                $keysToTrack = ['position', 'rank_class', 'work_unit_id', 'squad_id', 'employee_type', 'phone_number', 'nik'];
                                                 $labels = [
                                                     'position' => 'Jabatan',
                                                     'rank_class' => 'Golongan',
                                                     'work_unit_id' => 'ID Unit',
-                                                    'picket_regu' => 'Regu',
+                                                    'squad_id' => 'Regu/P2U',
                                                     'employee_type' => 'Tipe',
                                                     'phone_number' => 'No. Telp',
                                                     'nik' => 'NIK'
