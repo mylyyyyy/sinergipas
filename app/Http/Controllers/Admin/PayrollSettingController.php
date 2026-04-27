@@ -31,6 +31,14 @@ class PayrollSettingController extends Controller
             'staff_saturday_enabled' => Setting::getValue('payroll_staff_saturday_enabled', 'off'),
             'staff_saturday_in' => Setting::getValue('payroll_staff_saturday_in', '07:30'),
             'staff_saturday_out' => Setting::getValue('payroll_staff_saturday_out', '12:00'),
+
+            // Jam Kerja Staff (Bulan Puasa - Opsional)
+            'ramadan_enabled' => Setting::getValue('payroll_ramadan_enabled', 'off'),
+            'ramadan_start' => Setting::getValue('payroll_ramadan_start', date('Y-m-d')),
+            'ramadan_end' => Setting::getValue('payroll_ramadan_end', date('Y-m-d')),
+            'ramadan_staff_in' => Setting::getValue('payroll_ramadan_staff_in', '08:00'),
+            'ramadan_staff_out_mon_thu' => Setting::getValue('payroll_ramadan_staff_out_mon_thu', '15:00'),
+            'ramadan_staff_out_fri' => Setting::getValue('payroll_ramadan_staff_out_fri', '15:30'),
         ];
 
         return view('admin.settings.payroll', compact('settings'));
@@ -55,11 +63,21 @@ class PayrollSettingController extends Controller
             'payroll_staff_saturday_enabled' => 'nullable|string',
             'payroll_staff_saturday_in' => 'required_if:payroll_staff_saturday_enabled,on|string',
             'payroll_staff_saturday_out' => 'required_if:payroll_staff_saturday_enabled,on|string',
+            
+            'payroll_ramadan_enabled' => 'nullable|string',
+            'payroll_ramadan_start' => 'required_if:payroll_ramadan_enabled,on|date',
+            'payroll_ramadan_end' => 'required_if:payroll_ramadan_enabled,on|date',
+            'payroll_ramadan_staff_in' => 'required_if:payroll_ramadan_enabled,on|string',
+            'payroll_ramadan_staff_out_mon_thu' => 'required_if:payroll_ramadan_enabled,on|string',
+            'payroll_ramadan_staff_out_fri' => 'required_if:payroll_ramadan_enabled,on|string',
         ]);
 
-        // Handle checkbox for saturday_enabled
+        // Handle checkboxes
         if (!isset($data['payroll_staff_saturday_enabled'])) {
             $data['payroll_staff_saturday_enabled'] = 'off';
+        }
+        if (!isset($data['payroll_ramadan_enabled'])) {
+            $data['payroll_ramadan_enabled'] = 'off';
         }
 
         foreach ($data as $key => $value) {

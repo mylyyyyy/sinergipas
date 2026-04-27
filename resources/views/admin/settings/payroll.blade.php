@@ -178,6 +178,48 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Section 4: Bulan Puasa -->
+            <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden card-3d lg:col-span-2">
+                <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="moon" class="w-5 h-5 text-emerald-500"></i>
+                        <h4 class="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Opsi Jam Kerja Ramadhan (Staff)</h4>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="payroll_ramadan_enabled" {{ $settings['ramadan_enabled'] === 'on' ? 'checked' : '' }} class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                    </label>
+                </div>
+                <div class="p-8 space-y-6 {{ $settings['ramadan_enabled'] === 'on' ? '' : 'opacity-40 grayscale pointer-events-none' }}" id="ramadan-inputs">
+                    <p class="text-[10px] font-bold text-slate-500 italic mt-0">Aktifkan opsi ini jika memasuki bulan puasa. Aturan jam kerja ini akan otomatis menggantikan jam kerja reguler pada rentang tanggal yang ditentukan, dan sinkron dengan perhitungan Tunkin maupun absensi.</p>
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mulai Berlaku</label>
+                            <input type="date" name="payroll_ramadan_start" value="{{ $settings['ramadan_start'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-emerald-500 transition-all">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Berakhir Pada</label>
+                            <input type="date" name="payroll_ramadan_end" value="{{ $settings['ramadan_end'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-emerald-500 transition-all">
+                        </div>
+                    </div>
+                    <div class="space-y-2 pt-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Jam Masuk (Setiap Hari)</label>
+                        <input type="time" name="payroll_ramadan_staff_in" value="{{ $settings['ramadan_staff_in'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-emerald-500 transition-all">
+                    </div>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Jam Pulang (Sen-Kam)</label>
+                            <input type="time" name="payroll_ramadan_staff_out_mon_thu" value="{{ $settings['ramadan_staff_out_mon_thu'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-emerald-500 transition-all">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Jam Pulang (Jumat)</label>
+                            <input type="time" name="payroll_ramadan_staff_out_fri" value="{{ $settings['ramadan_staff_out_fri'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-emerald-500 transition-all">
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Submit Button Row -->
@@ -205,14 +247,27 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const checkbox = document.querySelector('input[name="payroll_staff_saturday_enabled"]');
-        const inputs = document.getElementById('saturday-inputs');
+        // Saturday logic
+        const satCheckbox = document.querySelector('input[name="payroll_staff_saturday_enabled"]');
+        const satInputs = document.getElementById('saturday-inputs');
 
-        checkbox.addEventListener('change', () => {
-            if (checkbox.checked) {
-                inputs.classList.remove('opacity-40', 'grayscale', 'pointer-events-none');
+        satCheckbox.addEventListener('change', () => {
+            if (satCheckbox.checked) {
+                satInputs.classList.remove('opacity-40', 'grayscale', 'pointer-events-none');
             } else {
-                inputs.classList.add('opacity-40', 'grayscale', 'pointer-events-none');
+                satInputs.classList.add('opacity-40', 'grayscale', 'pointer-events-none');
+            }
+        });
+
+        // Ramadan logic
+        const ramadanCheckbox = document.querySelector('input[name="payroll_ramadan_enabled"]');
+        const ramadanInputs = document.getElementById('ramadan-inputs');
+
+        ramadanCheckbox.addEventListener('change', () => {
+            if (ramadanCheckbox.checked) {
+                ramadanInputs.classList.remove('opacity-40', 'grayscale', 'pointer-events-none');
+            } else {
+                ramadanInputs.classList.add('opacity-40', 'grayscale', 'pointer-events-none');
             }
         });
     });

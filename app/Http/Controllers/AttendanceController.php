@@ -48,10 +48,16 @@ class AttendanceController extends Controller
         $staffInTime = \App\Models\Setting::getValue('payroll_staff_in', '07:30');
         $staffSatEnabled = \App\Models\Setting::getValue('payroll_staff_saturday_enabled', 'off');
         $staffSatIn = \App\Models\Setting::getValue('payroll_staff_saturday_in', '07:30');
+        
+        $ramadanEnabled = \App\Models\Setting::getValue('payroll_ramadan_enabled', 'off');
+        $ramadanStart = Carbon::parse(\App\Models\Setting::getValue('payroll_ramadan_start', date('Y-m-d')))->startOfDay();
+        $ramadanEnd = Carbon::parse(\App\Models\Setting::getValue('payroll_ramadan_end', date('Y-m-d')))->endOfDay();
+        $ramadanIn = \App\Models\Setting::getValue('payroll_ramadan_staff_in', '08:00');
 
         // Helper to get effective shift start time for a date
-        $getScheduledStartTime = function($emp, $date) use ($squadSchedules, $individualSchedules, $staffInTime, $staffSatEnabled, $staffSatIn) {
+        $getScheduledStartTime = function($emp, $date) use ($squadSchedules, $individualSchedules, $staffInTime, $staffSatEnabled, $staffSatIn, $ramadanEnabled, $ramadanStart, $ramadanEnd, $ramadanIn) {
             $dateStr = Carbon::parse($date)->format('Y-m-d');
+            $dateObj = Carbon::parse($date);
             
             // 1. Individual Priority
             if (isset($individualSchedules[$emp->id][$dateStr])) {
@@ -75,11 +81,17 @@ class AttendanceController extends Controller
             
             // 3. Default Staff - Hanya jika BUKAN anggota regu
             if (!$emp->squad_id) {
-                $dayNum = Carbon::parse($date)->dayOfWeek;
-                if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) return $staffInTime;
+                $dayNum = $dateObj->dayOfWeek;
+                $isRamadan = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd));
+
+                if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) {
+                    return $isRamadan ? $ramadanIn : $staffInTime;
+                }
                 
                 // New Saturday Logic
-                if ($dayNum === Carbon::SATURDAY && $staffSatEnabled === 'on') return $staffSatIn;
+                if ($dayNum === Carbon::SATURDAY && $staffSatEnabled === 'on') {
+                    return $staffSatIn; // Asumsi hari sabtu tidak terpengaruh jam puasa, atau bisa disesuaikan jika perlu
+                }
             }
             
             return null;

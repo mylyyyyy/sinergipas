@@ -133,12 +133,28 @@ class PayrollService
             } elseif (($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) || ($dayOfWeek === Carbon::SATURDAY && $rules['staff_saturday_enabled'] === 'on')) {
                 $isScheduled = true;
                 $isDefaultOffice = true;
+                
+                // Cek apakah hari ini masuk dalam rentang Bulan Puasa
+                $isRamadan = false;
+                if (isset($rules['ramadan_enabled']) && $rules['ramadan_enabled'] === 'on') {
+                    $ramadanStart = Carbon::parse($rules['ramadan_start'])->startOfDay();
+                    $ramadanEnd = Carbon::parse($rules['ramadan_end'])->endOfDay();
+                    if ($currentDateObj->between($ramadanStart, $ramadanEnd)) {
+                        $isRamadan = true;
+                    }
+                }
+
                 if ($dayOfWeek === Carbon::SATURDAY) {
                     $scheduledInTime = $rules['staff_saturday_in'];
                     $scheduledOutTime = $rules['staff_saturday_out'];
                 } else {
-                    $scheduledInTime = $rules['staff_in'];
-                    $scheduledOutTime = ($dayOfWeek === Carbon::FRIDAY) ? $rules['staff_out_fri'] : $rules['staff_out_mon_thu'];
+                    if ($isRamadan) {
+                        $scheduledInTime = $rules['ramadan_staff_in'];
+                        $scheduledOutTime = ($dayOfWeek === Carbon::FRIDAY) ? $rules['ramadan_staff_out_fri'] : $rules['ramadan_staff_out_mon_thu'];
+                    } else {
+                        $scheduledInTime = $rules['staff_in'];
+                        $scheduledOutTime = ($dayOfWeek === Carbon::FRIDAY) ? $rules['staff_out_fri'] : $rules['staff_out_mon_thu'];
+                    }
                 }
             }
 

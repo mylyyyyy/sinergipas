@@ -66,21 +66,37 @@ class ScheduleService
         $dayOfWeek = $dateObj->dayOfWeek;
         $staffSatEnabled = Setting::getValue('payroll_staff_saturday_enabled', 'off');
 
+        $ramadanEnabled = Setting::getValue('payroll_ramadan_enabled', 'off');
+        $ramadanStart = Carbon::parse(Setting::getValue('payroll_ramadan_start', date('Y-m-d')))->startOfDay();
+        $ramadanEnd = Carbon::parse(Setting::getValue('payroll_ramadan_end', date('Y-m-d')))->endOfDay();
+        
+        $isRamadan = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd));
+
         if (($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) || ($dayOfWeek === Carbon::SATURDAY && $staffSatEnabled === 'on')) {
-            $inTime = Setting::getValue('payroll_staff_in', '07:30');
-            $outTime = ($dayOfWeek === Carbon::FRIDAY) 
-                ? Setting::getValue('payroll_staff_out_fri', '16:30')
-                : Setting::getValue('payroll_staff_out_mon_thu', '16:00');
+            if ($isRamadan && $dayOfWeek !== Carbon::SATURDAY) {
+                $inTime = Setting::getValue('payroll_ramadan_staff_in', '08:00');
+                $outTime = ($dayOfWeek === Carbon::FRIDAY) 
+                    ? Setting::getValue('payroll_ramadan_staff_out_fri', '15:30')
+                    : Setting::getValue('payroll_ramadan_staff_out_mon_thu', '15:00');
+                $shiftName = 'Staff Kantor (Ramadhan)';
+            } else {
+                $inTime = Setting::getValue('payroll_staff_in', '07:30');
+                $outTime = ($dayOfWeek === Carbon::FRIDAY) 
+                    ? Setting::getValue('payroll_staff_out_fri', '16:30')
+                    : Setting::getValue('payroll_staff_out_mon_thu', '16:00');
+                $shiftName = 'Staff Kantor';
+            }
             
             if ($dayOfWeek === Carbon::SATURDAY) {
                 $inTime = Setting::getValue('payroll_staff_saturday_in', '07:30');
                 $outTime = Setting::getValue('payroll_staff_saturday_out', '12:00');
+                $shiftName = 'Staff Kantor (Sabtu)';
             }
 
             return [
                 'type' => 'office',
                 'shift' => (object)[
-                    'name' => ($dayOfWeek === Carbon::SATURDAY) ? 'Staff Kantor (Sabtu)' : 'Staff Kantor',
+                    'name' => $shiftName,
                     'start_time' => $inTime . ':00',
                     'end_time' => $outTime . ':00',
                 ],
