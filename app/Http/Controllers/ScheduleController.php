@@ -21,22 +21,23 @@ class ScheduleController extends Controller
         $month = Carbon::parse($monthStr . '-01');
         $daysInMonth = $month->daysInMonth;
 
-        $shifts = Shift::whereIn('name', ['Pagi', 'Siang', 'Malam'])->orderBy('id')->get();
+        $shifts = Shift::where(function($q) {
+            $q->whereIn('name', ['Pagi', 'Siang', 'Malam'])
+              ->orWhere('name', 'like', '%RUPAM%');
+        })->orderBy('id')->get();
         
-        // Get filtered squads for both tabs
         $reguSquads = Squad::where('type', 'regu')->orderBy('name')->get();
         $p2uSquads = Squad::where('type', 'p2u')->orderBy('name')->get();
 
-        // Get schedules for Regu and P2U
+        // Get schedules for Regu and P2U with fixed grouping key (strictly Y-m-d)
         $allSquadSchedules = SquadSchedule::with('squad')
             ->whereMonth('date', $month->month)
             ->whereYear('date', $month->year)
             ->get()
             ->groupBy(function($item) {
-                return $item->date . '_' . $item->shift_id;
+                return Carbon::parse($item->date)->format('Y-m-d') . '_' . $item->shift_id;
             });
 
-        // Split grouped schedules for easier view access
         $reguSchedules = $allSquadSchedules->map(function($group) {
             return $group->where('squad.type', 'regu');
         });
@@ -45,7 +46,6 @@ class ScheduleController extends Controller
             return $group->where('squad.type', 'p2u');
         });
 
-        // Individual Pickets
         $individualSchedulesList = Schedule::with(['employee', 'shift'])
             ->whereMonth('date', $month->month)
             ->whereYear('date', $month->year)
@@ -53,12 +53,10 @@ class ScheduleController extends Controller
             ->get();
 
         $individualSchedules = $individualSchedulesList->groupBy(function($item) {
-                return $item->date . '_' . $item->shift_id;
+                return Carbon::parse($item->date)->format('Y-m-d') . '_' . $item->shift_id;
             });
 
         $employees = Employee::orderBy('full_name')->get();
-
-        // PERSISTENCE: If current month is empty, offer to copy from last month
         $hasData = SquadSchedule::whereMonth('date', $month->month)->whereYear('date', $month->year)->exists();
 
         return view('admin.schedules.index', compact(
@@ -77,15 +75,19 @@ class ScheduleController extends Controller
             'type' => 'required|in:regu,p2u'
         ]);
 
+        $cleanDate = Carbon::parse($request->date)->format('Y-m-d');
+
         // Always delete existing squad of the same type for this date/shift
-        SquadSchedule::where('date', $request->date)
+        SquadSchedule::where('date', $cleanDate)
             ->where('shift_id', $request->shift_id)
-            ->whereHas('squad', fn($q) => $q->where('type', $request->type))
+            ->whereHas('squad', function($q) use ($request) {
+                $q->where('type', $request->type);
+            })
             ->delete();
 
         if ($request->squad_id) {
             SquadSchedule::create([
-                'date' => $request->date,
+                'date' => $cleanDate,
                 'shift_id' => $request->shift_id,
                 'squad_id' => $request->squad_id
             ]);
@@ -135,7 +137,6 @@ class ScheduleController extends Controller
                     ]
                 );
             } else {
-                // Jika statusnya Piket atau Libur, hapus record Attendance STATUS KHUSUS jika ada
                 \App\Models\Attendance::where('employee_id', $employee_id)
                     ->where('date', $cleanDate)
                     ->whereIn('status', ['on_leave', 'sick', 'duty_full', 'duty_half', 'tubel'])
@@ -151,14 +152,10 @@ class ScheduleController extends Controller
         $schedule = Schedule::find($id);
         if ($schedule) {
             $cleanDate = \Carbon\Carbon::parse($schedule->date)->format('Y-m-d');
-            
-            // Hapus record di Attendance jika statusnya adalah salah satu status sinkronisasi
-            // Gunakan whereIn status untuk memastikan record 'buatan' ini hilang total
             \App\Models\Attendance::where('employee_id', $schedule->employee_id)
                 ->where('date', $cleanDate)
                 ->whereIn('status', ['on_leave', 'sick', 'duty_full', 'duty_half', 'tubel'])
                 ->delete();
-
             $schedule->delete();
         }
         return back()->with('success', 'Jadwal penugasan berhasil dihapus.');
@@ -172,11 +169,14 @@ class ScheduleController extends Controller
         $squads = Squad::where('type', $request->type)->orderBy('name')->pluck('id')->toArray();
         if (empty($squads)) return back()->with('error', 'Belum ada unit ' . strtoupper($request->type));
 
-        $shifts = Shift::whereIn('name', ['Pagi', 'Siang', 'Malam'])->orderBy('id')->get();
+        $shifts = Shift::where(function($q) {
+            $q->whereIn('name', ['Pagi', 'Siang', 'Malam'])
+              ->orWhere('name', 'like', '%RUPAM%');
+        })->orderBy('id')->get();
+        
         $squadCount = count($squads);
         $currentSquadIndex = 0;
 
-        // Try to find last month's last assigned squad to continue rotation
         $lastMonth = $month->copy()->subMonth();
         $lastSchedule = SquadSchedule::whereMonth('date', $lastMonth->month)
             ->whereYear('date', $lastMonth->year)
@@ -190,13 +190,20 @@ class ScheduleController extends Controller
             if ($lastIdx !== false) $currentSquadIndex = ($lastIdx + 1) % $squadCount;
         }
 
+        // CLEAR existing records first to ensure no conflicts
+        SquadSchedule::whereMonth('date', $month->month)
+            ->whereYear('date', $month->year)
+            ->whereHas('squad', fn($q) => $q->where('type', $request->type))
+            ->delete();
+
         for ($d = 1; $d <= $month->daysInMonth; $d++) {
             $date = $month->copy()->day($d)->format('Y-m-d');
             foreach ($shifts as $shift) {
-                SquadSchedule::updateOrCreate(
-                    ['date' => $date, 'shift_id' => $shift->id, 'squad_id' => $squads[$currentSquadIndex]],
-                    ['updated_at' => now()]
-                );
+                SquadSchedule::create([
+                    'date' => $date, 
+                    'shift_id' => $shift->id, 
+                    'squad_id' => $squads[$currentSquadIndex]
+                ]);
                 $currentSquadIndex = ($currentSquadIndex + 1) % $squadCount;
             }
         }
@@ -232,7 +239,6 @@ class ScheduleController extends Controller
 
         foreach ($schedules as $s) {
             $newDate = Carbon::parse($s->date)->addMonth();
-            // Ensure we only copy if day exists in current month (prevent 31 -> 31 if next month only 30)
             if ($newDate->month == $month->month) {
                 SquadSchedule::updateOrCreate(
                     ['date' => $newDate->format('Y-m-d'), 'shift_id' => $s->shift_id, 'squad_id' => $s->squad_id],
@@ -246,14 +252,16 @@ class ScheduleController extends Controller
 
     public function exportPdf(Request $request)
     {
-        set_time_limit(300); // Prevent timeout for large PDF generation
-        
+        set_time_limit(300);
         $monthStr = $request->month ?? now()->format('Y-m');
-        $type = $request->type ?? 'regu'; // Default to regu if not specified
+        $type = $request->type ?? 'regu';
         $date = \Carbon\Carbon::parse($monthStr . '-01');
         $daysInMonth = $date->daysInMonth;
         
-        $shifts = Shift::whereIn('name', ['Pagi', 'Siang', 'Malam'])->orderBy('id')->get();
+        $shifts = Shift::where(function($q) {
+            $q->whereIn('name', ['Pagi', 'Siang', 'Malam'])
+              ->orWhere('name', 'like', '%RUPAM%');
+        })->orderBy('id')->get();
         
         if ($type === 'individual') {
             $schedules = Schedule::with(['employee', 'shift'])
@@ -268,7 +276,6 @@ class ScheduleController extends Controller
             ))->setPaper('a4', 'portrait')->download("jadwal-piket-individu-{$monthStr}.pdf");
         }
 
-        // For Regu and P2U
         $schedules = SquadSchedule::with('squad')
             ->whereMonth('date', $date->month)
             ->whereYear('date', $date->year)
@@ -276,7 +283,9 @@ class ScheduleController extends Controller
                 $q->where('type', $type);
             })
             ->get()
-            ->groupBy(fn($item) => $item->date . '_' . $item->shift_id);
+            ->groupBy(function($item) {
+                return Carbon::parse($item->date)->format('Y-m-d') . '_' . $item->shift_id;
+            });
 
         $title = ($type === 'p2u') ? 'JADWAL UNIT P2U' : 'JADWAL REGU JAGA';
 

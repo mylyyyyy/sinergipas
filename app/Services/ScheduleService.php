@@ -42,9 +42,20 @@ class ScheduleService
                 ->first();
 
             if ($squad) {
+                $st = $squad->shift->start_time ?? '06:00:00';
+                
+                // Force 06:00 for Morning Guard Shifts to ensure consistency across the system
+                if ($squad->shift && str_contains(strtoupper($squad->shift->name ?? ''), 'PAGI')) {
+                    $st = '06:00:00';
+                }
+
                 return [
                     'type' => 'squad',
-                    'shift' => $squad->shift,
+                    'shift' => (object)[
+                        'name' => $squad->shift->name ?? 'Regu Jaga',
+                        'start_time' => $st,
+                        'end_time' => $squad->shift->end_time ?? '00:00:00',
+                    ],
                     'is_picket' => true
                 ];
             }
