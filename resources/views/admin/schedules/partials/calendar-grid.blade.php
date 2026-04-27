@@ -61,11 +61,20 @@
                                     <option value="">- KOSONG -</option>
                                     @foreach($squads as $squad)
                                         <option value="{{ $squad->id }}" {{ $daySchedules->contains('squad_id', $squad->id) ? 'selected' : '' }}>
-                                            @if(!str_contains(strtoupper($squad->name), 'REGU')) 
-                                                REGU {{ strtoupper($squad->name) }}
-                                            @else
-                                                {{ strtoupper($squad->name) }}
-                                            @endif
+                                            @php
+                                                $squadName = strtoupper($squad->name);
+                                                if ($type === 'p2u') {
+                                                    // Ubah kata "REGU" menjadi "P2U" jika ada, atau tambahkan prefix P2U
+                                                    $displayName = str_contains($squadName, 'REGU') 
+                                                        ? str_replace('REGU', 'P2U', $squadName) 
+                                                        : 'P2U ' . $squadName;
+                                                } else {
+                                                    $displayName = str_contains($squadName, 'REGU') 
+                                                        ? $squadName 
+                                                        : 'REGU ' . $squadName;
+                                                }
+                                            @endphp
+                                            {{ $displayName }}
                                         </option>
                                     @endforeach
                                 </select>
