@@ -69,28 +69,40 @@ class ScheduleService
         $ramadanEnabled = Setting::getValue('payroll_ramadan_enabled', 'off');
         $ramadanStart = Carbon::parse(Setting::getValue('payroll_ramadan_start', date('Y-m-d')))->startOfDay();
         $ramadanEnd = Carbon::parse(Setting::getValue('payroll_ramadan_end', date('Y-m-d')))->endOfDay();
+        $ramadanSatEnabled = Setting::getValue('payroll_ramadan_saturday_enabled', 'off');
         
         $isRamadan = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd));
 
-        if (($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) || ($dayOfWeek === Carbon::SATURDAY && $staffSatEnabled === 'on')) {
-            if ($isRamadan && $dayOfWeek !== Carbon::SATURDAY) {
-                $inTime = Setting::getValue('payroll_ramadan_staff_in', '08:00');
-                $outTime = ($dayOfWeek === Carbon::FRIDAY) 
-                    ? Setting::getValue('payroll_ramadan_staff_out_fri', '15:30')
-                    : Setting::getValue('payroll_ramadan_staff_out_mon_thu', '15:00');
-                $shiftName = 'Staff Kantor (Ramadhan)';
-            } else {
-                $inTime = Setting::getValue('payroll_staff_in', '07:30');
-                $outTime = ($dayOfWeek === Carbon::FRIDAY) 
-                    ? Setting::getValue('payroll_staff_out_fri', '16:30')
-                    : Setting::getValue('payroll_staff_out_mon_thu', '16:00');
-                $shiftName = 'Staff Kantor';
-            }
+        // Jika hari biasa atau (hari sabtu DAN (sabtu biasa aktif ATAU sabtu puasa aktif))
+        if (($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) || 
+            ($dayOfWeek === Carbon::SATURDAY && ($staffSatEnabled === 'on' || ($isRamadan && $ramadanSatEnabled === 'on')))) {
             
             if ($dayOfWeek === Carbon::SATURDAY) {
-                $inTime = Setting::getValue('payroll_staff_saturday_in', '07:30');
-                $outTime = Setting::getValue('payroll_staff_saturday_out', '12:00');
-                $shiftName = 'Staff Kantor (Sabtu)';
+                if ($isRamadan && $ramadanSatEnabled === 'on') {
+                    $inTime = Setting::getValue('payroll_ramadan_saturday_in', '08:00');
+                    $outTime = Setting::getValue('payroll_ramadan_saturday_out', '12:00');
+                    $shiftName = 'Staff Kantor (Sabtu Ramadhan)';
+                } else if (!$isRamadan && $staffSatEnabled === 'on') {
+                    $inTime = Setting::getValue('payroll_staff_saturday_in', '07:30');
+                    $outTime = Setting::getValue('payroll_staff_saturday_out', '12:00');
+                    $shiftName = 'Staff Kantor (Sabtu)';
+                } else {
+                    return null; // Skip jika aturan sabtu tidak terpenuhi
+                }
+            } else {
+                if ($isRamadan) {
+                    $inTime = Setting::getValue('payroll_ramadan_staff_in', '08:00');
+                    $outTime = ($dayOfWeek === Carbon::FRIDAY) 
+                        ? Setting::getValue('payroll_ramadan_staff_out_fri', '15:30')
+                        : Setting::getValue('payroll_ramadan_staff_out_mon_thu', '15:00');
+                    $shiftName = 'Staff Kantor (Ramadhan)';
+                } else {
+                    $inTime = Setting::getValue('payroll_staff_in', '07:30');
+                    $outTime = ($dayOfWeek === Carbon::FRIDAY) 
+                        ? Setting::getValue('payroll_staff_out_fri', '16:30')
+                        : Setting::getValue('payroll_staff_out_mon_thu', '16:00');
+                    $shiftName = 'Staff Kantor';
+                }
             }
 
             return [

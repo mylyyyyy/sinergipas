@@ -53,9 +53,11 @@ class AttendanceController extends Controller
         $ramadanStart = Carbon::parse(\App\Models\Setting::getValue('payroll_ramadan_start', date('Y-m-d')))->startOfDay();
         $ramadanEnd = Carbon::parse(\App\Models\Setting::getValue('payroll_ramadan_end', date('Y-m-d')))->endOfDay();
         $ramadanIn = \App\Models\Setting::getValue('payroll_ramadan_staff_in', '08:00');
+        $ramadanSatEnabled = \App\Models\Setting::getValue('payroll_ramadan_saturday_enabled', 'off');
+        $ramadanSatIn = \App\Models\Setting::getValue('payroll_ramadan_saturday_in', '08:00');
 
         // Helper to get effective shift start time for a date
-        $getScheduledStartTime = function($emp, $date) use ($squadSchedules, $individualSchedules, $staffInTime, $staffSatEnabled, $staffSatIn, $ramadanEnabled, $ramadanStart, $ramadanEnd, $ramadanIn) {
+        $getScheduledStartTime = function($emp, $date) use ($squadSchedules, $individualSchedules, $staffInTime, $staffSatEnabled, $staffSatIn, $ramadanEnabled, $ramadanStart, $ramadanEnd, $ramadanIn, $ramadanSatEnabled, $ramadanSatIn) {
             $dateStr = Carbon::parse($date)->format('Y-m-d');
             $dateObj = Carbon::parse($date);
             
@@ -88,9 +90,13 @@ class AttendanceController extends Controller
                     return $isRamadan ? $ramadanIn : $staffInTime;
                 }
                 
-                // New Saturday Logic
-                if ($dayNum === Carbon::SATURDAY && $staffSatEnabled === 'on') {
-                    return $staffSatIn; // Asumsi hari sabtu tidak terpengaruh jam puasa, atau bisa disesuaikan jika perlu
+                // Saturday Logic
+                if ($dayNum === Carbon::SATURDAY) {
+                    if ($isRamadan && $ramadanSatEnabled === 'on') {
+                        return $ramadanSatIn;
+                    } else if (!$isRamadan && $staffSatEnabled === 'on') {
+                        return $staffSatIn;
+                    }
                 }
             }
             
@@ -363,6 +369,16 @@ class AttendanceController extends Controller
             $staffSatEnabled = Setting::getValue('payroll_staff_saturday_enabled', 'off');
             $staffSatIn = Setting::getValue('payroll_staff_saturday_in', '07:30');
             $staffOutSat = Setting::getValue('payroll_staff_saturday_out', '12:00');
+            
+            $ramadanEnabled = Setting::getValue('payroll_ramadan_enabled', 'off');
+            $ramadanStart = Carbon::parse(Setting::getValue('payroll_ramadan_start', date('Y-m-d')))->startOfDay();
+            $ramadanEnd = Carbon::parse(Setting::getValue('payroll_ramadan_end', date('Y-m-d')))->endOfDay();
+            $ramadanIn = Setting::getValue('payroll_ramadan_staff_in', '08:00');
+            $ramadanOutMonThu = Setting::getValue('payroll_ramadan_staff_out_mon_thu', '15:00');
+            $ramadanOutFri = Setting::getValue('payroll_ramadan_staff_out_fri', '15:30');
+            $ramadanSatEnabled = Setting::getValue('payroll_ramadan_saturday_enabled', 'off');
+            $ramadanSatIn = Setting::getValue('payroll_ramadan_saturday_in', '08:00');
+            $ramadanSatOut = Setting::getValue('payroll_ramadan_saturday_out', '12:00');
             // -------------------------------------------------------------------------
 
             // REPLACE: Hapus data lama sebelum insert
@@ -410,14 +426,28 @@ class AttendanceController extends Controller
                     else {
                         $dateObj = Carbon::parse($date);
                         $dayNum = $dateObj->dayOfWeek;
-                        if (($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) || ($dayNum === Carbon::SATURDAY && $staffSatEnabled === 'on')) {
+                        $isRamadan = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd));
+
+                        if (($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) || ($dayNum === Carbon::SATURDAY && $staffSatEnabled === 'on') || ($isRamadan && $dayNum === Carbon::SATURDAY && $ramadanSatEnabled === 'on')) {
                             
                             if ($dayNum === Carbon::SATURDAY) {
-                                $inT = $staffSatIn;
-                                $outT = $staffOutSat;
+                                if ($isRamadan && $ramadanSatEnabled === 'on') {
+                                    $inT = $ramadanSatIn;
+                                    $outT = $ramadanSatOut;
+                                } else if (!$isRamadan && $staffSatEnabled === 'on') {
+                                    $inT = $staffSatIn;
+                                    $outT = $staffOutSat;
+                                } else {
+                                    continue; // Skip if saturday logic is off
+                                }
                             } else {
-                                $inT = $staffInTime;
-                                $outT = ($dayNum === Carbon::FRIDAY) ? $staffOutFri : $staffOutMonThu;
+                                if ($isRamadan) {
+                                    $inT = $ramadanIn;
+                                    $outT = ($dayNum === Carbon::FRIDAY) ? $ramadanOutFri : $ramadanOutMonThu;
+                                } else {
+                                    $inT = $staffInTime;
+                                    $outT = ($dayNum === Carbon::FRIDAY) ? $staffOutFri : $staffOutMonThu;
+                                }
                             }
 
                             $effectiveSched = ['shift' => (object)[
@@ -509,10 +539,15 @@ class AttendanceController extends Controller
             ->map(fn($g) => $g->keyBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
 
         $staffSatEnabled = Setting::getValue('payroll_staff_saturday_enabled', 'off');
+        $ramadanEnabled = Setting::getValue('payroll_ramadan_enabled', 'off');
+        $ramadanStart = Carbon::parse(Setting::getValue('payroll_ramadan_start', date('Y-m-d')))->startOfDay();
+        $ramadanEnd = Carbon::parse(Setting::getValue('payroll_ramadan_end', date('Y-m-d')))->endOfDay();
+        $ramadanSatEnabled = Setting::getValue('payroll_ramadan_saturday_enabled', 'off');
 
         // Helper logic to determine if an employee is scheduled on a specific date
-        $checkIsScheduled = function($emp, $date) use ($squadSchedules, $individualSchedules, $staffSatEnabled) {
+        $checkIsScheduled = function($emp, $date) use ($squadSchedules, $individualSchedules, $staffSatEnabled, $ramadanEnabled, $ramadanStart, $ramadanEnd, $ramadanSatEnabled) {
             $dateStr = Carbon::parse($date)->format('Y-m-d');
+            $dateObj = Carbon::parse($date);
             
             // 1. Individual Override (Highest Priority)
             if (isset($individualSchedules[$emp->id][$dateStr])) {
@@ -526,9 +561,15 @@ class AttendanceController extends Controller
             
             // 3. Default Office (Staff only)
             if (!$emp->squad_id) {
-                $dayNum = Carbon::parse($date)->dayOfWeek;
+                $dayNum = $dateObj->dayOfWeek;
+                $isRamadan = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd));
+
                 if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) return true;
-                if ($dayNum === Carbon::SATURDAY && $staffSatEnabled === 'on') return true;
+                
+                if ($dayNum === Carbon::SATURDAY) {
+                    if ($isRamadan && $ramadanSatEnabled === 'on') return true;
+                    if (!$isRamadan && $staffSatEnabled === 'on') return true;
+                }
             }
             
             return false;

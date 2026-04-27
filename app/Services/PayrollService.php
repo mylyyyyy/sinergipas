@@ -1,5 +1,5 @@
 <?php
-// VERSION 4.0 - FINAL REFINED TL LOGIC (ROBUST CARBON COMPARISON)
+// VERSION 5.0 - ADDED RAMADAN SATURDAY LOGIC
 
 namespace App\Services;
 
@@ -42,6 +42,17 @@ class PayrollService
             'staff_saturday_enabled' => $allSettings['payroll_staff_saturday_enabled'] ?? 'off',
             'staff_saturday_in' => $allSettings['payroll_staff_saturday_in'] ?? '07:30',
             'staff_saturday_out' => $allSettings['payroll_staff_saturday_out'] ?? '12:00',
+            
+            // Jam Kerja Staff (Bulan Puasa)
+            'ramadan_enabled' => $allSettings['payroll_ramadan_enabled'] ?? 'off',
+            'ramadan_start' => $allSettings['payroll_ramadan_start'] ?? date('Y-m-d'),
+            'ramadan_end' => $allSettings['payroll_ramadan_end'] ?? date('Y-m-d'),
+            'ramadan_staff_in' => $allSettings['payroll_ramadan_staff_in'] ?? '08:00',
+            'ramadan_staff_out_mon_thu' => $allSettings['payroll_ramadan_staff_out_mon_thu'] ?? '15:00',
+            'ramadan_staff_out_fri' => $allSettings['payroll_ramadan_staff_out_fri'] ?? '15:30',
+            'ramadan_saturday_enabled' => $allSettings['payroll_ramadan_saturday_enabled'] ?? 'off',
+            'ramadan_saturday_in' => $allSettings['payroll_ramadan_saturday_in'] ?? '08:00',
+            'ramadan_saturday_out' => $allSettings['payroll_ramadan_saturday_out'] ?? '12:00',
         ];
         
         $attendances = Attendance::where('employee_id', $employee->id)
@@ -136,7 +147,7 @@ class PayrollService
                 
                 // Cek apakah hari ini masuk dalam rentang Bulan Puasa
                 $isRamadan = false;
-                if (isset($rules['ramadan_enabled']) && $rules['ramadan_enabled'] === 'on') {
+                if ($rules['ramadan_enabled'] === 'on') {
                     $ramadanStart = Carbon::parse($rules['ramadan_start'])->startOfDay();
                     $ramadanEnd = Carbon::parse($rules['ramadan_end'])->endOfDay();
                     if ($currentDateObj->between($ramadanStart, $ramadanEnd)) {
@@ -145,8 +156,17 @@ class PayrollService
                 }
 
                 if ($dayOfWeek === Carbon::SATURDAY) {
-                    $scheduledInTime = $rules['staff_saturday_in'];
-                    $scheduledOutTime = $rules['staff_saturday_out'];
+                    if ($isRamadan && $rules['ramadan_saturday_enabled'] === 'on') {
+                        $scheduledInTime = $rules['ramadan_saturday_in'];
+                        $scheduledOutTime = $rules['ramadan_saturday_out'];
+                    } else if (!$isRamadan && $rules['staff_saturday_enabled'] === 'on') {
+                        $scheduledInTime = $rules['staff_saturday_in'];
+                        $scheduledOutTime = $rules['staff_saturday_out'];
+                    } else {
+                        // Jika Sabtu tidak diaktifkan pada bulan puasa, batalkan jadwal
+                        $isScheduled = false;
+                        $isDefaultOffice = false;
+                    }
                 } else {
                     if ($isRamadan) {
                         $scheduledInTime = $rules['ramadan_staff_in'];
@@ -188,16 +208,18 @@ class PayrollService
                         $actualTimestamp = strtotime($currentDate . ' ' . $checkInStr);
                         $targetTimestamp = strtotime($currentDate . ' ' . $scheduledInTime);
 
-                        // LOGIKA TL (Denda Apel di sini sudah dihapus total)
+                        // FORCE RECALCULATE TL
                         if ($actualTimestamp > $targetTimestamp) {
                             $diff = (int) ceil(($actualTimestamp - $targetTimestamp) / 60);
                             $lateMin = max($lateMin, $diff);
                         }
                     }
 
+                    // --- Pencatatan TL yang Persisten ---
                     if ($lateMin > 0) {
                         $p = $this->getLatePSWPercentage($lateMin, $rules);
                         $canCompensate = false;
+                        
                         if ($lateMin <= 30 && $stats['compensation_count'] < 8 && $attendance->check_out && $scheduledOutTime) {
                             $actualOut = strtotime($currentDate . ' ' . date('H:i:s', strtotime($attendance->check_out)));
                             $requiredOut = strtotime($currentDate . ' ' . $scheduledOutTime) + 1800; // +30 mins
@@ -212,10 +234,17 @@ class PayrollService
                             $stats['deduction_percentage'] += $p;
                             $label = $isDefaultOffice ? 'Terlambat (TL)' : 'Terlambat (TL Shift)';
                             $targetDisplay = $scheduledInTime ? date('H:i', strtotime($scheduledInTime)) : '--:--';
-                            $stats['details'][] = ['type' => $label, 'info' => "{$lateMin}m (Jadwal: {$targetDisplay})", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
+                            $stats['details'][] = [
+                                'type' => $label, 
+                                'info' => "{$lateMin}m (Jadwal: {$targetDisplay})", 
+                                'date' => $currentDate, 
+                                'percent' => $p, 
+                                'rupiah' => ($p / 100) * $baseTunkin
+                            ];
                         }
                     }
 
+                    // 3. PSW & Lupa Absen
                     $earlyMin = abs((int)($attendance->early_minutes ?? 0));
                     if ($earlyMin > 0) {
                         $p = $this->getLatePSWPercentage($earlyMin, $rules);

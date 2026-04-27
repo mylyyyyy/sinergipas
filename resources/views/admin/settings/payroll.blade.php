@@ -121,13 +121,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tidak Ikut Apel/Upacara</label>
-                        <div class="relative">
-                            <input type="number" step="0.1" name="payroll_apel_percent" value="{{ $settings['apel'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all">
-                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">%</span>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -218,6 +211,30 @@
                             <input type="time" name="payroll_ramadan_staff_out_fri" value="{{ $settings['ramadan_staff_out_fri'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-emerald-500 transition-all">
                         </div>
                     </div>
+
+                    <div class="pt-6 border-t border-slate-100">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h5 class="text-[10px] font-black text-slate-900 uppercase tracking-[0.15em]">Opsi Hari Sabtu (Bulan Puasa)</h5>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic text-emerald-500">Aktifkan jika ada jadwal masuk staff di hari Sabtu selama bulan puasa</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="payroll_ramadan_saturday_enabled" {{ $settings['ramadan_saturday_enabled'] === 'on' ? 'checked' : '' }} class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-6 {{ $settings['ramadan_saturday_enabled'] === 'on' ? '' : 'opacity-40 grayscale pointer-events-none' }}" id="ramadan-saturday-inputs">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Jam Masuk (Sabtu Puasa)</label>
+                                <input type="time" name="payroll_ramadan_saturday_in" value="{{ $settings['ramadan_saturday_in'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-emerald-500 transition-all">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Jam Pulang (Sabtu Puasa)</label>
+                                <input type="time" name="payroll_ramadan_saturday_out" value="{{ $settings['ramadan_saturday_out'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-emerald-500 transition-all">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -268,6 +285,18 @@
                 ramadanInputs.classList.remove('opacity-40', 'grayscale', 'pointer-events-none');
             } else {
                 ramadanInputs.classList.add('opacity-40', 'grayscale', 'pointer-events-none');
+            }
+        });
+
+        // Ramadan Saturday logic
+        const ramadanSatCheckbox = document.querySelector('input[name="payroll_ramadan_saturday_enabled"]');
+        const ramadanSatInputs = document.getElementById('ramadan-saturday-inputs');
+
+        ramadanSatCheckbox.addEventListener('change', () => {
+            if (ramadanSatCheckbox.checked) {
+                ramadanSatInputs.classList.remove('opacity-40', 'grayscale', 'pointer-events-none');
+            } else {
+                ramadanSatInputs.classList.add('opacity-40', 'grayscale', 'pointer-events-none');
             }
         });
     });

@@ -39,6 +39,11 @@ class PayrollSettingController extends Controller
             'ramadan_staff_in' => Setting::getValue('payroll_ramadan_staff_in', '08:00'),
             'ramadan_staff_out_mon_thu' => Setting::getValue('payroll_ramadan_staff_out_mon_thu', '15:00'),
             'ramadan_staff_out_fri' => Setting::getValue('payroll_ramadan_staff_out_fri', '15:30'),
+
+            // Jam Kerja Staff (Bulan Puasa - Sabtu)
+            'ramadan_saturday_enabled' => Setting::getValue('payroll_ramadan_saturday_enabled', 'off'),
+            'ramadan_saturday_in' => Setting::getValue('payroll_ramadan_saturday_in', '08:00'),
+            'ramadan_saturday_out' => Setting::getValue('payroll_ramadan_saturday_out', '12:00'),
         ];
 
         return view('admin.settings.payroll', compact('settings'));
@@ -70,6 +75,10 @@ class PayrollSettingController extends Controller
             'payroll_ramadan_staff_in' => 'required_if:payroll_ramadan_enabled,on|string',
             'payroll_ramadan_staff_out_mon_thu' => 'required_if:payroll_ramadan_enabled,on|string',
             'payroll_ramadan_staff_out_fri' => 'required_if:payroll_ramadan_enabled,on|string',
+
+            'payroll_ramadan_saturday_enabled' => 'nullable|string',
+            'payroll_ramadan_saturday_in' => 'required_if:payroll_ramadan_saturday_enabled,on|string',
+            'payroll_ramadan_saturday_out' => 'required_if:payroll_ramadan_saturday_enabled,on|string',
         ]);
 
         // Handle checkboxes
@@ -78,6 +87,9 @@ class PayrollSettingController extends Controller
         }
         if (!isset($data['payroll_ramadan_enabled'])) {
             $data['payroll_ramadan_enabled'] = 'off';
+        }
+        if (!isset($data['payroll_ramadan_saturday_enabled'])) {
+            $data['payroll_ramadan_saturday_enabled'] = 'off';
         }
 
         foreach ($data as $key => $value) {
