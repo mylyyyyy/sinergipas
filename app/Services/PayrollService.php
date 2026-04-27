@@ -72,8 +72,8 @@ class PayrollService
             'details' => [],
             'processed_logs' => [],
             'violation_note' => null,
-            'is_tubel' => $employee->is_tubel,
-            'is_cpns' => $employee->is_cpns,
+            'is_tubel' => (bool)$employee->is_tubel,
+            'is_cpns' => (bool)$employee->is_cpns,
             'is_acting' => false
         ];
 
@@ -128,27 +128,25 @@ class PayrollService
                 $scheduledInTime = $squadSched->shift->start_time ?? null;
                 $scheduledOutTime = $squadSched->shift->end_time ?? null;
                 
-                // Force 06:00 for Guard Morning Shifts (Bukan Ramadhan)
-                if ($scheduledInTime && str_contains(strtoupper($squadSched->shift->name ?? ''), 'PAGI')) {
+                // FORCE 06:00:00 untuk semua Regu Jaga Pagi (Pastikan Syahrul telat 77 menit)
+                if (str_contains(strtoupper($squadSched->shift->name ?? ''), 'PAGI')) {
                     $scheduledInTime = '06:00:00';
                 }
-            } elseif (!$employee->squad_id && $dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) {
+            } elseif ($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) {
                 $isScheduled = true;
                 $isDefaultOffice = true;
                 $scheduledInTime = $rules['staff_in'];
                 $scheduledOutTime = ($dayOfWeek === Carbon::FRIDAY) ? $rules['staff_out_fri'] : $rules['staff_out_mon_thu'];
             }
 
-            // Fallback absolut untuk regu jaga pagi jika data shift terputus
+            // Fallback regu jaga pagi jika data shift terputus
             if ($employee->squad_id && $isScheduled && empty($scheduledInTime)) {
                 $scheduledInTime = '06:00:00'; 
             }
 
             if ($specialStatus && in_array($specialStatus, ['duty_full', 'duty_half', 'tubel'])) {
                 $isEligibleMeal = ($specialStatus === 'duty_half');
-                $stats['processed_logs'][] = [
-                    'date' => $currentDate, 'status' => $specialStatus, 'check_in' => 'DINAS', 'check_out' => 'LUAR', 'is_scheduled' => true, 'meal_amount' => $isEligibleMeal ? $mealRate : 0
-                ];
+                $stats['processed_logs'][] = ['date' => $currentDate, 'status' => $specialStatus, 'check_in' => 'DINAS', 'check_out' => 'LUAR', 'is_scheduled' => true, 'meal_amount' => $isEligibleMeal ? $mealRate : 0];
                 if ($isEligibleMeal) { $stats['meal_allowance_days']++; $stats['total_present']++; }
                 if ($specialStatus === 'tubel') { $stats['deduction_percentage'] += 100; }
                 continue;
@@ -157,27 +155,14 @@ class PayrollService
             if ($attendance) {
                 $status = $attendance->status;
                 $isEligibleMeal = in_array($status, ['present', 'late', 'duty_half', 'picket']) && $isScheduled;
-
                 $checkInDisplay = $attendance->check_in ? date('H:i', strtotime($attendance->check_in)) : '--:--';
                 $checkOutDisplay = $attendance->check_out ? date('H:i', strtotime($attendance->check_out)) : '--:--';
-                
-                if ($checkInDisplay !== '--:--' && $checkInDisplay === $checkOutDisplay) {
-                    $checkOutDisplay = '--:--';
-                }
+                if ($checkInDisplay !== '--:--' && $checkInDisplay === $checkOutDisplay) $checkOutDisplay = '--:--';
 
-                $stats['processed_logs'][] = [
-                    'date' => $currentDate,
-                    'status' => $status,
-                    'check_in' => $checkInDisplay,
-                    'check_out' => $checkOutDisplay,
-                    'is_scheduled' => $isScheduled,
-                    'meal_amount' => $isEligibleMeal ? $mealRate : 0
-                ];
-
+                $stats['processed_logs'][] = ['date' => $currentDate, 'status' => $status, 'check_in' => $checkInDisplay, 'check_out' => $checkOutDisplay, 'is_scheduled' => $isScheduled, 'meal_amount' => $isEligibleMeal ? $mealRate : 0];
                 if ($isEligibleMeal) { $stats['meal_allowance_days']++; $stats['total_present']++; }
 
                 if ($isScheduled) {
-                    // Paksa ambil late_minutes sebagai angka positif (mengatasi kasus Syahrul -17m)
                     $lateMin = abs((int)($attendance->late_minutes ?? 0));
                     $checkInStr = $attendance->check_in ? (is_string($attendance->check_in) ? $attendance->check_in : $attendance->check_in->format('H:i:s')) : null;
                     
@@ -185,8 +170,8 @@ class PayrollService
                         $actualTime = date('H:i', strtotime($checkInStr));
                         $targetIn = date('H:i', strtotime($scheduledInTime));
 
-                        // 1. Denda Apel (HANYA untuk Default Staff Kantor)
-                        if ($isDefaultOffice && $actualTime > $rules['staff_in']) {
+                        // 1. Denda Apel (Staf Kantor)
+                        if ($isDefaultOffice && $actualTime > date('H:i', strtotime($rules['staff_in']))) {
                             $stats['deduction_percentage'] += $rules['apel'];
                             $stats['details'][] = [
                                 'type' => 'Tidak Ikut Apel', 
@@ -197,20 +182,18 @@ class PayrollService
                             ];
                         }
 
-                        // 2. Denda Terlambat (TL) - Force recalculate selisih menit (Mengatasi kasus Budi Mulyono)
+                        // 2. FORCE RECALCULATE TL (Penting untuk Kasus Budi & Syahrul)
                         if ($actualTime > $targetIn) {
                             $diff = (int) Carbon::parse($currentDate . ' ' . $actualTime)->diffInMinutes(Carbon::parse($currentDate . ' ' . $targetIn));
                             $lateMin = max($lateMin, $diff);
                         }
                     }
 
-                    // --- BAGIAN TL: HARUS SELALU DICATAT JIKA LATE_MIN > 0 ---
+                    // --- Pencatatan TL yang Persisten ---
                     if ($lateMin > 0) {
-                        $stats['late_count']++;
                         $p = $this->getLatePSWPercentage($lateMin, $rules);
                         $canCompensate = false;
                         
-                        // Kompensasi hanya berlaku jika ada jam pulang (check_out)
                         if ($lateMin <= 30 && $stats['compensation_count'] < 8 && $attendance->check_out && $scheduledOutTime) {
                             $actualOut = Carbon::parse($currentDate . ' ' . date('H:i:s', strtotime($attendance->check_out)));
                             $requiredOut = Carbon::parse($currentDate . ' ' . $scheduledOutTime)->addMinutes(30);
@@ -219,22 +202,15 @@ class PayrollService
 
                         if ($canCompensate) {
                             $stats['compensation_count']++;
-                            $stats['details'][] = [
-                                'type' => 'TL Diganti (Kompensasi)', 
-                                'info' => "Telat {$lateMin}m, Ganti Pulang", 
-                                'date' => $currentDate, 
-                                'percent' => 0, 
-                                'rupiah' => 0
-                            ];
+                            $stats['details'][] = ['type' => 'TL Diganti (Kompensasi)', 'info' => "Telat {$lateMin}m, Ganti Pulang", 'date' => $currentDate, 'percent' => 0, 'rupiah' => 0];
                         } else {
+                            $stats['late_count']++;
                             $stats['deduction_percentage'] += $p;
                             $label = $isDefaultOffice ? 'Terlambat (TL)' : 'Terlambat (TL Shift)';
-                            $displayTarget = $scheduledInTime ? date('H:i', strtotime($scheduledInTime)) : '--:--';
-                            $infoText = "{$lateMin}m (Jadwal: {$displayTarget})";
-                            
+                            $targetDisplay = $scheduledInTime ? date('H:i', strtotime($scheduledInTime)) : '--:--';
                             $stats['details'][] = [
                                 'type' => $label, 
-                                'info' => $infoText, 
+                                'info' => "{$lateMin}m (Jadwal: {$targetDisplay})", 
                                 'date' => $currentDate, 
                                 'percent' => $p, 
                                 'rupiah' => ($p / 100) * $baseTunkin
@@ -250,35 +226,24 @@ class PayrollService
                         $stats['details'][] = ['type' => 'Pulang Cepat (PSW)', 'info' => "{$earlyMin}m", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                     }
 
-                    $hasOnlyOneScan = (empty($attendance->check_in) || empty($attendance->check_out) || $attendance->check_in == $attendance->check_out);
-                    if (in_array($status, ['present', 'late']) && $hasOnlyOneScan) {
-                        $p = $rules['lupa_absen'];
-                        $stats['deduction_percentage'] += $p;
-                        $stats['details'][] = ['type' => 'Lupa Absen', 'info' => (empty($attendance->check_in) ? "Tanpa Masuk" : "Tanpa Pulang"), 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
+                    if (in_array($status, ['present', 'late']) && (empty($attendance->check_in) || empty($attendance->check_out) || $attendance->check_in == $attendance->check_out)) {
+                        $stats['deduction_percentage'] += $rules['lupa_absen'];
+                        $stats['details'][] = ['type' => 'Lupa Absen', 'info' => (empty($attendance->check_in) ? "Tanpa Masuk" : "Tanpa Pulang"), 'date' => $currentDate, 'percent' => $rules['lupa_absen'], 'rupiah' => ($rules['lupa_absen'] / 100) * $baseTunkin];
                     }
-                } else if (!$isScheduled && $attendance && in_array($attendance->status, ['present', 'late'])) {
+                } else if ($attendance && in_array($attendance->status, ['present', 'late'])) {
                     $lateMinFallback = abs((int)($attendance->late_minutes ?? 0));
                     if ($lateMinFallback > 0) {
                         $stats['late_count']++;
                         $p = $this->getLatePSWPercentage($lateMinFallback, $rules);
                         $stats['deduction_percentage'] += $p;
-                        $stats['details'][] = [
-                            'type' => 'Terlambat (TL)', 
-                            'info' => "{$lateMinFallback}m (Tercatat)", 
-                            'date' => $currentDate, 
-                            'percent' => $p, 
-                            'rupiah' => ($p / 100) * $baseTunkin
-                        ];
+                        $stats['details'][] = ['type' => 'Terlambat (TL)', 'info' => "{$lateMinFallback}m (Tercatat)", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                     }
                 }
 
                 if ($status === 'sick') {
                     $sickCounter++;
                     $p = ($sickCounter >= 3 && $sickCounter <= 6) ? $rules['sakit_3_6'] : (($sickCounter >= 7) ? $rules['sakit_7'] : 0);
-                    if ($p > 0) {
-                        $stats['deduction_percentage'] += $p;
-                        $stats['details'][] = ['type' => 'Sakit Progresif', 'info' => "Hari ke-{$sickCounter}", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
-                    }
+                    if ($p > 0) { $stats['deduction_percentage'] += $p; $stats['details'][] = ['type' => 'Sakit Progresif', 'info' => "Hari ke-{$sickCounter}", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin]; }
                 }
 
                 if ($status === 'absent') {
@@ -286,7 +251,6 @@ class PayrollService
                     $stats['deduction_percentage'] += $p;
                     $stats['details'][] = ['type' => 'Mangkir', 'info' => "Tanpa Keterangan", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                 }
-
             } else {
                 if ($isScheduled && !$isFuture) {
                     $p = $rules['mangkir'];
@@ -297,7 +261,6 @@ class PayrollService
         }
 
         if ($stats['late_count'] > $rules['max_late']) $stats['violation_note'] = "PELANGGARAN: Telat {$stats['late_count']}x";
-
         $finalPercent = min(100, $stats['deduction_percentage']);
         $stats['total_potongan_rupiah'] = ($finalPercent / 100) * $baseTunkin;
         $stats['tunkin_final'] = max(0, ($baseTunkin + $actingBonus) - $stats['total_potongan_rupiah']);
