@@ -46,9 +46,11 @@ class AttendanceController extends Controller
             ->map(fn($g) => $g->keyBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
 
         $staffInTime = \App\Models\Setting::getValue('payroll_staff_in', '07:30');
+        $staffSatEnabled = \App\Models\Setting::getValue('payroll_staff_saturday_enabled', 'off');
+        $staffSatIn = \App\Models\Setting::getValue('payroll_staff_saturday_in', '07:30');
 
         // Helper to get effective shift start time for a date
-        $getScheduledStartTime = function($emp, $date) use ($squadSchedules, $individualSchedules, $staffInTime) {
+        $getScheduledStartTime = function($emp, $date) use ($squadSchedules, $individualSchedules, $staffInTime, $staffSatEnabled, $staffSatIn) {
             $dateStr = Carbon::parse($date)->format('Y-m-d');
             
             // 1. Individual Priority
@@ -71,10 +73,13 @@ class AttendanceController extends Controller
                 return $st ?? '06:00:00';
             }
             
-            // 3. Default Staff (Mon-Fri) - Hanya jika BUKAN anggota regu
+            // 3. Default Staff - Hanya jika BUKAN anggota regu
             if (!$emp->squad_id) {
                 $dayNum = Carbon::parse($date)->dayOfWeek;
                 if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) return $staffInTime;
+                
+                // New Saturday Logic
+                if ($dayNum === Carbon::SATURDAY && $staffSatEnabled === 'on') return $staffSatIn;
             }
             
             return null;
@@ -343,6 +348,9 @@ class AttendanceController extends Controller
             $staffInTime = Setting::getValue('payroll_staff_in', '07:30');
             $staffOutMonThu = Setting::getValue('payroll_staff_out_mon_thu', '16:00');
             $staffOutFri = Setting::getValue('payroll_staff_out_fri', '16:30');
+            $staffSatEnabled = Setting::getValue('payroll_staff_saturday_enabled', 'off');
+            $staffSatIn = Setting::getValue('payroll_staff_saturday_in', '07:30');
+            $staffOutSat = Setting::getValue('payroll_staff_saturday_out', '12:00');
             // -------------------------------------------------------------------------
 
             // REPLACE: Hapus data lama sebelum insert
@@ -389,10 +397,19 @@ class AttendanceController extends Controller
                     // 3. Cek Kantor (Staff)
                     else {
                         $dateObj = Carbon::parse($date);
-                        if ($dateObj->dayOfWeek >= Carbon::MONDAY && $dateObj->dayOfWeek <= Carbon::FRIDAY) {
-                            $outT = ($dateObj->dayOfWeek === Carbon::FRIDAY) ? $staffOutFri : $staffOutMonThu;
+                        $dayNum = $dateObj->dayOfWeek;
+                        if (($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) || ($dayNum === Carbon::SATURDAY && $staffSatEnabled === 'on')) {
+                            
+                            if ($dayNum === Carbon::SATURDAY) {
+                                $inT = $staffSatIn;
+                                $outT = $staffOutSat;
+                            } else {
+                                $inT = $staffInTime;
+                                $outT = ($dayNum === Carbon::FRIDAY) ? $staffOutFri : $staffOutMonThu;
+                            }
+
                             $effectiveSched = ['shift' => (object)[
-                                'start_time' => $staffInTime . ':00',
+                                'start_time' => $inT . ':00',
                                 'end_time' => $outT . ':00'
                             ]];
                         }
@@ -479,8 +496,10 @@ class AttendanceController extends Controller
             ->get()->groupBy('employee_id')
             ->map(fn($g) => $g->keyBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
 
+        $staffSatEnabled = Setting::getValue('payroll_staff_saturday_enabled', 'off');
+
         // Helper logic to determine if an employee is scheduled on a specific date
-        $checkIsScheduled = function($emp, $date) use ($squadSchedules, $individualSchedules) {
+        $checkIsScheduled = function($emp, $date) use ($squadSchedules, $individualSchedules, $staffSatEnabled) {
             $dateStr = Carbon::parse($date)->format('Y-m-d');
             
             // 1. Individual Override (Highest Priority)
@@ -493,10 +512,11 @@ class AttendanceController extends Controller
                 return in_array($dateStr, $squadSchedules[$emp->squad_id]);
             }
             
-            // 3. Default Office (Staff only, Mon-Fri)
+            // 3. Default Office (Staff only)
             if (!$emp->squad_id) {
                 $dayNum = Carbon::parse($date)->dayOfWeek;
-                return ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY);
+                if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) return true;
+                if ($dayNum === Carbon::SATURDAY && $staffSatEnabled === 'on') return true;
             }
             
             return false;

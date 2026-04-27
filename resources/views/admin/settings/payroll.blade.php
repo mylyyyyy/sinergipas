@@ -152,6 +152,30 @@
                             <input type="time" name="payroll_staff_out_fri" value="{{ $settings['staff_out_fri'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all">
                         </div>
                     </div>
+
+                    <div class="pt-6 border-t border-slate-100">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h5 class="text-[10px] font-black text-slate-900 uppercase tracking-[0.15em]">Opsi Hari Sabtu</h5>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic text-blue-500">Aktifkan jika ada acara/jadwal khusus staff di hari Sabtu</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="payroll_staff_saturday_enabled" {{ $settings['staff_saturday_enabled'] === 'on' ? 'checked' : '' }} class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-6 {{ $settings['staff_saturday_enabled'] === 'on' ? '' : 'opacity-40 grayscale pointer-events-none' }}" id="saturday-inputs">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Jam Masuk (Sabtu)</label>
+                                <input type="time" name="payroll_staff_saturday_in" value="{{ $settings['staff_saturday_in'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Jam Pulang (Sabtu)</label>
+                                <input type="time" name="payroll_staff_saturday_out" value="{{ $settings['staff_saturday_out'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -178,4 +202,19 @@
     });
 </script>
 @endif
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const checkbox = document.querySelector('input[name="payroll_staff_saturday_enabled"]');
+        const inputs = document.getElementById('saturday-inputs');
+
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+                inputs.classList.remove('opacity-40', 'grayscale', 'pointer-events-none');
+            } else {
+                inputs.classList.add('opacity-40', 'grayscale', 'pointer-events-none');
+            }
+        });
+    });
+</script>
 @endsection

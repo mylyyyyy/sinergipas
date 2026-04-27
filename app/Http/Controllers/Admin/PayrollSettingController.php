@@ -26,6 +26,11 @@ class PayrollSettingController extends Controller
             'staff_in' => Setting::getValue('payroll_staff_in', '07:30'),
             'staff_out_mon_thu' => Setting::getValue('payroll_staff_out_mon_thu', '16:00'),
             'staff_out_fri' => Setting::getValue('payroll_staff_out_fri', '16:30'),
+
+            // Jam Kerja Staff (Sabtu - Opsional)
+            'staff_saturday_enabled' => Setting::getValue('payroll_staff_saturday_enabled', 'off'),
+            'staff_saturday_in' => Setting::getValue('payroll_staff_saturday_in', '07:30'),
+            'staff_saturday_out' => Setting::getValue('payroll_staff_saturday_out', '12:00'),
         ];
 
         return view('admin.settings.payroll', compact('settings'));
@@ -47,7 +52,15 @@ class PayrollSettingController extends Controller
             'payroll_staff_in' => 'required|string',
             'payroll_staff_out_mon_thu' => 'required|string',
             'payroll_staff_out_fri' => 'required|string',
+            'payroll_staff_saturday_enabled' => 'nullable|string',
+            'payroll_staff_saturday_in' => 'required_if:payroll_staff_saturday_enabled,on|string',
+            'payroll_staff_saturday_out' => 'required_if:payroll_staff_saturday_enabled,on|string',
         ]);
+
+        // Handle checkbox for saturday_enabled
+        if (!isset($data['payroll_staff_saturday_enabled'])) {
+            $data['payroll_staff_saturday_enabled'] = 'off';
+        }
 
         foreach ($data as $key => $value) {
             Setting::updateOrCreate(['key' => $key], ['value' => $value]);

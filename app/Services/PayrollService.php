@@ -39,6 +39,9 @@ class PayrollService
             'staff_in' => $allSettings['payroll_staff_in'] ?? '07:30',
             'staff_out_mon_thu' => $allSettings['payroll_staff_out_mon_thu'] ?? '16:00',
             'staff_out_fri' => $allSettings['payroll_staff_out_fri'] ?? '16:30',
+            'staff_saturday_enabled' => $allSettings['payroll_staff_saturday_enabled'] ?? 'off',
+            'staff_saturday_in' => $allSettings['payroll_staff_saturday_in'] ?? '07:30',
+            'staff_saturday_out' => $allSettings['payroll_staff_saturday_out'] ?? '12:00',
         ];
         
         $attendances = Attendance::where('employee_id', $employee->id)
@@ -127,11 +130,16 @@ class PayrollService
                 if (str_contains(strtoupper($squadSched->shift->name ?? ''), 'PAGI')) {
                     $scheduledInTime = '06:00:00';
                 }
-            } elseif ($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) {
+            } elseif (($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) || ($dayOfWeek === Carbon::SATURDAY && $rules['staff_saturday_enabled'] === 'on')) {
                 $isScheduled = true;
                 $isDefaultOffice = true;
-                $scheduledInTime = $rules['staff_in'];
-                $scheduledOutTime = ($dayOfWeek === Carbon::FRIDAY) ? $rules['staff_out_fri'] : $rules['staff_out_mon_thu'];
+                if ($dayOfWeek === Carbon::SATURDAY) {
+                    $scheduledInTime = $rules['staff_saturday_in'];
+                    $scheduledOutTime = $rules['staff_saturday_out'];
+                } else {
+                    $scheduledInTime = $rules['staff_in'];
+                    $scheduledOutTime = ($dayOfWeek === Carbon::FRIDAY) ? $rules['staff_out_fri'] : $rules['staff_out_mon_thu'];
+                }
             }
 
             if ($employee->squad_id && $isScheduled && empty($scheduledInTime)) {

@@ -50,20 +50,26 @@ class ScheduleService
             }
         }
 
-        // 3. Jadwal Default Staff (Hanya Senin-Jumat)
+        // 3. Jadwal Default Staff (Senin-Jumat, dan Sabtu opsional)
         $dateObj = Carbon::parse($date);
         $dayOfWeek = $dateObj->dayOfWeek;
+        $staffSatEnabled = Setting::getValue('payroll_staff_saturday_enabled', 'off');
 
-        if ($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) {
+        if (($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) || ($dayOfWeek === Carbon::SATURDAY && $staffSatEnabled === 'on')) {
             $inTime = Setting::getValue('payroll_staff_in', '07:30');
             $outTime = ($dayOfWeek === Carbon::FRIDAY) 
                 ? Setting::getValue('payroll_staff_out_fri', '16:30')
                 : Setting::getValue('payroll_staff_out_mon_thu', '16:00');
+            
+            if ($dayOfWeek === Carbon::SATURDAY) {
+                $inTime = Setting::getValue('payroll_staff_saturday_in', '07:30');
+                $outTime = Setting::getValue('payroll_staff_saturday_out', '12:00');
+            }
 
             return [
                 'type' => 'office',
                 'shift' => (object)[
-                    'name' => 'Staff Kantor',
+                    'name' => ($dayOfWeek === Carbon::SATURDAY) ? 'Staff Kantor (Sabtu)' : 'Staff Kantor',
                     'start_time' => $inTime . ':00',
                     'end_time' => $outTime . ':00',
                 ],
