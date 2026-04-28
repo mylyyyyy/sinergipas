@@ -54,20 +54,20 @@
                     <div style="font-size: 8px; font-weight: bold; color: #0f172a; margin-bottom: 5px; text-decoration: underline;">KETERANGAN JADWAL:</div>
                     <table style="font-size: 7px; color: #475569; border: none;">
                         <tr>
-                            <td style="border: none; padding: 1px 0; text-align: left; width: 80px;">1. Pola Rotasi</td>
-                            <td style="border: none; padding: 1px 0; text-align: left;">: 4 Regu (Pagi - Siang & Malam - Libur - Libur)</td>
+                            <td style="border: none; padding: 1px 0; text-align: left; width: 80px;">Dinas Pagi</td>
+                            <td style="border: none; padding: 1px 0; text-align: left;">: 06.00 WIB – 13.00 WIB</td>
                         </tr>
                         <tr>
-                            <td style="border: none; padding: 1px 0; text-align: left;">2. Sesi Pagi</td>
-                            <td style="border: none; padding: 1px 0; text-align: left;">: Sesuai jam dinas yang ditetapkan di sistem</td>
+                            <td style="border: none; padding: 1px 0; text-align: left;">Dinas Siang</td>
+                            <td style="border: none; padding: 1px 0; text-align: left;">: 13.00 WIB – 20.00 WIB</td>
                         </tr>
                         <tr>
-                            <td style="border: none; padding: 1px 0; text-align: left;">3. Sesi Siang/Malam</td>
-                            <td style="border: none; padding: 1px 0; text-align: left;">: Sesuai jam dinas pengamanan yang berlaku</td>
+                            <td style="border: none; padding: 1px 0; text-align: left;">Dinas Malam</td>
+                            <td style="border: none; padding: 1px 0; text-align: left;">: 20.00 WIB – 06.00 WIB</td>
                         </tr>
                         <tr>
-                            <td style="border: none; padding: 1px 0; text-align: left;">4. Validitas</td>
-                            <td style="border: none; padding: 1px 0; text-align: left;">: Dokumen resmi hasil sistem Sinergi PAS Jombang</td>
+                            <td style="border: none; padding: 1px 0; text-align: left;">Pola Rotasi</td>
+                            <td style="border: none; padding: 1px 0; text-align: left;">: Pagi - Siang - Malam - Libur</td>
                         </tr>
                     </table>
                 </td>
