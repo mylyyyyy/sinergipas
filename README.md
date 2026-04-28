@@ -2,7 +2,7 @@
   <img src="public/logo1.png" alt="Sinergi PAS Logo" width="120">
   
   # 🚀 Sinergi PAS
-  ### **Sistem Informasi Manajemen Kepegawaian & Payroll Terpadu**
+  ### **Sistem Informasi Kinerja Pemasyarakatan**
   **Lembaga Pemasyarakatan Kelas IIB Jombang**
 
   [![Laravel](https://img.shields.io/badge/Framework-Laravel%2011-FF2D20?style=for-the-badge&logo=laravel)](https://laravel.com)
@@ -14,7 +14,7 @@
 ---
 
 ## 📝 Deskripsi Proyek
-**Sinergi PAS** adalah platform ERP (*Enterprise Resource Planning*) internal yang dirancang khusus untuk mentransformasi tata kelola administrasi di **Lembaga Pemasyarakatan Kelas IIB Jombang**. 
+**Sinergi PAS** (*Sistem Informasi Kinerja Pemasyarakatan*) adalah platform ERP (*Enterprise Resource Planning*) internal yang dirancang khusus untuk mentransformasi tata kelola administrasi di **Lembaga Pemasyarakatan Kelas IIB Jombang**. 
 
 Sistem ini mengintegrasikan empat pilar utama birokrasi digital: **Manajemen Personel, Penjadwalan Operasional, Arsip Digital, dan Digital Payroll**. Dengan sistem ini, seluruh proses yang sebelumnya manual (Excel-based) kini berjalan secara otomatis, transparan, dan real-time.
 

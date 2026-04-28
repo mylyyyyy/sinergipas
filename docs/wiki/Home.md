@@ -1,6 +1,6 @@
 # Selamat Datang di Wiki Sinergi PAS 🏢
 
-**Sinergi PAS** adalah Sistem Informasi Kepegawaian internal yang dikembangkan untuk **Lapas Jombang**. Sistem ini dirancang untuk mendigitalisasi manajemen dokumen, pelaporan masalah, dan pemantauan kinerja pegawai secara efisien dan transparan.
+**Sinergi PAS** (*Sistem Informasi Kinerja Pemasyarakatan*) adalah platform *Enterprise Resource Planning* (ERP) internal yang dikembangkan untuk **Lapas Jombang**. Sistem ini dirancang untuk mendigitalisasi manajemen dokumen, pelaporan masalah, dan pemantauan kinerja pegawai secara efisien dan transparan.
 
 ## 📖 Navigasi Wiki
 Silakan gunakan menu di bawah ini untuk mempelajari lebih lanjut tentang sistem:
