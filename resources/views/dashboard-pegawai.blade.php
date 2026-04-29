@@ -152,7 +152,7 @@
                     @if($latestSalary)
                         <a href="{{ route('documents.download', $latestSalary->id) }}" class="inline-flex w-full items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-amber-600 text-white font-black text-xs uppercase tracking-widest hover:bg-amber-700 transition-all shadow-lg btn-3d no-loader">
                             <i data-lucide="download-cloud" class="w-5 h-5"></i>
-                            Unduh PDF
+                            Unduh Slip Gaji Terbaru
                         </a>
                     @endif
                     <a href="{{ route('my.payroll') }}" class="inline-flex w-full items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">
