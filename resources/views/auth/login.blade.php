@@ -139,7 +139,7 @@
 
             <div class="relative z-10 w-full">
                 <div class="space-y-2 animate-in fade-in slide-in-from-right duration-1000">
-                    <h3 class="text-xl font-bold text-white/80 uppercase tracking-[0.5em] mb-4">Official Application</h3>
+                    <h3 class="text-xs md:text-sm font-bold text-white/90 uppercase tracking-widest mb-4">Sistem Informasi Kinerja Pegawai Pemasyarakatan</h3>
                     <h1 class="text-7xl lg:text-8xl font-black leading-none flex flex-col">
                         <span class="text-white drop-shadow-2xl">SINERGI</span>
                         <span class="text-pas-orange drop-shadow-2xl">PAS</span>
