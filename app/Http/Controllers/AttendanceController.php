@@ -45,6 +45,9 @@ class AttendanceController extends Controller
             ->get()->groupBy('employee_id')
             ->map(fn($g) => $g->groupBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
 
+        $holidays = \App\Models\Holiday::whereBetween('date', [$startDate, $endDate])
+            ->pluck('date')->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))->toArray();
+
         $staffInTime = \App\Models\Setting::getValue('payroll_staff_in', '07:30');
         $staffSatEnabled = \App\Models\Setting::getValue('payroll_staff_saturday_enabled', 'off');
         $staffSatIn = \App\Models\Setting::getValue('payroll_staff_saturday_in', '07:30');
@@ -57,10 +60,13 @@ class AttendanceController extends Controller
         $ramadanSatIn = \App\Models\Setting::getValue('payroll_ramadan_saturday_in', '08:00');
 
         // Helper to get effective shift info (including double shift check)
-        $getEffectiveShiftInfo = function($emp, $date) use ($squadSchedules, $individualSchedules, $staffInTime, $staffSatEnabled, $staffSatIn, $ramadanEnabled, $ramadanStart, $ramadanEnd, $ramadanIn, $ramadanSatEnabled, $ramadanSatIn) {
+        $getEffectiveShiftInfo = function($emp, $date) use ($squadSchedules, $individualSchedules, $holidays, $staffInTime, $staffSatEnabled, $staffSatIn, $ramadanEnabled, $ramadanStart, $ramadanEnd, $ramadanIn, $ramadanSatEnabled, $ramadanSatIn) {
             $dateStr = Carbon::parse($date)->format('Y-m-d');
             $dateObj = Carbon::parse($date);
             
+            // Cek Libur Nasional
+            $isHoliday = in_array($dateStr, $holidays);
+
             // 1. Individual
             if (isset($individualSchedules[$emp->id][$dateStr])) {
                 $scheds = $individualSchedules[$emp->id][$dateStr];
@@ -86,6 +92,8 @@ class AttendanceController extends Controller
                 return ['start_time' => $minIn, 'is_double' => ($hasPagi && $hasMalam) || $scheds->count() > 1];
             }
             
+            if ($isHoliday) return null;
+
             // 3. Office Fallback
             $hasSquadScheduleAtAll = $emp->squad_id && isset($squadSchedules[$emp->squad_id]) && $squadSchedules[$emp->squad_id]->count() > 0;
             if (!$emp->squad_id || !$hasSquadScheduleAtAll) {

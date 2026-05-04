@@ -158,6 +158,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/export', [ScheduleController::class, 'exportPdf'])->name('export');
         });
 
+        Route::prefix('admin/holidays')->name('admin.holidays.')->group(function () {
+            Route::post('/', [\App\Http\Controllers\HolidayController::class, 'store'])->name('store');
+            Route::delete('/{holiday}', [\App\Http\Controllers\HolidayController::class, 'destroy'])->name('destroy');
+        });
+
         Route::prefix('admin/tunkins')->name('admin.tunkins.')->group(function () {
             Route::get('/', [TunkinController::class, 'index'])->name('index');
             Route::get('/export/excel', [TunkinController::class, 'exportRecapExcel'])->name('export.excel');

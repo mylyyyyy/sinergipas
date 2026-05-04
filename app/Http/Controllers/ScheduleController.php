@@ -61,12 +61,17 @@ class ScheduleController extends Controller
             'Staff Kantor' => $allEmployees->filter(fn($e) => !$e->squad)
         ];
 
+        $holidays = \App\Models\Holiday::whereMonth('date', $month->month)
+            ->whereYear('date', $month->year)
+            ->orderBy('date')
+            ->get();
+
         $hasData = SquadSchedule::whereMonth('date', $month->month)->whereYear('date', $month->year)->exists();
 
         return view('admin.schedules.index', compact(
             'month', 'monthStr', 'daysInMonth', 'shifts', 
             'reguSquads', 'p2uSquads', 'reguSchedules', 'p2uSchedules',
-            'individualSchedules', 'individualSchedulesList', 'employeesByGroup', 'hasData'
+            'individualSchedules', 'individualSchedulesList', 'employeesByGroup', 'hasData', 'holidays'
         ));
     }
 

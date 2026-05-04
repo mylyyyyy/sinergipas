@@ -35,6 +35,9 @@
             <button onclick="switchSchedTab('individual')" id="btn-individual" class="sched-tab-btn px-8 py-4 rounded-[22px] text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-3">
                 <i data-lucide="user-check" class="w-4 h-4"></i> Piket Individu
             </button>
+            <button onclick="switchSchedTab('holiday')" id="btn-holiday" class="sched-tab-btn px-8 py-4 rounded-[22px] text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-3">
+                <i data-lucide="calendar-off" class="w-4 h-4 text-red-500"></i> Hari Libur
+            </button>
         </div>
 
         <div id="tab-actions" class="flex gap-3">
@@ -296,6 +299,101 @@
                                         </div>
                                         
                                         <form action="{{ route('admin.schedules.destroy-individual', $is->id) }}" method="POST" class="no-loader opacity-0 group-hover:opacity-100 transition-all">
+                                            @csrf @method('DELETE')
+                                            <button type="button" onclick="confirmDelete(this.form)" class="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Content: Holiday -->
+    <div id="tab-holiday" class="sched-tab-content hidden space-y-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <!-- Form Plot -->
+            <div class="lg:col-span-4 sticky top-8">
+                <div class="bg-slate-900 rounded-[32px] p-8 shadow-2xl relative overflow-hidden border border-white/5 group">
+                    <div class="absolute -right-16 -top-16 w-64 h-64 bg-red-600/10 blur-[80px] transition-all duration-700"></div>
+                    
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                                <i data-lucide="calendar-off" class="w-6 h-6 text-red-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-black text-white uppercase tracking-tight italic">Hari Libur</h3>
+                                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Tanggal Merah Nasional</p>
+                            </div>
+                        </div>
+                        
+                        <form action="{{ route('admin.holidays.store') }}" method="POST" class="space-y-6">
+                            @csrf
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Tanggal Libur</label>
+                                <input type="date" name="date" required value="{{ date('Y-m-d') }}" class="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white focus:bg-white/10 focus:border-red-500 outline-none transition-all font-bold text-sm [color-scheme:dark]">
+                            </div>
+
+                            <div class="space-y-3">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Keterangan / Nama Libur</label>
+                                <input type="text" name="description" required placeholder="Contoh: Hari Buruh Internasional" class="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white focus:bg-white/10 focus:border-red-500 outline-none transition-all font-bold text-sm placeholder:text-slate-600">
+                            </div>
+
+                            <button type="submit" class="w-full bg-red-600 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-red-500 transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                                <i data-lucide="check-circle" class="w-4 h-4"></i> Simpan Libur
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List Holidays -->
+            <div class="lg:col-span-8">
+                <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[600px] card-3d">
+                    <!-- Header -->
+                    <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row gap-6 justify-between items-center">
+                        <div class="flex items-center gap-4">
+                            <div class="w-1 h-8 bg-red-600 rounded-full"></div>
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900 uppercase tracking-tight italic">Daftar Hari Libur Nasional</h3>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Bulan {{ \Carbon\Carbon::parse($monthStr.'-01')->translatedFormat('F Y') }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scrollable List -->
+                    <div class="p-6 overflow-y-auto custom-scrollbar">
+                        @if(!isset($holidays) || $holidays->isEmpty())
+                            <div class="py-20 flex flex-col items-center justify-center text-center opacity-30">
+                                <i data-lucide="calendar-check" class="w-16 h-16 text-slate-300 mb-4"></i>
+                                <h4 class="text-sm font-black text-slate-900 uppercase italic">Tidak Ada Libur Nasional</h4>
+                            </div>
+                        @else
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @foreach($holidays as $hol)
+                                    <div class="group p-5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between hover:bg-white hover:border-red-200 hover:shadow-lg transition-all duration-300">
+                                        <div class="flex items-center gap-4 min-w-0">
+                                            <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 flex flex-col items-center justify-center shrink-0 shadow-sm group-hover:bg-red-600 transition-colors duration-500">
+                                                <span class="text-sm font-black text-slate-900 group-hover:text-white">{{ date('d', strtotime($hol->date)) }}</span>
+                                                <span class="text-[8px] font-black text-slate-400 uppercase group-hover:text-red-100">{{ \Carbon\Carbon::parse($hol->date)->translatedFormat('D') }}</span>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-black text-slate-900 truncate group-hover:text-red-600 transition-colors">{{ strtoupper($hol->description) }}</p>
+                                                <div class="flex items-center gap-2 mt-2">
+                                                    <span class="flex items-center gap-1 px-2 py-0.5 rounded-lg border bg-red-100 text-red-600 border-red-200 text-[8px] font-black uppercase tracking-widest shadow-sm">
+                                                        <i data-lucide="calendar-off" class="w-3 h-3"></i> TANGGAL MERAH
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <form action="{{ route('admin.holidays.destroy', $hol->id) }}" method="POST" class="no-loader opacity-0 group-hover:opacity-100 transition-all">
                                             @csrf @method('DELETE')
                                             <button type="button" onclick="confirmDelete(this.form)" class="p-2 text-slate-300 hover:text-red-500 transition-colors">
                                                 <i data-lucide="trash-2" class="w-4 h-4"></i>

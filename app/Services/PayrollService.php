@@ -76,6 +76,9 @@ class PayrollService
                 ->groupBy(fn($s) => Carbon::parse($s->date)->format('Y-m-d'));
         }
         
+        $holidays = \App\Models\Holiday::whereBetween('date', [$startDate, $endDate])
+            ->pluck('date')->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))->toArray();
+
         $hasAnySquadSchedule = $employee->squad_id && $squadSchedules->count() > 0;
 
         $stats = [

@@ -21,6 +21,9 @@ class ScheduleService
         $month = Carbon::parse($date)->month;
         $year = Carbon::parse($date)->year;
 
+        // Cek Libur Nasional
+        $isHoliday = \App\Models\Holiday::where('date', $dateStr)->exists();
+
         // 1. Cek Jadwal Individu (Piket/Override)
         $individuals = Schedule::with('shift')
             ->where('employee_id', $employee->id)
@@ -85,6 +88,11 @@ class ScheduleService
                     'is_double_shift' => ($hasPagi && $hasMalam) || ($squads->count() > 1)
                 ];
             }
+        }
+
+        // Jika hari libur nasional, otomatis libur untuk staff/non-regu
+        if ($isHoliday) {
+            return null;
         }
 
         // 3. Jadwal Default Staff (Senin-Jumat, dan Sabtu opsional)
