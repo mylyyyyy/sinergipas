@@ -92,7 +92,26 @@ class PayrollService
             'is_acting' => false
         ];
         
-        // ... (sik Counter, baseTunkin logic unchanged) ...
+        $sickCounter = 0;
+        $baseTunkin = (float)($employee->tunkin->nominal ?? 0);
+        if ($employee->is_cpns) $baseTunkin = 0.8 * $baseTunkin;
+
+        $actingBonus = 0;
+        if ($employee->acting_tunkin_id && $employee->acting_start_date) {
+            $startDateObj = Carbon::parse($employee->acting_start_date);
+            if ($date->diffInMonths($startDateObj) >= 1) {
+                $actingTunkin = $employee->actingTunkin->nominal ?? 0;
+                $actingBonus = 0.2 * $actingTunkin;
+                $stats['is_acting'] = true;
+            }
+        }
+
+        if ($employee->is_tubel) {
+            $stats['deduction_percentage'] = 100;
+            $stats['details'][] = ['type' => 'Tugas Belajar', 'info' => 'Potong 100%', 'date' => null, 'percent' => 100, 'rupiah' => $baseTunkin];
+            $baseTunkin = 0;
+            $actingBonus = 0;
+        }
 
         $mealRate = (float)($employee->rank_relation->meal_allowance ?? 0);
         $today = now()->startOfDay();
