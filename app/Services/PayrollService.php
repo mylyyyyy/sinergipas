@@ -130,6 +130,7 @@ class PayrollService
             $specialStatus = null; 
             $isDefaultOffice = false;
             $isDoubleShift = false;
+            $isNightShift = false;
 
             if ($individualSchedules->has($currentDate)) {
                 $indivs = $individualSchedules->get($currentDate); // Wait, individualSchedules was grouped?
@@ -141,6 +142,12 @@ class PayrollService
                 $isScheduled = !in_array($specialStatus, ['off', 'leave', 'sick']);
                 $scheduledInTime = $indiv->shift->start_time ?? null;
                 $scheduledOutTime = $indiv->shift->end_time ?? null;
+                
+                foreach((is_iterable($indivs) ? $indivs : [$indivs]) as $indivSched) {
+                    if ($indivSched->shift && str_contains(strtoupper($indivSched->shift->name ?? ''), 'MALAM')) {
+                        $isNightShift = true;
+                    }
+                }
             } elseif ($employee->squad_id && isset($squadSchedules[$currentDate])) {
                 $isScheduled = true;
                 $dayScheds = $squadSchedules[$currentDate];
@@ -149,7 +156,7 @@ class PayrollService
                 foreach($dayScheds as $s) {
                     $st = $s->shift->start_time ?? '06:00:00';
                     if ($s->shift && str_contains(strtoupper($s->shift->name), 'PAGI')) { $st = '06:00:00'; $hasPagi = true; }
-                    if ($s->shift && str_contains(strtoupper($s->shift->name), 'MALAM')) $hasMalam = true;
+                    if ($s->shift && str_contains(strtoupper($s->shift->name), 'MALAM')) { $hasMalam = true; $isNightShift = true; }
                     
                     if (!$minIn || $st < $minIn) $minIn = $st;
                     if (!$maxOut || ($s->shift->end_time ?? '00:00:00') > $maxOut) $maxOut = $s->shift->end_time;
@@ -292,8 +299,13 @@ class PayrollService
                     }
 
                     if (in_array($status, ['present', 'late']) && (empty($attendance->check_in) || empty($attendance->check_out) || $attendance->check_in == $attendance->check_out)) {
-                        $stats['deduction_percentage'] += $rules['lupa_absen'];
-                        $stats['details'][] = ['type' => 'Lupa Absen', 'info' => (empty($attendance->check_in) ? "Tanpa Masuk" : "Tanpa Pulang"), 'date' => $currentDate, 'percent' => $rules['lupa_absen'], 'rupiah' => ($rules['lupa_absen'] / 100) * $baseTunkin];
+                        // Skip "Lupa Absen Pulang" deduction if this is a night shift
+                        if ($isNightShift && !empty($attendance->check_in) && empty($attendance->check_out)) {
+                            // Do nothing, it's expected for night shifts
+                        } else {
+                            $stats['deduction_percentage'] += $rules['lupa_absen'];
+                            $stats['details'][] = ['type' => 'Lupa Absen', 'info' => (empty($attendance->check_in) ? "Tanpa Masuk" : "Tanpa Pulang"), 'date' => $currentDate, 'percent' => $rules['lupa_absen'], 'rupiah' => ($rules['lupa_absen'] / 100) * $baseTunkin];
+                        }
                     }
                 } else if ($attendance && in_array($attendance->status, ['present', 'late'])) {
                     $lateMinFallback = abs((int)($attendance->late_minutes ?? 0));
