@@ -187,7 +187,8 @@ class AttendanceController extends Controller
                 $targetInTime = date('H:i', strtotime($effectiveStart));
                 if ($checkInTime > $targetInTime) {
                     $log->status = 'late';
-                    $log->late_minutes = (int)Carbon::parse($log->date.' '.$checkInTime)->diffInMinutes(Carbon::parse($log->date.' '.$targetInTime));
+                    $dateStr = Carbon::parse($log->date)->format('Y-m-d');
+                    $log->late_minutes = (int)Carbon::parse($dateStr.' '.$checkInTime)->diffInMinutes(Carbon::parse($dateStr.' '.$targetInTime));
                 } else {
                     if ($log->status === 'late') $log->status = 'present';
                     $log->late_minutes = 0;
