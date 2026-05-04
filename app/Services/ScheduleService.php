@@ -17,103 +17,144 @@ class ScheduleService
      */
     public function getEffectiveSchedule(Employee $employee, $date)
     {
-        $date = Carbon::parse($date)->format('Y-m-d');
+        $dateStr = Carbon::parse($date)->format('Y-m-d');
+        $month = Carbon::parse($date)->month;
+        $year = Carbon::parse($date)->year;
 
         // 1. Cek Jadwal Individu (Piket/Override)
-        $individual = Schedule::with('shift')
+        $individuals = Schedule::with('shift')
             ->where('employee_id', $employee->id)
-            ->where('date', $date)
-            ->first();
+            ->where('date', $dateStr)
+            ->get();
 
-        if ($individual) {
+        if ($individuals->isNotEmpty()) {
+            $isOff = false; $isPicket = false; $st = null; $et = null; $status = 'present'; $shiftName = 'Piket Individu';
+            foreach($individuals as $indiv) {
+                if (in_array($indiv->status, ['off', 'leave', 'sick'])) { $isOff = true; $status = $indiv->status; }
+                if ($indiv->status === 'picket') $isPicket = true;
+                
+                $start = $indiv->shift->start_time ?? null;
+                $end = $indiv->shift->end_time ?? null;
+                if ($start && (!$st || $start < $st)) $st = $start;
+                if ($end && (!$et || $end > $et)) $et = $end;
+                if ($indiv->shift) $shiftName = $indiv->shift->name;
+            }
+
             return [
                 'type' => 'individual',
-                'status' => $individual->status,
-                'shift' => $individual->shift,
-                'is_picket' => $individual->status === 'picket'
+                'status' => $status,
+                'shift' => (object)[
+                    'name' => $shiftName,
+                    'start_time' => $st,
+                    'end_time' => $et,
+                ],
+                'is_picket' => $isPicket,
+                'is_double_shift' => false // Individu biasanya single
             ];
         }
 
         // 2. Cek Jadwal Regu (Jika pegawai punya squad_id)
         if ($employee->squad_id) {
-            $squad = SquadSchedule::with('shift')
+            $squads = SquadSchedule::with('shift')
                 ->where('squad_id', $employee->squad_id)
-                ->where('date', $date)
-                ->first();
+                ->where('date', $dateStr)
+                ->get();
 
-            if ($squad) {
-                $st = $squad->shift->start_time ?? '06:00:00';
-                
-                // Force 06:00 for Morning Guard Shifts to ensure consistency across the system
-                if ($squad->shift && str_contains(strtoupper($squad->shift->name ?? ''), 'PAGI')) {
-                    $st = '06:00:00';
+            if ($squads->isNotEmpty()) {
+                $st = null; $et = null; $hasPagi = false; $hasMalam = false;
+                foreach($squads as $sq) {
+                    $start = $sq->shift->start_time ?? '06:00:00';
+                    if ($sq->shift && str_contains(strtoupper($sq->shift->name), 'PAGI')) {
+                        $start = '06:00:00'; $hasPagi = true;
+                    }
+                    if ($sq->shift && str_contains(strtoupper($sq->shift->name), 'MALAM')) $hasMalam = true;
+
+                    $end = $sq->shift->end_time ?? '00:00:00';
+                    if (!$st || $start < $st) $st = $start;
+                    if (!$et || $end > $et) $et = $end;
                 }
 
                 return [
                     'type' => 'squad',
                     'shift' => (object)[
-                        'name' => $squad->shift->name ?? 'Regu Jaga',
+                        'name' => $squads->count() > 1 ? 'Double Shift' : $squads->first()->shift->name,
                         'start_time' => $st,
-                        'end_time' => $squad->shift->end_time ?? '00:00:00',
+                        'end_time' => $et,
                     ],
-                    'is_picket' => true
+                    'is_picket' => true,
+                    'is_double_shift' => ($hasPagi && $hasMalam) || ($squads->count() > 1)
                 ];
             }
         }
 
         // 3. Jadwal Default Staff (Senin-Jumat, dan Sabtu opsional)
-        $dateObj = Carbon::parse($date);
-        $dayOfWeek = $dateObj->dayOfWeek;
-        $staffSatEnabled = Setting::getValue('payroll_staff_saturday_enabled', 'off');
+        // PERBAIKAN: Hanya fallback jika squad TIDAK ADA jadwal sama sekali di bulan ini
+        $shouldFallback = false;
+        if (!$employee->squad_id) {
+            $shouldFallback = true;
+        } else {
+            // Cek apakah squad ini punya jadwal APAPUN di bulan ini
+            $anySquadSchedule = SquadSchedule::where('squad_id', $employee->squad_id)
+                ->whereMonth('date', $month)
+                ->whereYear('date', $year)
+                ->exists();
+            if (!$anySquadSchedule) $shouldFallback = true;
+        }
 
-        $ramadanEnabled = Setting::getValue('payroll_ramadan_enabled', 'off');
-        $ramadanStart = Carbon::parse(Setting::getValue('payroll_ramadan_start', date('Y-m-d')))->startOfDay();
-        $ramadanEnd = Carbon::parse(Setting::getValue('payroll_ramadan_end', date('Y-m-d')))->endOfDay();
-        $ramadanSatEnabled = Setting::getValue('payroll_ramadan_saturday_enabled', 'off');
-        
-        $isRamadan = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd));
+        if ($shouldFallback) {
+            $dateObj = Carbon::parse($dateStr);
+            $dayOfWeek = $dateObj->dayOfWeek;
+            $staffSatEnabled = Setting::getValue('payroll_staff_saturday_enabled', 'off');
 
-        // Jika hari biasa atau (hari sabtu DAN (sabtu biasa aktif ATAU sabtu puasa aktif))
-        if (($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) || 
-            ($dayOfWeek === Carbon::SATURDAY && ($staffSatEnabled === 'on' || ($isRamadan && $ramadanSatEnabled === 'on')))) {
+            $ramadanEnabled = Setting::getValue('payroll_ramadan_enabled', 'off');
+            $ramadanStart = Carbon::parse(Setting::getValue('payroll_ramadan_start', date('Y-m-d')))->startOfDay();
+            $ramadanEnd = Carbon::parse(Setting::getValue('payroll_ramadan_end', date('Y-m-d')))->endOfDay();
+            $ramadanSatEnabled = Setting::getValue('payroll_ramadan_saturday_enabled', 'off');
             
-            if ($dayOfWeek === Carbon::SATURDAY) {
-                if ($isRamadan && $ramadanSatEnabled === 'on') {
-                    $inTime = Setting::getValue('payroll_ramadan_saturday_in', '08:00');
-                    $outTime = Setting::getValue('payroll_ramadan_saturday_out', '12:00');
-                    $shiftName = 'Staff Kantor (Sabtu Ramadhan)';
-                } else if (!$isRamadan && $staffSatEnabled === 'on') {
-                    $inTime = Setting::getValue('payroll_staff_saturday_in', '07:30');
-                    $outTime = Setting::getValue('payroll_staff_saturday_out', '12:00');
-                    $shiftName = 'Staff Kantor (Sabtu)';
-                } else {
-                    return null; // Skip jika aturan sabtu tidak terpenuhi
-                }
-            } else {
-                if ($isRamadan) {
-                    $inTime = Setting::getValue('payroll_ramadan_staff_in', '08:00');
-                    $outTime = ($dayOfWeek === Carbon::FRIDAY) 
-                        ? Setting::getValue('payroll_ramadan_staff_out_fri', '15:30')
-                        : Setting::getValue('payroll_ramadan_staff_out_mon_thu', '15:00');
-                    $shiftName = 'Staff Kantor (Ramadhan)';
-                } else {
-                    $inTime = Setting::getValue('payroll_staff_in', '07:30');
-                    $outTime = ($dayOfWeek === Carbon::FRIDAY) 
-                        ? Setting::getValue('payroll_staff_out_fri', '16:30')
-                        : Setting::getValue('payroll_staff_out_mon_thu', '16:00');
-                    $shiftName = 'Staff Kantor';
-                }
-            }
+            $isRamadan = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd));
 
-            return [
-                'type' => 'office',
-                'shift' => (object)[
-                    'name' => $shiftName,
-                    'start_time' => $inTime . ':00',
-                    'end_time' => $outTime . ':00',
-                ],
-                'is_picket' => false
-            ];
+            if (($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) || 
+                ($dayOfWeek === Carbon::SATURDAY && ($staffSatEnabled === 'on' || ($isRamadan && $ramadanSatEnabled === 'on')))) {
+                
+                if ($dayOfWeek === Carbon::SATURDAY) {
+                    if ($isRamadan && $ramadanSatEnabled === 'on') {
+                        $inTime = Setting::getValue('payroll_ramadan_saturday_in', '08:00');
+                        $outTime = Setting::getValue('payroll_ramadan_saturday_out', '12:00');
+                        $shiftName = 'Staff Kantor (Sabtu Ramadhan)';
+                    } else if (!$isRamadan && $staffSatEnabled === 'on') {
+                        $inTime = Setting::getValue('payroll_staff_saturday_in', '07:30');
+                        $outTime = Setting::getValue('payroll_staff_saturday_out', '12:00');
+                        $shiftName = 'Staff Kantor (Sabtu)';
+                    } else {
+                        return null;
+                    }
+                } else {
+                    if ($isRamadan) {
+                        $inTime = Setting::getValue('payroll_ramadan_staff_in', '08:00');
+                        $outTime = ($dayOfWeek === Carbon::FRIDAY) 
+                            ? Setting::getValue('payroll_ramadan_staff_out_fri', '15:30')
+                            : Setting::getValue('payroll_ramadan_staff_out_mon_thu', '15:00');
+                        $shiftName = 'Staff Kantor (Ramadhan)';
+                    } else {
+                        $inTime = Setting::getValue('payroll_staff_in', '07:30');
+                        $outTime = ($dayOfWeek === Carbon::FRIDAY) 
+                            ? Setting::getValue('payroll_staff_out_fri', '16:30')
+                            : Setting::getValue('payroll_staff_out_mon_thu', '16:00');
+                        $shiftName = 'Staff Kantor';
+                    }
+                }
+
+                return [
+                    'type' => 'office',
+                    'shift' => (object)[
+                        'name' => $shiftName,
+                        'start_time' => $inTime . ':00',
+                        'end_time' => $outTime . ':00',
+                    ],
+                    'is_picket' => false,
+                    'is_double_shift' => false
+                ];
+            }
         }
 
         // Tidak ada jadwal (Libur/Weekend tanpa piket)
