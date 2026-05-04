@@ -142,11 +142,13 @@ class AttendanceController extends Controller
                     $checkInTime = date('H:i', strtotime($att->check_in));
                     $targetInTime = date('H:i', strtotime($effectiveStart));
                     $dateStr = Carbon::parse($att->date)->format('Y-m-d');
-                    $actualIn = Carbon::parse($dateStr.' '.$checkInTime);
-                    $targetIn = Carbon::parse($dateStr.' '.$targetInTime);
-                    $diffMinutes = $actualIn->diffInMinutes($targetIn, false);
+                    
+                    $actualTs = strtotime($dateStr.' '.$checkInTime);
+                    $targetTs = strtotime($dateStr.' '.$targetInTime);
+                    $diffMinutes = (int) ceil(($actualTs - $targetTs) / 60);
+                    
                     if ($diffMinutes >= -180) {
-                        $status = ($actualIn > $targetIn) ? 'late' : 'present';
+                        $status = ($diffMinutes > 0) ? 'late' : 'present';
                     } else {
                         $status = 'absent';
                     }
@@ -205,14 +207,14 @@ class AttendanceController extends Controller
                 $targetInTime = date('H:i', strtotime($effectiveStart));
                 
                 $dateStr = Carbon::parse($log->date)->format('Y-m-d');
-                $actualIn = Carbon::parse($dateStr.' '.$checkInTime);
-                $targetIn = Carbon::parse($dateStr.' '.$targetInTime);
+                $actualTs = strtotime($dateStr.' '.$checkInTime);
+                $targetTs = strtotime($dateStr.' '.$targetInTime);
                 
-                $diffMinutes = $actualIn->diffInMinutes($targetIn, false); // Negative if early
+                $diffMinutes = (int) ceil(($actualTs - $targetTs) / 60);
 
                 // Tolerance: Max 3 hours early (increased from 2)
                 if ($diffMinutes >= -180) {
-                    if ($actualIn > $targetIn) {
+                    if ($diffMinutes > 0) {
                         $log->status = 'late';
                         $log->late_minutes = (int)$diffMinutes;
                     } else {
