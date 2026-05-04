@@ -203,9 +203,13 @@ class AttendanceController extends Controller
                         $log->late_minutes = 0;
                     }
                 } else {
-                    // Still outside schedule
-                    $log->status = 'absent';
+                    // Masih sangat jauh dari jadwal, tapi karena dia scan kita anggap hadir (Luar Jadwal)
+                    $log->status = 'present';
                 }
+            } elseif ($log->check_in && !$isScheduled && $canReevaluate) {
+                // Scan di hari libur (Tidak ada jadwal)
+                $log->status = 'present';
+                $log->late_minutes = 0;
             }
 
             $hasMeal = $isScheduled && !in_array($log->status, ['absent', 'duty_full', 'tubel', 'on_leave', 'sick']);
@@ -360,8 +364,10 @@ class AttendanceController extends Controller
                             }
                             $allowance = (float)($emp->rank_relation->meal_allowance ?? 0) * ($isDouble ? 2 : 1);
                         } else {
-                            $status = 'absent'; // Outside tolerance
+                            $status = 'present'; // Outside tolerance but scanned
                         }
+                    } elseif (!$effectiveSched && !in_array($status, ['on_leave', 'sick'])) {
+                        $status = 'present'; // Scanned on a day off
                     }
 
                     $insertData[] = ['employee_id' => $emp->id, 'date' => $date, 'check_in' => $checkIn->format('H:i:s'), 'check_out' => $checkOut ? $checkOut->format('H:i:s') : null, 'status' => $status, 'late_minutes' => $late, 'early_minutes' => $early, 'allowance_amount' => $allowance, 'created_at' => $now, 'updated_at' => $now];
