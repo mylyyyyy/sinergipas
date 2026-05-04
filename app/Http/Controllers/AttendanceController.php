@@ -81,22 +81,21 @@ class AttendanceController extends Controller
                 return $st ?? '06:00:00';
             }
             
-            // 3. Default Staff - Hanya jika BUKAN anggota regu
-            if (!$emp->squad_id) {
-                $dayNum = $dateObj->dayOfWeek;
-                $isRamadan = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd));
+            // 3. Default Staff Fallback (Office Hours)
+            // BERLAKU UNTUK SEMUA yang tidak punya jadwal regu/individu pada hari kerja
+            $dayNum = $dateObj->dayOfWeek;
+            $isRamadan = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd));
 
-                if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) {
-                    return $isRamadan ? $ramadanIn : $staffInTime;
-                }
-                
-                // Saturday Logic
-                if ($dayNum === Carbon::SATURDAY) {
-                    if ($isRamadan && $ramadanSatEnabled === 'on') {
-                        return $ramadanSatIn;
-                    } else if (!$isRamadan && $staffSatEnabled === 'on') {
-                        return $staffSatIn;
-                    }
+            if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) {
+                return $isRamadan ? $ramadanIn : $staffInTime;
+            }
+            
+            // Saturday Logic
+            if ($dayNum === Carbon::SATURDAY) {
+                if ($isRamadan && $ramadanSatEnabled === 'on') {
+                    return $ramadanSatIn;
+                } else if (!$isRamadan && $staffSatEnabled === 'on') {
+                    return $staffSatIn;
                 }
             }
             
@@ -422,8 +421,10 @@ class AttendanceController extends Controller
                         $effectiveSched = ['shift' => $sched->shift];
                         $isPicket = true;
                     }
-                    // 3. Cek Kantor (Staff)
-                    else {
+                    
+                    // 3. Default Staff Fallback (Office Hours)
+                    // Jika tidak ada jadwal regu/individu, gunakan jam kantor jika hari kerja
+                    if (!$effectiveSched && $status === 'absent') {
                         $dateObj = Carbon::parse($date);
                         $dayNum = $dateObj->dayOfWeek;
                         $isRamadan = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd));
@@ -438,7 +439,7 @@ class AttendanceController extends Controller
                                     $inT = $staffSatIn;
                                     $outT = $staffOutSat;
                                 } else {
-                                    continue; // Skip if saturday logic is off
+                                    $inT = null;
                                 }
                             } else {
                                 if ($isRamadan) {
@@ -450,10 +451,12 @@ class AttendanceController extends Controller
                                 }
                             }
 
-                            $effectiveSched = ['shift' => (object)[
-                                'start_time' => $inT . ':00',
-                                'end_time' => $outT . ':00'
-                            ]];
+                            if ($inT) {
+                                $effectiveSched = ['shift' => (object)[
+                                    'start_time' => $inT . ':00',
+                                    'end_time' => $outT . ':00'
+                                ]];
+                            }
                         }
                     }
 
@@ -555,21 +558,20 @@ class AttendanceController extends Controller
             }
             
             // 2. Squad Schedule
-            if ($emp->squad_id && isset($squadSchedules[$emp->squad_id])) {
-                return in_array($dateStr, $squadSchedules[$emp->squad_id]);
+            if ($emp->squad_id && isset($squadSchedules[$emp->squad_id]) && in_array($dateStr, $squadSchedules[$emp->squad_id])) {
+                return true;
             }
             
-            // 3. Default Office (Staff only)
-            if (!$emp->squad_id) {
-                $dayNum = $dateObj->dayOfWeek;
-                $isRamadan = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd));
+            // 3. Default Office Fallback (Staff hours)
+            // Berlaku jika tidak ada jadwal regu/individu pada hari kerja
+            $dayNum = $dateObj->dayOfWeek;
+            $isRamadan = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd));
 
-                if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) return true;
-                
-                if ($dayNum === Carbon::SATURDAY) {
-                    if ($isRamadan && $ramadanSatEnabled === 'on') return true;
-                    if (!$isRamadan && $staffSatEnabled === 'on') return true;
-                }
+            if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) return true;
+            
+            if ($dayNum === Carbon::SATURDAY) {
+                if ($isRamadan && $ramadanSatEnabled === 'on') return true;
+                if (!$isRamadan && $staffSatEnabled === 'on') return true;
             }
             
             return false;
