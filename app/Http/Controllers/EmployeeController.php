@@ -169,8 +169,12 @@ class EmployeeController extends Controller
         $rank = $request->rank_id ? Rank::find($request->rank_id) : null;
 
         $jNameUpper = strtoupper($position->name);
+        // Logic auto-detect hanya sebagai fallback jika tidak diisi manual atau ada perubahan squad
         $isJaga = str_contains($jNameUpper, 'JAGA') || str_contains($jNameUpper, 'PENGAMANAN') || str_contains($jNameUpper, 'PENJAGA') || $request->filled('squad_id');
-        $employeeType = $isJaga ? 'regu_jaga' : 'non_regu_jaga';
+        $autoType = $isJaga ? 'regu_jaga' : 'non_regu_jaga';
+        
+        // Prioritaskan input manual jika ada, jika tidak gunakan auto-detect
+        $employeeType = $request->employee_type ?? $autoType;
 
         $employee->update([
             'nip' => trim($request->nip),
@@ -189,7 +193,7 @@ class EmployeeController extends Controller
             'rank_class' => $rank?->name,
             'category_id' => $request->category_id,
             'employee_type' => $employeeType,
-            'squad_id' => $request->squad_id,
+            'squad_id' => $request->squad_id ?: null, // Explicitly set null if empty
             'role_in_squad' => $request->role_in_squad,
         ]);
 
